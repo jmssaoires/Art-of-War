@@ -1,0 +1,79 @@
+{
+  "entities": {
+    "Room": {
+      "title": "Deduction Sandbox Room",
+      "description": "Multiplayer deduction room for the Ancient Strategy Sandbox",
+      "type": "object",
+      "properties": {
+        "roomName": { "type": "string", "description": "The name of the room" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last update timestamp" },
+        "mandate": { "type": "integer", "description": "The shared mandate value (0 to 100)" },
+        "stability": { "type": "integer", "description": "The shared stability value (0 to 100)" },
+        "coffers": { "type": "integer", "description": "The dynamic shared coffers treasury value" },
+        "emperorAge": { "type": "integer", "description": "The emperor current age" },
+        "status": { "type": "string", "enum": ["ACTIVE", "ARCHIVED"], "description": "Lobby state" }
+      },
+      "required": ["roomName", "createdAt", "updatedAt", "mandate", "stability", "coffers", "emperorAge", "status"]
+    },
+    "Player": {
+      "title": "Player",
+      "description": "A player within a deduction room",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique user ID" },
+        "username": { "type": "string", "description": "A customized ancient name or Google display name" },
+        "role": { "type": "string", "description": "The selected faction/role" },
+        "online": { "type": "boolean", "description": "Signifies online status" },
+        "joinedAt": { "type": "string", "format": "date-time", "description": "Join timestamp" }
+      },
+      "required": ["uid", "username", "role", "online", "joinedAt"]
+    },
+    "DeductionLog": {
+      "title": "DeductionLog",
+      "description": "Deduction action history logs stream",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string", "description": "Log narrative text" },
+        "username": { "type": "string", "description": "Who performed the action" },
+        "role": { "type": "string", "description": "The player's faction role when acting" },
+        "timestamp": { "type": "string", "format": "date-time", "description": "Timestamp" }
+      },
+      "required": ["text", "username", "role", "timestamp"]
+    },
+    "MapUnit": {
+      "title": "MapUnit",
+      "description": "A tactical army unit placed on the map by a user",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique unit local or remote ID" },
+        "name": { "type": "string", "description": "The name of this troop" },
+        "side": { "type": "string", "enum": ["allied", "hostile"], "description": "Combat side: allied or hostile" },
+        "lat": { "type": "number", "description": "Latitude coordinate" },
+        "lng": { "type": "number", "description": "Longitude coordinate" },
+        "size": { "type": "integer", "description": "Current army size" },
+        "creatorUid": { "type": "string", "description": "Creator user UID" },
+        "creatorName": { "type": "string", "description": "Creator display name" }
+      },
+      "required": ["id", "name", "side", "lat", "lng", "size"]
+    }
+  },
+  "firestore": {
+    "/rooms/{roomId}": {
+      "schema": "Room",
+      "description": "Core room state containing high level game numbers"
+    },
+    "/rooms/{roomId}/players/{playerId}": {
+      "schema": "Player",
+      "description": "Players participating in this specific room"
+    },
+    "/rooms/{roomId}/logs/{logId}": {
+      "schema": "DeductionLog",
+      "description": "Real-time action feed for everyone in the room"
+    },
+    "/rooms/{roomId}/mapUnits/{unitId}": {
+      "schema": "MapUnit",
+      "description": "Tactical units stationed on the terrain in the room"
+    }
+  }
+}

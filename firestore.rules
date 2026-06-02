@@ -1,0 +1,113 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    
+    function incoming() {
+      return request.resource.data;
+    }
+    
+    function existing() {
+      return resource.data;
+    }
+
+    // Global safety net: default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Rules for Rooms
+    match /rooms/{roomId} {
+      allow create: if isSignedIn() 
+        && isValidId(roomId)
+        && incoming().roomName is string && incoming().roomName.size() <= 100
+        && incoming().mandate is int
+        && incoming().stability is int
+        && incoming().coffers is int
+        && incoming().emperorAge is int
+        && incoming().status == 'ACTIVE'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow read: if isSignedIn();
+
+      allow update: if isSignedIn()
+        && incoming().roomName is string && incoming().roomName.size() <= 100
+        && incoming().mandate is int
+        && incoming().stability is int
+        && incoming().coffers is int
+        && incoming().emperorAge is int
+        && incoming().status is string
+        && incoming().updatedAt == request.time;
+      
+      allow delete: if false;
+    }
+
+    // Rules for Room Players
+    match /rooms/{roomId}/players/{playerId} {
+      allow get, list: if isSignedIn();
+      
+      allow create, update: if isSignedIn()
+        && isValidId(roomId)
+        && isValidId(playerId)
+        && request.auth.uid == playerId
+        && incoming().uid == playerId
+        && incoming().username is string && incoming().username.size() <= 100
+        && incoming().role is string && incoming().role.size() <= 64
+        && incoming().online is bool
+        && incoming().joinedAt == request.time;
+
+      allow delete: if isSignedIn() && request.auth.uid == playerId;
+    }
+
+    // Rules for Room Logs
+    match /rooms/{roomId}/logs/{logId} {
+      allow list, get: if isSignedIn() && isValidId(roomId);
+      
+      allow create: if isSignedIn()
+        && isValidId(roomId)
+        && isValidId(logId)
+        && incoming().username is string && incoming().username.size() <= 100
+        && incoming().role is string && incoming().role.size() <= 64
+        && incoming().text is string && incoming().text.size() <= 600
+        && incoming().timestamp == request.time;
+
+      allow update, delete: if false;
+    }
+
+    // Rules for Room Map Units
+    match /rooms/{roomId}/mapUnits/{unitId} {
+      allow read, list: if isSignedIn() && isValidId(roomId);
+      
+      allow create: if isSignedIn()
+        && isValidId(roomId)
+        && isValidId(unitId)
+        && incoming().id is string && incoming().id.size() <= 128
+        && incoming().name is string && incoming().name.size() <= 100
+        && (incoming().side == 'allied' || incoming().side == 'hostile')
+        && (incoming().lat is number || incoming().lat is int)
+        && (incoming().lng is number || incoming().lng is int)
+        && incoming().size is int;
+
+      allow update: if isSignedIn()
+        && isValidId(roomId)
+        && isValidId(unitId)
+        && incoming().id is string && incoming().id.size() <= 128
+        && incoming().name is string && incoming().name.size() <= 100
+        && (incoming().side == 'allied' || incoming().side == 'hostile')
+        && (incoming().lat is number || incoming().lat is int)
+        && (incoming().lng is number || incoming().lng is int)
+        && incoming().size is int;
+
+      allow delete: if isSignedIn() && isValidId(roomId) && isValidId(unitId);
+    }
+  }
+}

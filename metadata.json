@@ -1,0 +1,8 @@
+{
+  "name": "Remix: 《孙子》大战略推演沙盒",
+  "description": "基于孙子十三篇与传统政治生态的异步大战略与权谋模拟推演沙盒，包含朝堂内斗、极权宦官、虚实奇正军事、五间情报与外交地缘模拟。",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
