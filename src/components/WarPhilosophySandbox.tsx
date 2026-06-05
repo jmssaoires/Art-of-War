@@ -19,6 +19,17 @@ import {
   Download,
   Share2
 } from 'lucide-react';
+import { 
+  LineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip as RechartsTooltip, 
+  Legend, 
+  ResponsiveContainer 
+} from 'recharts';
+import { soundManager } from '../utils/soundManager';
 
 interface Scenario {
   id: string;
@@ -162,12 +173,238 @@ interface Achievement {
   unlocked: boolean;
 }
 
-export default function WarPhilosophySandbox() {
+interface WarPhilosophyProps {
+  currentChronoYear?: number;
+  dynastyStats?: {
+    mandate: number;
+    stability: number;
+    coffers: number;
+    emperorAge: number;
+  };
+  onSyncState?: (stats: any) => void;
+  activeCardId?: string | null;
+}
+
+export default function WarPhilosophySandbox({ 
+  currentChronoYear = -230, 
+  dynastyStats = { mandate: 75, coffers: 45000, stability: 80, emperorAge: 14 }, 
+  onSyncState,
+  activeCardId = null
+}: WarPhilosophyProps) {
   // Scenario simulation states
   const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
   const [selectedScenarioOption, setSelectedScenarioOption] = useState<string | null>(null);
   const [simulationResult, setSimulationResult] = useState<any>(null);
   const [survivalHistory, setSurvivalHistory] = useState<any[]>([]);
+
+  // Chronological military tactics scenario states
+  const [selectedTacticPath, setSelectedTacticPath] = useState<string | null>(null);
+  const [hasExecutedTactic, setHasExecutedTactic] = useState<boolean>(false);
+  const [activeTacticYear, setActiveTacticYear] = useState<number>(currentChronoYear);
+
+  // Trigger state reset if the master year shifts
+  useEffect(() => {
+    setSelectedTacticPath(null);
+    setHasExecutedTactic(false);
+    setActiveTacticYear(currentChronoYear);
+  }, [currentChronoYear]);
+
+  const getChronoTacticScenario = (year: number) => {
+    if (year >= -230 && year <= -221) {
+      return {
+        epoch: "秦扫六国 · 百川东出",
+        title: "合纵雄防与粮道奇变考评",
+        description: `公元前 ${Math.abs(year)} 年，大军倾天东出，诸侯合纵阻击我督运漕饷之偏师。为全军之计，前方便道军粮忽遭六国精骑奇击死劫。偏师断薪仅剩三日，统帅应当如何出奇御危？`,
+        options: [
+          {
+            key: 'A',
+            text: '【避实击虚 · 瞒天过海】以大阵佯作主力拼死突围吸引敌军视线，暗中派遣死士一万由高地绝险鸟道，秘密转运漕口粮饷，奇兵突袭其防守虚弱侧后翼。',
+            shortText: '避实击虚',
+            mandateDelta: 12,
+            coffersDelta: -8000,
+            feedback: '妙极！敌军误认我军急于正面突围，倾主力追击，我精锐高地飞跃神兵天降，合围顿破，并得六国战利辎重无数！天命受大振！',
+            projection: [
+              { name: '当前', 天命: dynastyStats.mandate, 国库: dynastyStats.coffers / 1000 },
+              { name: '+3年', 天命: dynastyStats.mandate + 6, 国库: (dynastyStats.coffers - 4000) / 1000 },
+              { name: '+7年', 天命: dynastyStats.mandate + 10, 国库: (dynastyStats.coffers + 8000) / 1000 },
+              { name: '+12年', 天命: dynastyStats.mandate + 15, 国库: (dynastyStats.coffers + 16000) / 1000 },
+            ]
+          },
+          {
+            key: 'B',
+            text: '【以合待散 · 坚壁屯收】全军退守城郭壁垒，就地向周围郡县强征百姓降臣充军协防，竭泽搜扣口粮以逸待劳，静候敌寇自溃。',
+            shortText: '坚壁清野',
+            mandateDelta: -12,
+            coffersDelta: -2000,
+            feedback: '保求万全。虽借城堡击退游骑，但强征暴敛致使关东百姓恨声载道，民间反抗暗波沸腾，大丧王天命！',
+            projection: [
+              { name: '当前', 天命: dynastyStats.mandate, 国库: dynastyStats.coffers / 1000 },
+              { name: '+3年', 天命: dynastyStats.mandate - 5, 国库: (dynastyStats.coffers - 1000) / 1000 },
+              { name: '+7年', 天命: dynastyStats.mandate - 10, 国库: (dynastyStats.coffers + 2000) / 1000 },
+              { name: '+12年', 天命: dynastyStats.mandate - 15, 国库: (dynastyStats.coffers + 5000) / 1000 },
+            ]
+          },
+          {
+            key: 'C',
+            text: '【孤注一掷 · 绝地猛冲】倾出国帑大量黄金雇募关中刑大夫、死罪万骑与塞外胡虏，舍弃重型铁甲夜行数百里斩其正印将军。',
+            shortText: '绝地冲决',
+            mandateDelta: 20,
+            coffersDelta: -16000,
+            feedback: '狂悍大捷！重赏之下死士锐不可当，当夜横刀破开敌重甲中军，枭斩燕赵大将！如神之谋让天下大惊。然而赏金让国帑严重透支陷入亏空。',
+            projection: [
+              { name: '当前', 天命: dynastyStats.mandate, 国库: dynastyStats.coffers / 1000 },
+              { name: '+3年', 天命: dynastyStats.mandate + 12, 国库: (dynastyStats.coffers - 12000) / 1000 },
+              { name: '+7年', 天命: dynastyStats.mandate + 16, 国库: (dynastyStats.coffers - 6000) / 1000 },
+              { name: '+12年', 天命: dynastyStats.mandate + 22, 国库: (dynastyStats.coffers + 2000) / 1000 },
+            ]
+          }
+        ]
+      };
+    } else if (year >= -220 && year <= -210) {
+      return {
+        epoch: "始皇巡狩 · 海内皆臣",
+        title: "徭役极点与暴洪失期危局",
+        description: `公元前 ${Math.abs(year)} 年，帝国修长城、筑驰道、筑阿房耗竭关东民力。秋连暴洪，大批徭役在关东断送前程断路。失期者依秦法当极严追斩，陈吴等起义暴乱一触即发。如何抚平惊天浩劫？`,
+        options: [
+          {
+            key: 'A',
+            text: '【弛刑赦免 · 给田休养】上奏朝廷特请因连天暴洪赦免天下失期劳役，罢黜阿房徭役一年，授流民公田自养。',
+            shortText: '放宽休养',
+            mandateDelta: 18,
+            coffersDelta: -5000,
+            feedback: '大施天德！关东戍卒感激万分，散去长弓回归桑麻，万里烽烟之火胎死腹中，社会天命大振！',
+            projection: [
+              { name: '当前', 天命: dynastyStats.mandate, 国库: dynastyStats.coffers / 1000 },
+              { name: '+3年', 天命: dynastyStats.mandate + 8, 国库: (dynastyStats.coffers - 3000) / 1000 },
+              { name: '+7年', 天命: dynastyStats.mandate + 14, 国库: (dynastyStats.coffers - 1000) / 1000 },
+              { name: '+12年', 天命: dynastyStats.mandate + 20, 国库: (dynastyStats.coffers + 4000) / 1000 },
+            ]
+          },
+          {
+            key: 'B',
+            text: '【诡计伏诛 · 间杀反首】暗差帝国死间死士携千枚金镒贿买地方流民渠帅心腹，将其秘密绞杀以防举事，高悬首逆警告。',
+            shortText: '诡间斩首',
+            mandateDelta: 6,
+            coffersDelta: -10000,
+            feedback: '兵法诡道。借心腹之手将陈胜吴广秘密绝命，地方举事随之破灭。但国库花费重资贿赂豪强，花费剧烈。',
+            projection: [
+              { name: '当前', 天命: dynastyStats.mandate, 国库: dynastyStats.coffers / 1000 },
+              { name: '+3年', 天命: dynastyStats.mandate + 2, 国库: (dynastyStats.coffers - 8000) / 1000 },
+              { name: '+7年', 天命: dynastyStats.mandate + 5, 国库: (dynastyStats.coffers - 4000) / 1000 },
+              { name: '+12年', 天命: dynastyStats.mandate + 8, 国库: (dynastyStats.coffers + 1000) / 1000 },
+            ]
+          },
+          {
+            key: 'C',
+            text: '【严酷法峻 · 强力镇压】调遣三千铁鹰死士强弩严酷清洗失期抗徭之村庄，两侧长途连坐，树万尊血腥京观震慑海防。',
+            shortText: '强厉镇捕',
+            mandateDelta: -25,
+            coffersDelta: 8000,
+            feedback: '血海怒涛！抗命村庄遭血洗，严苛的法家镇压逼使流民更行绝境，暴乱烽火呈燎原之势！国帑虽抢劫罪财暴增，但海内天命几近崩殂。',
+            projection: [
+              { name: '当前', 天命: dynastyStats.mandate, 国库: dynastyStats.coffers / 1000 },
+              { name: '+3年', 天命: dynastyStats.mandate - 10, 国库: (dynastyStats.coffers + 4000) / 1000 },
+              { name: '+7年', 天命: dynastyStats.mandate - 20, 国库: (dynastyStats.coffers + 8000) / 1000 },
+              { name: '+12年', 天命: dynastyStats.mandate - 30, 国库: (dynastyStats.coffers + 14000) / 1000 },
+            ]
+          }
+        ]
+      };
+    } else {
+      return {
+        epoch: "楚汉相争 · 逐鹿中原",
+        title: "荥阳鏖兵背水一战测试",
+        description: `公元前 ${Math.abs(year)} 年，楚汉相持于荥阳鏖谷，项羽率三楚铁骑三度绝我甬粮，军中缺乏辎重已无一斗多余之粮。汉王高垒叹息，大势极险，大帅何等决策可抗霸王神威？`,
+        options: [
+          {
+            key: 'A',
+            text: '【背水死守 · 韩信抄彭】主力背水结死牢阻阵誓死撑持三万重骑，密遣兵仙韩信率三郡奇旅夜渡绝河，直袭楚都空虚之地。',
+            shortText: '暗抄楚都',
+            mandateDelta: 25,
+            coffersDelta: -10000,
+            feedback: '大功底定！项羽惊觉老巢危急，忙不迭折兵后撤，我军合围之危顷刻解除，天命大喜，长期天下归一根基由此筑定！',
+            projection: [
+              { name: '当前', 天命: dynastyStats.mandate, 国库: dynastyStats.coffers / 1000 },
+              { name: '+3年', 天命: dynastyStats.mandate + 12, 国库: (dynastyStats.coffers - 6000) / 1000 },
+              { name: '+7年', 天命: dynastyStats.mandate + 20, 国库: (dynastyStats.coffers + 12000) / 1000 },
+              { name: '+12年', 天命: dynastyStats.mandate + 30, 国库: (dynastyStats.coffers + 28000) / 1000 },
+            ]
+          },
+          {
+            key: 'B',
+            text: '【卑辞厚币 · 鸿沟议割】割弃成皋以东富庶之县让于项羽，遣使赠朝廷所存重宝与之讲和停战，各自休养。',
+            shortText: '屈意讲和',
+            mandateDelta: -10,
+            coffersDelta: -18000,
+            feedback: '权宜自辱。项羽接受了大量钱粮实力继续大壮。朝野文人见朝廷割地，无不感到大失望，天命重重滑落。',
+            projection: [
+              { name: '当前', 天命: dynastyStats.mandate, 国库: dynastyStats.coffers / 1000 },
+              { name: '+3年', 天命: dynastyStats.mandate - 4, 国库: (dynastyStats.coffers - 12000) / 1000 },
+              { name: '+7年', 天命: dynastyStats.mandate - 8, 国库: (dynastyStats.coffers - 6000) / 1000 },
+              { name: '+12年', 天命: dynastyStats.mandate - 10, 国库: (dynastyStats.coffers + 2000) / 1000 },
+            ]
+          },
+          {
+            key: 'C',
+            text: '【极端暴税 · 尽抽老弱】在关中强制征调一切幼龄、老弱士卒并强征十抽其五的军役税，死撑到底求决。',
+            shortText: '竭泽求饷',
+            mandateDelta: -22,
+            coffersDelta: 20000,
+            feedback: '涸泽而渔。虽然短时间内强征赋税使得国库财富陡升，但关中骨肉死离恨天动地，国家稳定天命大崩丧。',
+            projection: [
+              { name: '当前', 天命: dynastyStats.mandate, 国库: dynastyStats.coffers / 1000 },
+              { name: '+3年', 天命: dynastyStats.mandate - 12, 国库: (dynastyStats.coffers + 15000) / 1000 },
+              { name: '+7年', 天命: dynastyStats.mandate - 22, 国库: (dynastyStats.coffers + 10000) / 1000 },
+              { name: '+12年', 天命: dynastyStats.mandate - 32, 国库: (dynastyStats.coffers - 3000) / 1000 },
+            ]
+          }
+        ]
+      };
+    }
+  };
+
+  const handleExecuteTacticDecision = () => {
+    if (!selectedTacticPath) return;
+    const scenario = getChronoTacticScenario(activeTacticYear);
+    const chosenOption = scenario.options.find(o => o.key === selectedTacticPath);
+    if (!chosenOption) return;
+
+    // Apply immediate changes to parent stats callback if present
+    if (onSyncState) {
+      const nextMandate = Math.min(100, Math.max(5, dynastyStats.mandate + chosenOption.mandateDelta));
+      const nextCoffers = Math.max(0, dynastyStats.coffers + chosenOption.coffersDelta);
+      onSyncState({
+        mandate: nextMandate,
+        coffers: nextCoffers
+      });
+    }
+
+    setHasExecutedTactic(true);
+    try {
+      soundManager.playHorn();
+    } catch (e) {}
+
+    // Log this into survivalHistory list!
+    const testEntry = {
+      scenarioTitle: `🎓 【兵书历练】${scenario.epoch}:${chosenOption.shortText}`,
+      actionTaken: chosenOption.text.slice(0, 100),
+      verdict: chosenOption.mandateDelta > 10 ? '甲等上谋' : chosenOption.mandateDelta > 0 ? '乙等守势' : '丙等劣道',
+      prestigeChange: `国帑 ${chosenOption.coffersDelta >= 0 ? '+' : ''}${chosenOption.coffersDelta.toLocaleString()}金`,
+      expGain: `天命 ${chosenOption.mandateDelta >= 0 ? '+' : ''}${chosenOption.mandateDelta}%`,
+      militaryExp: characterFate.militaryExp + 150,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    const nextStats = {
+      ...characterFate,
+      militaryExp: characterFate.militaryExp + 150
+    };
+    setCharacterFate(nextStats);
+
+    const nextHistory = [testEntry, ...survivalHistory];
+    setSurvivalHistory(nextHistory);
+    saveToLocal(nextHistory, nextStats);
+  };
 
   // AI Scenario Advice states
   const [scenarioAdvice, setScenarioAdvice] = useState<any>(null);
@@ -231,11 +468,11 @@ export default function WarPhilosophySandbox() {
   ]);
 
   const rankingLadder = [
-    { title: '大圣兵尊 (The Unification Hegemon)', points: 1500, requirement: '达到1500点战史阅历', desc: '与孙武、吴起并耀，不战而屈人之兵。', current: false },
-    { title: '二品金吾卫上大夫 (Hegemon Regent)', points: 1200, requirement: '达到1200点战史阅历', desc: '执朝廷兵枢，奇正调配自如，制九地。', current: true },
-    { title: '折冲营副统督 (Raid Vanguard)', points: 800, requirement: '达到800点战史阅历', desc: '精熟五间诡道，敢于散地、死地临危。', current: false },
-    { title: '三军百夫营校尉 (Junior Tactician)', points: 400, requirement: '达到400点战史阅历', desc: '能看透正奇之实，领老卒死斗不乱。', current: false },
-    { title: '关中布衣新募斥候 (Rookie Scout)', points: 100, requirement: '达到100点战史阅历', desc: '偶闻始计十三篇。未登真正沙场。', current: false }
+    { title: '大圣兵尊', points: 1500, requirement: '达到1500点战史阅历', desc: '与孙武、吴起并耀，不战而屈人之兵。', current: false },
+    { title: '二品金吾卫上大夫', points: 1200, requirement: '达到1200点战史阅历', desc: '执朝廷兵枢，奇正调配自如，制九地。', current: true },
+    { title: '折冲营副统督', points: 800, requirement: '达到800点战史阅历', desc: '精熟五间诡道，敢于散地、死地临危。', current: false },
+    { title: '三军百夫营校尉', points: 400, requirement: '达到400点战史阅历', desc: '能看透正奇之实，领老卒死斗不乱。', current: false },
+    { title: '关中布衣新募斥候', points: 100, requirement: '达到100点战史阅历', desc: '偶闻始计十三篇。未登真正沙场。', current: false }
   ];
 
   // Load from local storage on mount
@@ -471,6 +708,28 @@ export default function WarPhilosophySandbox() {
         </div>
       </div>
 
+      {activeCardId && (
+        <div className="mb-4 bg-[#8C2F39]/5 border border-[#8C2F39]/30 p-3 rounded flex items-center justify-between text-xs animate-pulse text-[#8C2F39] font-serif shrink-0">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[#8C2F39] animate-spin" />
+            <div>
+              <span className="font-bold">【兵法符命加持生效中 · {
+                activeCardId === 'qizheng' ? '《奇正相生》首级御宝' :
+                activeCardId === 'huogong' ? '《火攻奇袭》烈炎秘卷' :
+                activeCardId === 'wujian' ? '《五间妙连》通幽罗网' :
+                '《商战大垄》国课税书'
+              }】</span>
+              <span className="text-[#1A1A1A]/80 ml-1.5 font-sans">
+                {activeCardId === 'qizheng' 
+                  ? '知彼知己而动，当前兵卷生存抉择及历史朝代判定成功概率和决策反馈奖励增加 35%！' 
+                  : '本推演大殿受此战法加持，策功评定获得暂时增能。'}
+              </span>
+            </div>
+          </div>
+          <span className="font-mono text-[9px] bg-[#8C2F39] text-[#F5F2ED] px-2 py-0.5 rounded font-black uppercase tracking-wider">加持中</span>
+        </div>
+      )}
+
       {/* Grid of 3 Plans */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
@@ -480,7 +739,7 @@ export default function WarPhilosophySandbox() {
           {/* Scheme 1: Interactive Survival Options Selection */}
           <div className="bg-white/60 p-5 rounded border border-[#1A1A1A]/15 relative overflow-hidden shadow-xs">
             <div className="absolute top-0 right-0 p-2 bg-[#8C2F39]/5 text-[#8C2F39] text-[9px] font-mono font-bold uppercase tracking-widest border-l border-b border-[#1A1A1A]/15">
-              方案一：兵法生存抉择 (Scenario Simulator)
+              方案一：兵法生存抉择
             </div>
 
             <div className="flex items-center gap-2 mb-3">
@@ -520,7 +779,7 @@ export default function WarPhilosophySandbox() {
                   className="w-full py-2 px-3 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 rounded text-[11px] font-mono font-bold hover:bg-amber-100/80 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
-                  📜 研读《孙子兵法十三篇》专章军机评释 (AI 兵学剖析)
+                  📜 研读《孙子兵法十三篇》专章军机评释
                 </button>
               )}
 
@@ -693,7 +952,7 @@ export default function WarPhilosophySandbox() {
           {/* Scheme 2: AI Strategic Counsel & Deep 推演 Room */}
           <div className="bg-white/60 p-5 rounded border border-[#1A1A1A]/15 relative overflow-hidden shadow-xs">
             <div className="absolute top-0 right-0 p-2 bg-[#8C2F39]/5 text-[#8C2F39] text-[9px] font-mono font-bold uppercase tracking-widest border-l border-b border-[#1A1A1A]/15">
-              方案二：军机智联参谋 (AI Strategic Advisor)
+              方案二：军机智联参谋
             </div>
 
             <h3 className="text-md font-serif font-black text-[#8C2F39] mb-1 flex items-center gap-1">
@@ -783,7 +1042,7 @@ export default function WarPhilosophySandbox() {
                     <div className="border-b border-dashed border-[#5A5A40]/30 pb-3 mb-3">
                       <span className="text-[10px] font-mono tracking-widest text-[#5A5A40] uppercase font-bold flex items-center gap-1">
                         <Award className="w-3.5 h-3.5 text-amber-600" />
-                        宣皇谕旨 · 兵书合符评 (Dynastic Advisory Report)
+                        宣皇谕旨 · 兵书合符评
                       </span>
                       <h4 className="text-lg font-serif font-black tracking-widest text-[#1A1A1A] mt-1 flex items-baseline gap-2">
                         决策宣判: <span className="text-[#8C2F39] text-xl font-bold">{aiReport.verdict || '上谋中用'}</span>
@@ -799,14 +1058,14 @@ export default function WarPhilosophySandbox() {
                       </div>
 
                       <div className="space-y-1">
-                        <span className="text-[10px] font-mono text-[#5A5A40] block font-bold">● 【圣意深理批判】 (The Critique)</span>
+                        <span className="text-[10px] font-mono text-[#5A5A40] block font-bold">● 【圣意深理批判】</span>
                         <p className="text-xs leading-relaxed text-neutral-700 text-justify">
                           {aiReport.critique || '爱将此决策在形势上甚得因变奇正。主力正卒牵制吸引了对方轻骑，侧后深入敌军要津。唯在漕粮与天时雨润防备上尚余瑕疵，切莫疏虞。'}
                         </p>
                       </div>
 
                       <div className="space-y-1 pt-2 border-t border-dashed border-[#5A5A40]/20">
-                        <span className="text-[10px] font-mono text-[#8C2F39] block font-bold">● 【临急变备良策】 (Tactical Scribe Remedy)</span>
+                        <span className="text-[10px] font-mono text-[#8C2F39] block font-bold">● 【临急变备良策】</span>
                         <p className="text-xs leading-relaxed text-[#8C2F39] text-justify font-semibold italic">
                           {aiReport.remedy || '建议偏将立刻增筑伏垒，撤营时缓鸣战鼓，以防敌轻骑因势反击。'}
                         </p>
@@ -827,6 +1086,134 @@ export default function WarPhilosophySandbox() {
               </AnimatePresence>
             </div>
           </div>
+
+          {/* Scheme 3: Chronological Military Strategy Scenario Test */}
+          <div className="bg-white/60 p-5 rounded border border-[#1A1A1A]/15 relative overflow-hidden shadow-xs space-y-4 text-[#1A1A1A]" id="temporal-military-tactics-test">
+            <div className="absolute top-0 right-0 p-2 bg-[#8C2F39]/5 text-[#8C2F39] text-[9px] font-mono font-bold uppercase tracking-widest border-l border-b border-[#1A1A1A]/15">
+              方案三：时局纪年兵学考评
+            </div>
+
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2 py-0.5 bg-[#8C2F39] text-[#F5F2ED] text-[9px] font-mono rounded-xs uppercase tracking-wider font-extrabold">
+                  时局天演 · 公元前 {Math.abs(activeTacticYear)} 年
+                </span>
+                <span className="text-xs text-[#8C2F39] font-serif font-black">
+                  【{getChronoTacticScenario(activeTacticYear).epoch}】
+                </span>
+              </div>
+              <h3 className="text-md font-serif font-black text-stone-900 mt-1 flex items-center gap-1.5">
+                <Swords className="w-4 h-4 text-[#8C2F39]" />
+                {getChronoTacticScenario(activeTacticYear).title}
+              </h3>
+            </div>
+
+            <p className="text-xs text-[#1A1A1A]/80 leading-relaxed bg-stone-50 border border-stone-200/50 p-3 rounded italic font-serif">
+              “ {getChronoTacticScenario(activeTacticYear).description} ”
+            </p>
+
+            {/* Decision options list */}
+            <div className="space-y-2">
+              <span className="text-[10px] font-mono text-stone-500 uppercase tracking-wider pl-1 font-bold block">
+                请密授退敌、安澜兵略条陈：
+              </span>
+              {getChronoTacticScenario(activeTacticYear).options.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => {
+                    if (!hasExecutedTactic) {
+                      setSelectedTacticPath(opt.key);
+                    }
+                  }}
+                  disabled={hasExecutedTactic}
+                  className={`w-full p-2.5 rounded text-left transition text-xs border flex items-start gap-2.5 cursor-pointer ${
+                    selectedTacticPath === opt.key
+                      ? 'bg-amber-50/70 border-amber-600/60 shadow-xs'
+                      : 'bg-white/80 border-stone-200 hover:bg-stone-50 disabled:opacity-60'
+                  }`}
+                >
+                  <span className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-mono font-bold border shrink-0 ${
+                    selectedTacticPath === opt.key ? 'bg-amber-800 text-white border-amber-800' : 'bg-stone-100 text-stone-600 border-stone-300'
+                  }`}>
+                    {opt.key}
+                  </span>
+                  <div className="flex-1">
+                    <span className="block font-serif font-bold text-stone-850 leading-tight">{opt.text}</span>
+                    <span className="text-[8.5px] text-amber-800 block mt-1 font-mono uppercase font-semibold">
+                      国策预计：天命 {opt.mandateDelta >= 0 ? '+' : ''}{opt.mandateDelta}% | 国库 {opt.coffersDelta >= 0 ? '+' : ''}{opt.coffersDelta.toLocaleString()} 金镒
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {/* Selected tactic details & long-term chart projection visualization */}
+            {selectedTacticPath && (
+              <div className="bg-stone-50 border border-stone-200 p-4 rounded-md space-y-3">
+                <div className="flex justify-between items-center border-b border-stone-300/40 pb-2">
+                  <span className="text-[10px] font-mono text-stone-600 tracking-wider font-bold">
+                    🔮 【此谋长远天演轨迹】 十二年天命国库推演预测线
+                  </span>
+                  <span className="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-mono font-bold">
+                    国库折千单位(镒)
+                  </span>
+                </div>
+
+                {/* Long-term trajectory line graph */}
+                <div className="h-44 w-full" id="tactic-long-term-graphic">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart 
+                      data={getChronoTacticScenario(activeTacticYear).options.find(o => o.key === selectedTacticPath)?.projection || []}
+                      margin={{ top: 10, right: 20, left: -20, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e1e1e1" />
+                      <XAxis dataKey="name" stroke="#686868" fontSize={9} />
+                      <YAxis stroke="#686868" fontSize={9} />
+                      <RechartsTooltip />
+                      <Legend iconSize={8} wrapperStyle={{ fontSize: '9px', fontFamily: 'monospace' }} />
+                      <Line type="monotone" name="天命趋势值" dataKey="天命" stroke="#8C2F39" strokeWidth={2} activeDot={{ r: 6 }} />
+                      <Line type="monotone" name="国库储量(金)" dataKey="国库" stroke="#C5A059" strokeWidth={2} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* If executed, show outcome narration and metrics block */}
+                {hasExecutedTactic ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.98 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="p-3 bg-amber-50/70 border border-amber-300/50 rounded-xs text-neutral-800 space-y-2 relative"
+                  >
+                    <div className="text-[11px] font-black text-amber-950 border-l-2 border-amber-600 pl-2 font-serif font-extrabold uppercase">
+                      天演主谋审批答复报告:
+                    </div>
+                    <p className="text-[11px] font-serif leading-relaxed text-stone-700">
+                      {getChronoTacticScenario(activeTacticYear).options.find(o => o.key === selectedTacticPath)?.feedback}
+                    </p>
+                    <div className="text-[9px] font-mono text-stone-500 italic pt-1.5 border-t border-dashed border-[#1A1A1A]/10 flex justify-between">
+                      <span>已录入大秦兵备考评档案</span>
+                      <span className="text-amber-800">★ 获得 150 点战史历练</span>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <div className="flex flex-col sm:flex-row justify-between items-center bg-stone-100 p-2.5 rounded border border-stone-200 gap-2">
+                    <span className="text-[10px] font-mono text-stone-500 flex items-center gap-1">
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                      行策即同步影响核心『天命值』与『国库』状态！
+                    </span>
+                    <button
+                      onClick={handleExecuteTacticDecision}
+                      className="bg-[#8C2F39] text-[#F5F2ED] py-1.5 px-4 rounded text-[11px] font-mono font-bold uppercase tracking-wider hover:bg-[#8C2F39]/90 active:scale-95 transition shadow-sm cursor-pointer flex items-center gap-1 shrink-0"
+                    >
+                      <Stamp className="w-3.5 h-3.5" />
+                      行此兵策决议
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
         </div>
 
         {/* Column Right (P3): Lineage Profile & Dynamic Hegemony Ladder */}
@@ -917,7 +1304,7 @@ export default function WarPhilosophySandbox() {
           {/* Scribe Ledger Timeline */}
           <div className="bg-white/60 p-5 rounded border border-[#1A1A1A]/15 relative overflow-hidden shadow-xs h-60 flex flex-col justify-between">
             <h3 className="text-xs font-mono text-[#1A1A1A]/80 uppercase tracking-widest border-b border-[#1A1A1A]/15 pb-1.5 font-bold">
-              中军兵备 survival 谱记时间轴
+              中军兵备曲录时间轴
             </h3>
 
             <div className="flex-1 overflow-y-auto space-y-2 py-2 pr-1" id="philosophy-chronology">

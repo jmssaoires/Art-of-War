@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CombatState, GeneralCharacter } from '../types';
-import { Shield, Sparkles, Swords, Compass, HelpCircle, Activity, Award, User, RotateCcw, Skull, Map, Sliders, X, Layers, ShieldAlert } from 'lucide-react';
+import { Shield, Sparkles, Swords, Compass, HelpCircle, Activity, Award, User, RotateCcw, Skull, Map, Sliders, X, Layers, ShieldAlert, ArrowRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { sfx } from '../utils/sfx';
 
 interface TraitDetail {
   name: string;
@@ -45,14 +47,14 @@ const TRAIT_DETAILS: Record<string, TraitDetail> = {
   },
   '逍遥津奇袭': {
     name: '逍遥津奇袭',
-    badge: '奇 (Surprise)',
+    badge: '奇',
     effect: '疾风迅雷。极度长于突陷阵、攻其无备，奇兵破坏力暴增。',
-    logic: '使我方的战术奇兵（Surprise Troop）部分的突袭战力评估基底暴增 1.5 倍。',
+    logic: '使我方的战术奇兵突袭战力评估基底暴增 1.5 倍。',
     formula: '奇袭打击效能 = 奇兵实数 * 1.5 (突袭基数) * 1.5 (奇特质系数) = 2.25',
     quote: '“凡战者，以正合，以奇胜。故善出奇者，无穷如天地，不竭如江河。”',
     chapter: '《孙子兵法·势篇》',
     strategicColor: 'text-[#8C2F39]',
-    combatBreakdown: '折冲决战！使我方迂回的奇袭铁骑（Surprise Troops）的核心爆破穿透系数，由默认 of 1.5 倍基础基底跃升至极高且暴烈的 2.25 倍计算。在侧后对决中能以摧枯拉朽之姿快速击溃守军核心指挥所。',
+    combatBreakdown: '折冲决战！使我方迂回的奇袭铁骑的核心爆破穿透系数，由默认的 1.5 倍基础基底跃升至极高且暴烈的 2.25 倍计算。在侧后对决中能以摧枯拉朽之姿快速击溃守军核心指挥所。',
     terrainPenalties: '在隘口深谷、密雨山泽中运动作战时，完全无视深远山川所带来的重叠行军负荷，反而能借助死角发动局部十倍合围，大幅将狭窄复杂地形化为极速杀敌的天赐战场。',
     strategyModification: '绝配《兵势篇》『奇正相生』真谛。担任敌军侧翼奇袭、切断重甲漕运转运、强行刺杀敌阵统帅的核心尖刀。极擅发动『正兵正面牵引，奇兵长途衔枚突袭』的必杀策略。'
   },
@@ -118,7 +120,7 @@ const ADV_ADVISOR_DATA: Record<string, AdviseDetails> = {
     threatLevel: 'WARN',
     suggestedStrategy: '采取孙子兵法《虚实》之「出其所不趋，趋其所不意」策略。避免正面交锋，利用佯攻伪装拉扯其重兵阵脚，或迁战于「散地」削减其主场据守天险加成。',
     counterRating: '92% 胜机 (战术合能)',
-    recommendedCounter: '启用佯攻（feign 示之形），或改变地形到「散地」分化。',
+    recommendedCounter: '启用佯攻（示之形），或改变地形到「散地」分化。',
     actions: [
       {
         label: '诱敌动摇：启动我军【佯攻虚晃】',
@@ -311,62 +313,68 @@ const CombatLog: React.FC<CombatLogProps> = ({ log, isLatest, flashClass }) => {
   const hasScatteredTerrain = log.includes('【平原散地】') || log.includes('散地');
 
   return (
-    <div className={`border-l-2 pl-2 py-1.5 transition-all duration-300 rounded-r flex flex-col gap-1 ${flashClass}`} id={`combat-log-item-${log.substring(0, 15).replace(/[^a-zA-Z0-9]/g, '')}`}>
-      <span className="text-[#1A1A1A]/85 leading-normal font-medium">{log}</span>
+    <motion.div 
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      className={`border-l-2 pl-2 py-1.5 transition-all duration-300 rounded-r flex flex-col gap-1 ${flashClass}`} id={`combat-log-item-${log.substring(0, 15).replace(/[^a-zA-Z0-9]/g, '')}`}>
+      <span className="text-[#1A1A1A]/85 leading-normal font-medium flex items-center gap-1.5">
+        <ArrowRight className="w-3 h-3 text-[#1A1A1A]/40 shrink-0" />
+        {log}
+      </span>
       
       {/* Structural Mechanical Counterpart Details */}
       {(hasDefenseMaster || hasChargeGeneral || hasXiaoyaojin || hasFeignStrike || hasFlawWrath || hasFlawDeath || hasDeathTerrain || hasScatteredTerrain) && (
         <div className="flex flex-wrap gap-1.5 mt-0.5" id="combat-log-tactical-impact-badges">
           {hasDefenseMaster && (
             <span className="inline-flex items-center gap-1.5 text-[9px] bg-emerald-50 text-emerald-800 border border-emerald-200/60 px-1.5 py-0.5 rounded font-mono font-bold">
-              🛡️ Defensive Master (防守大师): Suffer -25% Damage on counter-attacks (反击时承受战损扣减 25%)
+              🛡️ 防守大师：反击时承受战损扣减 25%
             </span>
           )}
           {hasChargeGeneral && (
             <span className="inline-flex items-center gap-1.5 text-[9px] bg-amber-50 text-amber-800 border border-amber-200/60 px-1.5 py-0.5 rounded font-mono font-bold">
-              ⚔️ Charge General (冲锋猛将): +15% Regular Forces Dmg (正兵白刃拼杀冲击穿透力狂掀 15%)
+              ⚔️ 冲锋猛将：正兵白刃拼杀冲击穿透力狂掀 15%
             </span>
           )}
           {hasXiaoyaojin && (
             <span className="inline-flex items-center gap-1.5 text-[9px] bg-amber-600/10 text-amber-900 border border-amber-600/20 px-1.5 py-0.5 rounded font-mono font-bold">
-              ⚡ Surprise Raid (逍遥津奇袭): x2.25 Surprise Force Dmg (合击侧翼爆破！奇兵威能急遽爆发 225%)
+              ⚡ 逍遥津奇袭：合击侧翼爆破！奇兵威能急遽爆发 225%
             </span>
           )}
           {hasFeignStrike && (
             <span className="inline-flex items-center gap-1.5 text-[9px] bg-blue-50 text-blue-800 border border-blue-200/60 px-1.5 py-0.5 rounded font-mono font-bold">
-              💨 Feign Strike (虚实突击): +20% Attack Multiplier under active feign deployment (佯攻形式下额外强占 20% 诡道极伤)
+              💨 虚实突击：佯攻形式下额外强占 20% 诡道极伤
             </span>
           )}
           {hasFlawWrath && (
             <span className="inline-flex items-center gap-1.5 text-[9px] bg-red-50 text-red-800 border border-red-200/60 px-1.5 py-0.5 rounded font-mono font-bold">
-              ⚠️ Flaw - Wrath (忿速): -30% Attack Output due to rash maneuver (将领狂暴易怒偏航，攻击减速 30%)
+              ⚠️ 忿速：将领狂暴易怒偏航，攻击减速 30%
             </span>
           )}
           {hasFlawDeath && (
             <span className="inline-flex items-center gap-1.5 text-[9px] bg-rose-50 text-rose-800 border border-rose-200/60 px-1.5 py-0.5 rounded font-mono font-bold">
-              🔥 Flaw - Desperado (必死): +30% Combat Output from backwater frenzy (将领必死决绝，全兵搏命攻势掀高 30%)
+              🔥 必死：将领必死决绝，全兵搏命攻势掀高 30%
             </span>
           )}
           {hasDeathTerrain && (
             <span className="inline-flex items-center gap-1.5 text-[9px] bg-[#8C2F39]/5 text-[#8C2F39] border border-[#8C2F39]/20 px-1.5 py-0.5 rounded font-mono font-bold">
-              🏟️ Death Terrain (死地): Both sides gain +30 Attack Power (背水绝境，战力狂放决死狂热)
+              🏟️ 死地：双方增加 +30 攻击力 (背水绝境，战力狂放决死狂热)
             </span>
           )}
           {hasScatteredTerrain && (
             <span className="inline-flex items-center gap-1.5 text-[9px] bg-sky-50 text-sky-800 border border-sky-100 px-1.5 py-0.5 rounded font-mono font-bold">
-              🏟️ Scattered Terrain (散地): Home army suffers -15 Attack Power penalty (人心浮散，士气松懈，全军战力扣减 15点)
+              🏟️ 散地：人心浮散，士气松懈，全军战力扣减 15点
             </span>
           )}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 
 const NINE_LANDS_DATA = [
   {
     id: 'SCATTERED',
-    name: '散地 (Scattered Ground)',
+    name: '散地',
     classicDesc: '孙子曰：本土作战，将士怀恋家室，其心易散。',
     advise: '散地则无战：此时不宜强决死战，当固结军心、谨防哗变，非防守大师莫动。',
     activeStatus: 'ACTIVE_AVAILABLE',
@@ -395,7 +403,7 @@ const NINE_LANDS_DATA = [
   },
   {
     id: 'LIGHT',
-    name: '轻地 (Light Ground)',
+    name: '轻地',
     classicDesc: '孙子曰：入人之地不深，将士恋乡，其心不一，退意未绝。',
     advise: '轻地则无止：万莫流连扎营。当急行而过，或以游变斥候紧咬敌军侧翼，保持战力敏捷。',
     activeStatus: 'ACTIVE_AVAILABLE',
@@ -417,7 +425,7 @@ const NINE_LANDS_DATA = [
   },
   {
     id: 'CONTENTIOUS',
-    name: '争地 (Contentious Ground)',
+    name: '争地',
     classicDesc: '孙子曰：我得亦利，彼得亦利，兵家不相让之险关隘枢。',
     advise: '争地无攻：敌若已得，断不可直面强攻；当施诡谋牵引其退，或以侧翼伏兵使其腹背受袭。',
     activeStatus: 'ACTIVE_AVAILABLE',
@@ -446,7 +454,7 @@ const NINE_LANDS_DATA = [
   },
   {
     id: 'FACILE',
-    name: '交地 (Facile Ground)',
+    name: '交地',
     classicDesc: '孙子曰：我不可以无路行，彼不可以无路来。道路交纵，两军均行方便。',
     advise: '交地无绝：大野平川，阵线易被分割。宜广设壁垒守备，确保侧后无后顾之忧。',
     activeStatus: 'ACTIVE_AVAILABLE',
@@ -468,7 +476,7 @@ const NINE_LANDS_DATA = [
   },
   {
     id: 'FOCAL',
-    name: '衢地 (Focal Ground)',
+    name: '衢地',
     classicDesc: '孙子曰：诸侯之地三通，先至而得天下之助者。诸国辐辏。',
     advise: '衢地合交：多谋外连、广设暗间、安抚周边各路客军，巧借盟军形成合击之势。',
     activeStatus: 'ACTIVE_AVAILABLE',
@@ -490,7 +498,7 @@ const NINE_LANDS_DATA = [
   },
   {
     id: 'HEAVY',
-    name: '重地 (Heavy Ground)',
+    name: '重地',
     classicDesc: '孙子曰：入人之地深，背城邑多，人马疲累，粮草全凭异地强断。',
     advise: '重地则掠：孤军涉险不可长驻。当借道夺其粮，或以极其刁钻的奇兵捣毁其屯粮险奥处。',
     activeStatus: 'ACTIVE_AVAILABLE',
@@ -519,7 +527,7 @@ const NINE_LANDS_DATA = [
   },
   {
     id: 'ENTRAPPING',
-    name: '圮地 (Entrapping Ground)',
+    name: '圮地',
     classicDesc: '孙子曰：山林、险阻、沮泽、凡难行、滞足而欲陷之泥涝。',
     advise: '圮地则行：行军不可怠慢。利用轻骑开道，坚盾收尾，一气通过，切忌在此旷日缠斗。',
     activeStatus: 'ACTIVE_AVAILABLE',
@@ -548,7 +556,7 @@ const NINE_LANDS_DATA = [
   },
   {
     id: 'FRONTIER',
-    name: '围地 (Frontier Ground)',
+    name: '围地',
     classicDesc: '孙子曰：进道狭隘，出路迂远，敌可以少数兵马扼杀我精甲万师。',
     advise: '围地则谋：狭关难退当用诡智。用空城计或佯降诱其骄，使其暴露出唯一的包抄缺口。',
     activeStatus: 'ACTIVE_AVAILABLE',
@@ -577,7 +585,7 @@ const NINE_LANDS_DATA = [
   },
   {
     id: 'DEATH',
-    name: '死地 (Ground of Death)',
+    name: '死地',
     classicDesc: '孙子曰：疾战则存，不疾战则亡。无复有归，置之死地而生之绝境。',
     advise: '死地则战：士卒断绝生还之想。当焚舟碎釜，借血光之灾迫使三军爆发最大哀兵之威。',
     activeStatus: 'ACTIVE_AVAILABLE',
@@ -606,11 +614,17 @@ const NINE_LANDS_DATA = [
   }
 ];
 
-export default function MilitarySandbox() {
+interface MilitarySandboxProps {
+  activeCardId?: string | null;
+}
+
+export default function MilitarySandbox({ activeCardId = null }: MilitarySandboxProps) {
+  const [shakeTrigger, setShakeTrigger] = useState(0);
+  const [isShaking, setIsShaking] = useState(false);
   const [generals, setGenerals] = useState<GeneralCharacter[]>([
-    { name: '曹仁 (Zheng Force Commander)', command: 85, bravery: 70, tactics: 65, training: 80, flaw: '必生', traits: ['防守大师', '沉稳老将'] },
-    { name: '张辽 (Qi Raid Commander)', command: 80, bravery: 92, tactics: 88, training: 75, flaw: '必死', traits: ['逍遥津奇袭', '虚实突击'] },
-    { name: '夏侯惇 (Garrison general)', command: 75, bravery: 85, tactics: 55, training: 70, flaw: '忿速', traits: ['刚直廉洁', '冲锋猛将'] },
+    { name: '曹仁 (前锋主将)', command: 85, bravery: 70, tactics: 65, training: 80, flaw: '必生', traits: ['防守大师', '沉稳老将'] },
+    { name: '张辽 (奇兵统帅)', command: 80, bravery: 92, tactics: 88, training: 75, flaw: '必死', traits: ['逍遥津奇袭', '虚实突击'] },
+    { name: '夏侯惇 (城守大将)', command: 75, bravery: 85, tactics: 55, training: 70, flaw: '忿速', traits: ['刚直廉洁', '冲锋猛将'] },
   ]);
 
   const [selectedGenIndex, setSelectedGenIndex] = useState<number>(1); // Zhang Liao by default
@@ -715,9 +729,9 @@ export default function MilitarySandbox() {
 
   // Morale calculations
   const getMoraleCategory = (m: number) => {
-    if (m >= 80) return { name: '锐气 (Morning Air - Sharp)', bonus: 0.25, desc: '避其锐气，击其惰归。战力+25%' };
-    if (m >= 40) return { name: '惰气 (Noon Air - Sluggish)', bonus: 0.00, desc: '两军相持，战力无起伏' };
-    return { name: '归气 (Evening Air - Retreating)', bonus: -0.30, desc: '归师勿遏。士气瓦解，战力-30%' };
+    if (m >= 80) return { name: '锐气', bonus: 0.25, desc: '避其锐气，击其惰归。战力+25%' };
+    if (m >= 40) return { name: '惰气', bonus: 0.00, desc: '两军相持，战力无起伏' };
+    return { name: '归气', bonus: -0.30, desc: '归师勿遏。士气瓦解，战力-30%' };
   };
 
   const currentMorale = getMoraleCategory(morale);
@@ -739,6 +753,7 @@ export default function MilitarySandbox() {
   };
 
   const handleProvoke = () => {
+    sfx.playMagic();
     const general = generals[selectedGenIndex];
     if (general.traits.includes('沉稳老将')) {
       setCombat(p => ({
@@ -960,9 +975,15 @@ export default function MilitarySandbox() {
 
     // Morale decay
     setMorale(prev => Math.max(10, prev - 8));
+    
+    sfx.playImpact();
+    sfx.playSword();
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 400);
   };
 
   const handleReset = () => {
+    sfx.playSelect();
     const recommended = getRecommendedTerrain(generals[selectedGenIndex]);
     setCombat({
       attackerRegular: 3000,
@@ -983,8 +1004,32 @@ export default function MilitarySandbox() {
 
   const selectedGen = generals[selectedGenIndex];
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        if (combat.attackerRegular > 0) {
+          handleSimulateTurn();
+        }
+      } else if (e.code === 'KeyP') {
+        handleProvoke();
+      } else if (e.code === 'KeyR') {
+        handleReset();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [combat.attackerRegular, handleSimulateTurn, handleProvoke, handleReset]);
+
   return (
-    <div className="bg-white/40 border border-[#1A1A1A]/15 p-6 rounded-md text-[#1A1A1A]" id="military-sandbox-root">
+    <div 
+      className={`bg-white/40 border border-[#1A1A1A]/15 p-6 rounded-md text-[#1A1A1A] ${isShaking ? 'animate-shake' : ''}`} 
+      id="military-sandbox-root"
+      onClick={() => sfx.init()}
+    >
       <style>{`
         @keyframes fadeUpOut {
           0% { transform: translate(0, 15px); opacity: 0; }
@@ -1031,6 +1076,28 @@ export default function MilitarySandbox() {
           GDD 模块 06, 07 · 交互实验室
         </span>
       </div>
+
+      {activeCardId && (
+        <div className="mb-4 bg-[#8C2F39]/5 border border-[#8C2F39]/30 p-3 rounded flex items-center justify-between text-xs animate-pulse text-[#8C2F39] font-serif">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[#8C2F39] animate-spin" />
+            <div>
+              <span className="font-bold">【兵法符命加持生效中 · {
+                activeCardId === 'qizheng' ? '《奇正相生》首级御宝' :
+                activeCardId === 'huogong' ? '《火攻奇袭》烈炎秘卷' :
+                activeCardId === 'wujian' ? '《五间妙连》通幽罗网' :
+                '《商战大垄》国课税书'
+              }】</span>
+              <span className="text-[#1A1A1A]/80 ml-1.5 font-sans">
+                {activeCardId === 'qizheng' 
+                  ? '大破敌方本阵，奇袭战术破坏力和正兵主力白刃突刺杀伤力自动获得 +35% 兵略倍乘！' 
+                  : '副帅正持此兵法偏殿协佐，各路营卫士气大振，战损抗性提升。'}
+              </span>
+            </div>
+          </div>
+          <span className="font-mono text-[9px] bg-[#8C2F39] text-[#F5F2ED] px-2 py-0.5 rounded font-black uppercase tracking-wider">加持中</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Commander Card Selection */}
@@ -1144,7 +1211,7 @@ export default function MilitarySandbox() {
                 <div className="flex justify-between items-center border-b border-dashed border-[#1A1A1A]/15 pb-1.5">
                   <span className="text-[10px] font-mono text-[#8C2F39] font-black uppercase tracking-widest flex items-center gap-1">
                     <Activity className="w-3.5 h-3.5 text-[#8C2F39]" />
-                    兵道特质手记 (Trait Scroll)
+                    兵道特质手记
                   </span>
                   <button 
                     onClick={() => setActiveTrait(null)}
@@ -1167,7 +1234,7 @@ export default function MilitarySandbox() {
                 </div>
 
                 <div className="bg-white/85 p-2 rounded border border-[#1A1A1A]/5 text-[10px] font-mono space-y-1">
-                  <div className="text-[9px] text-[#8C2F39] font-bold">● 【兵道公式赋益】 Logic:</div>
+                  <div className="text-[9px] text-[#8C2F39] font-bold">● 【兵道公式赋益】</div>
                   <div className="text-[#1A1A1A]/90 text-[10px] sm:text-xs leading-relaxed">{TRAIT_DETAILS[activeTrait].logic}</div>
                   <div className="text-[#5A5A40] text-[9px] font-semibold bg-neutral-100 p-1 rounded mt-1 font-mono">
                     算法公式: {TRAIT_DETAILS[activeTrait].formula}
@@ -1180,7 +1247,7 @@ export default function MilitarySandbox() {
                   className="w-full bg-[#8C2F39]/10 hover:bg-[#8C2F39]/20 text-[#8C2F39] text-[10px] sm:text-xs font-mono font-bold py-1.5 px-3 border border-[#8C2F39]/20 rounded transition flex items-center justify-center gap-1.5 uppercase tracking-wide cursor-pointer shadow-xs"
                 >
                   <Sparkles className="w-3 h-3 text-[#8C2F39]" />
-                  展开此特质深度推演剖析 (Show Details)
+                  展开此特质深度推演剖析
                 </button>
 
                 <div className="pt-2 border-t border-dashed border-[#1A1A1A]/10 text-right">
@@ -1238,8 +1305,8 @@ export default function MilitarySandbox() {
                 </span>
                 
                 <div className="text-xs font-mono">
-                  真：正兵 <strong className="text-[#1A1A1A] font-bold">{combat.attackerRegular}</strong> • 奇兵{' '}
-                  <strong className="text-[#8C2F39] font-bold">{combat.attackerSurprise}</strong>
+                  真：正兵 <motion.strong key={combat.attackerRegular} initial={{ scale: 1.5, color: '#EF4444' }} animate={{ scale: 1, color: '#1A1A1A' }} className="text-[#1A1A1A] font-bold inline-block">{combat.attackerRegular}</motion.strong> • 奇兵{' '}
+                  <motion.strong key={combat.attackerSurprise} initial={{ scale: 1.5, color: '#EF4444' }} animate={{ scale: 1, color: '#8C2F39' }} className="text-[#8C2F39] font-bold inline-block">{combat.attackerSurprise}</motion.strong>
                 </div>
 
                 <div className="text-[10px] text-[#1A1A1A]/50 font-mono">
@@ -1260,8 +1327,8 @@ export default function MilitarySandbox() {
                 </span>
 
                 <div className="text-xs font-mono">
-                  真：正兵 <strong className="text-[#1A1A1A] font-bold">{combat.defenderRegular}</strong> • 奇袭{' '}
-                  <strong className="text-[#5A5A40] font-bold">{combat.defenderSurprise}</strong>
+                  真：正兵 <motion.strong key={combat.defenderRegular} initial={{ scale: 1.5, color: '#EF4444' }} animate={{ scale: 1, color: '#1A1A1A' }} className="text-[#1A1A1A] font-bold inline-block">{combat.defenderRegular}</motion.strong> • 奇袭{' '}
+                  <motion.strong key={combat.defenderSurprise} initial={{ scale: 1.5, color: '#EF4444' }} animate={{ scale: 1, color: '#5A5A40' }} className="text-[#5A5A40] font-bold inline-block">{combat.defenderSurprise}</motion.strong>
                 </div>
 
                 <div className="text-[10px] text-[#1A1A1A]/50 font-mono">
@@ -1287,7 +1354,7 @@ export default function MilitarySandbox() {
                       : 'bg-white border-[#1A1A1A]/15 text-[#1A1A1A]/70 hover:bg-[#1A1A1A]/5'
                   }`}
                 >
-                  【我军】 feign 示之形 (虚妄伪装)
+                  【我军】 示之形 (虚妄伪装)
                 </button>
 
                 <button
@@ -1299,37 +1366,44 @@ export default function MilitarySandbox() {
                       : 'bg-white border-[#1A1A1A]/15 text-[#1A1A1A]/70 hover:bg-[#1A1A1A]/5'
                   }`}
                 >
-                  【敌军】 feign 难知如阴 (战场盲盒)
+                  【敌军】 难知如阴 (战场盲盒)
                 </button>
               </div>
 
               {/* Interactive buttons */}
-              <div className="flex gap-2">
-                <button
+              <div className="flex flex-col sm:flex-row gap-2">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   id="provoke-general-btn"
                   onClick={handleProvoke}
-                  className="bg-white hover:bg-neutral-50 border border-[#1A1A1A]/15 text-[#1A1A1A] font-bold text-xs py-2 px-4 rounded transition shadow-xs"
+                  className="bg-white hover:bg-neutral-50 border border-[#1A1A1A]/15 text-[#1A1A1A] font-bold text-xs py-2.5 px-4 rounded transition shadow-xs flex-1 flex justify-center items-center gap-1.5"
                 >
-                  ⚡ 言语激怒敌将 (寻衅缺陷处)
-                </button>
+                  <span className="text-amber-500">⚡</span> 言语激怒 <span className="text-[10px] text-[#1A1A1A]/50 font-normal ml-1 border border-[#1A1A1A]/20 rounded px-1">[P]</span>
+                </motion.button>
 
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   id="simulate-combat-btn"
                   onClick={handleSimulateTurn}
                   disabled={combat.attackerRegular <= 0}
-                  className="bg-[#8C2F39] hover:bg-[#8C2F39]/90 disabled:bg-neutral-200 disabled:text-[#1A1A1A]/40 text-[#F5F2ED] font-black text-xs py-2 px-6 rounded transition flex items-center gap-1 shadow"
+                  className="bg-[#8C2F39] hover:bg-[#8C2F39]/90 disabled:bg-neutral-200 disabled:text-[#1A1A1A]/40 text-[#F5F2ED] font-black text-xs py-2.5 px-6 rounded transition flex justify-center items-center gap-2 shadow flex-2"
                 >
-                  <Swords className="w-3.5 h-3.5" />
-                  奇正进击 · 模拟推演决算
-                </button>
+                  <Swords className="w-4 h-4" />
+                  奇正进击决算 <span className="text-[10px] bg-white/20 text-white font-normal ml-1 border border-white/20 rounded px-1.5">[SPACE]</span>
+                </motion.button>
 
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   id="reset-combat-btn"
                   onClick={handleReset}
-                  className="bg-white hover:bg-neutral-50 text-[#1A1A1A]/75 text-xs py-2 px-3 border border-[#1A1A1A]/15 rounded transition shadow-xs"
+                  className="bg-white hover:bg-neutral-50 text-[#1A1A1A]/75 text-xs py-2.5 px-4 border border-[#1A1A1A]/15 rounded transition shadow-xs flex items-center justify-center gap-1.5"
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                </button>
+                  <RotateCcw className="w-4 h-4" />
+                  <span className="text-[10px] text-[#1A1A1A]/50 font-normal border border-[#1A1A1A]/20 rounded px-1">[R]</span>
+                </motion.button>
               </div>
             </div>
 
@@ -1368,7 +1442,7 @@ export default function MilitarySandbox() {
               <div>
                 <span className="text-[#1A1A1A]/50 text-[9px] uppercase tracking-wider block mb-1.5">九地天演图 (点击任意地块瞬间调遣并刷新历史记录)</span>
                 <div className="grid grid-cols-3 sm:grid-cols-9 gap-1.5 md:gap-2 auto-rows-fr">
-                  {NINE_LANDS_DATA.map((land) => {
+                  {NINE_LANDS_DATA.map((land, index) => {
                     const isSelected = combat.terrain === land.id;
                     const rec = getRecommendedTerrain(selectedGen);
                     const isRecommended = rec.type === land.id;
@@ -1387,7 +1461,9 @@ export default function MilitarySandbox() {
                     const restName = land.name.split(' ')[0];
 
                     return (
-                      <button
+                      <motion.button
+                        whileHover={{ y: -2, boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                        whileTap={{ scale: 0.95 }}
                         type="button"
                         key={land.id}
                         id={`sandbox-map-cell-${land.id}`}
@@ -1434,7 +1510,7 @@ export default function MilitarySandbox() {
 
                         {/* Interactive dynamic mini status code labels */}
                         <div className="text-[7px] text-stone-400 font-mono flex justify-between items-center mt-1">
-                          <span>{land.id.substring(0, 4)}</span>
+                          <span>0{index + 1}</span>
                           {isRecommended && (
                             <span className="text-amber-600 font-bold scale-90" title="神契：主帅最佳指挥匹配">契</span>
                           )}
@@ -1459,7 +1535,7 @@ export default function MilitarySandbox() {
                           </span>
                           <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-[1px] border-4 border-transparent border-t-[#8C2F39]" />
                         </span>
-                      </button>
+                      </motion.button>
                     );
                   })}
                 </div>
@@ -1518,7 +1594,7 @@ export default function MilitarySandbox() {
                     兵法AI战术军师 · 实时破敌规划
                   </h4>
                   <p className="text-[9px] text-[#1A1A1A]/50 font-mono uppercase tracking-wider">
-                    Tactical Counter-Tactic Advisory Center
+                    兵法AI战术军师 · 实时破敌规划
                   </p>
                 </div>
               </div>
@@ -1549,7 +1625,7 @@ export default function MilitarySandbox() {
                       {/* Threat Badge */}
                       {ADV_ADVISOR_DATA[activeTrait].threatLevel === 'CRITICAL' && (
                         <span className="bg-red-50 text-red-700 text-[9px] font-mono px-1.5 py-0.5 rounded border border-red-200 font-bold flex items-center gap-1 animate-pulse">
-                          ⚠️ 致命威胁 (CRITICAL)
+                          ⚠️ 致命威胁
                         </span>
                       )}
                       {ADV_ADVISOR_DATA[activeTrait].threatLevel === 'WARN' && (
@@ -1571,7 +1647,7 @@ export default function MilitarySandbox() {
 
                   <div className="md:col-span-4 bg-amber-50/60 p-2.5 rounded border border-amber-800/10 space-y-1 min-h-[90px] flex flex-col justify-center">
                     <span className="text-[9px] font-mono text-amber-850 font-black uppercase tracking-wider block">
-                      💡 军师荐策 · Advisory Tip
+                      💡 军师荐策
                     </span>
                     <p className="text-[10px] leading-relaxed text-stone-700 font-serif italic">
                       {ADV_ADVISOR_DATA[activeTrait].suggestedStrategy}
@@ -1583,7 +1659,7 @@ export default function MilitarySandbox() {
                 <div className="space-y-1.5 pt-1.5 border-t border-dashed border-[#1A1A1A]/10 relative z-10">
                   <span className="text-[10px] font-mono text-[#8C2F39] font-black uppercase tracking-widest flex items-center gap-1 mb-1">
                     <Sliders className="w-3.5 h-3.5 text-[#8C2F39]" />
-                    主帅反制行动舱 (Actionable Counter-Tactics)
+                    主帅反制行动舱
                   </span>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1873,7 +1949,7 @@ export default function MilitarySandbox() {
               <div className="space-y-1">
                 <span className="text-[10px] sm:text-xs font-mono text-[#8C2F39] font-black uppercase tracking-widest flex items-center gap-1.5 animate-pulse">
                   <Compass className="w-4 h-4 text-[#8C2F39]" />
-                  孙子兵法 · 九地篇虚实战略图观 (SUN TZU'S NINE LANDS THEORIST HANDBOOK)
+                  孙子兵法 · 九地篇虚实战略图观
                 </span>
                 <div className="flex flex-wrap items-center gap-2.5">
                   <h3 className="text-xl sm:text-2xl font-serif font-black text-[#1A1A1A]">

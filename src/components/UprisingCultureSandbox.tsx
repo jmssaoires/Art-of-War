@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 
-type SchoolType = 'CONFUCIAN' | 'TAOIST' | 'BUDDHIST_SECTARIAN';
+type SchoolType = 'CONFUCIAN' | 'TAOIST' | 'BUDDHIST';
 
 interface LogEntry {
   time: string;
@@ -41,7 +41,7 @@ interface Region {
   influence: {
     CONFUCIAN: number;
     TAOIST: number;
-    BUDDHIST_SECTARIAN: number;
+    BUDDHIST: number;
   };
   unrest: number; // regional tension rate
   population: string;
@@ -57,7 +57,11 @@ interface HistorySnap {
   rebelForce?: number;
 }
 
-export default function UprisingCultureSandbox() {
+interface UprisingCultureSandboxProps {
+  activeCardId?: string | null;
+}
+
+export default function UprisingCultureSandbox({ activeCardId = null }: UprisingCultureSandboxProps) {
   // 1. Core State variables for Peasant Uprising & Cultural Dominance
   const [taxRate, setTaxRate] = useState<number>(38); // 0-100%
   const [famineLvl, setFamineLvl] = useState<number>(35); // 0-100%
@@ -90,7 +94,7 @@ export default function UprisingCultureSandbox() {
       y: 115,
       currentIdeology: 'CONFUCIAN',
       baseIdeology: 'CONFUCIAN',
-      influence: { CONFUCIAN: 75, TAOIST: 15, BUDDHIST_SECTARIAN: 10 },
+      influence: { CONFUCIAN: 75, TAOIST: 15, BUDDHIST: 10 },
       unrest: 10,
       population: '八万户',
       activeRebellion: false
@@ -104,7 +108,7 @@ export default function UprisingCultureSandbox() {
       y: 105,
       currentIdeology: 'CONFUCIAN',
       baseIdeology: 'CONFUCIAN',
-      influence: { CONFUCIAN: 55, TAOIST: 20, BUDDHIST_SECTARIAN: 25 },
+      influence: { CONFUCIAN: 55, TAOIST: 20, BUDDHIST: 25 },
       unrest: 28,
       population: '十四万户',
       activeRebellion: false
@@ -118,7 +122,7 @@ export default function UprisingCultureSandbox() {
       y: 215,
       currentIdeology: 'TAOIST',
       baseIdeology: 'TAOIST',
-      influence: { CONFUCIAN: 25, TAOIST: 65, BUDDHIST_SECTARIAN: 10 },
+      influence: { CONFUCIAN: 25, TAOIST: 65, BUDDHIST: 10 },
       unrest: 15,
       population: '十二万户',
       activeRebellion: false
@@ -127,12 +131,12 @@ export default function UprisingCultureSandbox() {
       id: 'jingchu',
       name: 'Jing-chu (荆楚)',
       chineseName: '荆楚重湖',
-      desc: '云梦大泽，崇山复水。流民退避落草，白莲密教在此扎根引诱。',
+      desc: '云梦大泽，崇山复水。流民退避落草，释家禅宗在此广开度牒。',
       x: 235,
       y: 205,
-      currentIdeology: 'BUDDHIST_SECTARIAN',
-      baseIdeology: 'BUDDHIST_SECTARIAN',
-      influence: { CONFUCIAN: 20, TAOIST: 20, BUDDHIST_SECTARIAN: 60 },
+      currentIdeology: 'BUDDHIST',
+      baseIdeology: 'BUDDHIST',
+      influence: { CONFUCIAN: 20, TAOIST: 20, BUDDHIST: 60 },
       unrest: 45,
       population: '九万户',
       activeRebellion: false
@@ -146,7 +150,7 @@ export default function UprisingCultureSandbox() {
       y: 225,
       currentIdeology: 'TAOIST',
       baseIdeology: 'TAOIST',
-      influence: { CONFUCIAN: 30, TAOIST: 50, BUDDHIST_SECTARIAN: 20 },
+      influence: { CONFUCIAN: 30, TAOIST: 50, BUDDHIST: 20 },
       unrest: 15,
       population: '六万户',
       activeRebellion: false
@@ -194,20 +198,20 @@ export default function UprisingCultureSandbox() {
     regions.forEach(r => {
       totalConfucian += r.influence.CONFUCIAN;
       totalTaoist += r.influence.TAOIST;
-      totalBuddhist += r.influence.BUDDHIST_SECTARIAN;
+      totalBuddhist += r.influence.BUDDHIST;
     });
     const divisor = regions.length;
     return {
       CONFUCIAN: Math.round(totalConfucian / divisor),
       TAOIST: Math.round(totalTaoist / divisor),
-      BUDDHIST_SECTARIAN: Math.round(totalBuddhist / divisor)
+      BUDDHIST: Math.round(totalBuddhist / divisor)
     };
   };
 
   const nationalStats = getNationalStats();
 
   // Derive religious suppression multiplier from Buddhism (Sectarian) influence
-  const religiousSuppression = Number((nationalStats.BUDDHIST_SECTARIAN / 100).toFixed(2));
+  const religiousSuppression = Number((nationalStats.BUDDHIST / 100).toFixed(2));
 
   // Formula for Peasant Uprising Probability P
   const formulaRawProb = (taxRate * 1.5 + famineLvl * 2.0 - 5) * (1 - religiousSuppression * 0.7);
@@ -219,14 +223,14 @@ export default function UprisingCultureSandbox() {
     let localTax = taxRate + (r.id === 'zhongyuan' ? 5 : r.id === 'jiangnan' ? -8 : r.id === 'guanzhong' ? 0 : r.id === 'jingchu' ? 8 : -3);
     if (r.currentIdeology === 'TAOIST') {
       localTax -= 6; // Taoist minimal government / laissez faire
-    } else if (r.currentIdeology === 'BUDDHIST_SECTARIAN') {
+    } else if (r.currentIdeology === 'BUDDHIST') {
       localTax += 6; // Sectarian friction with government tax collection
     }
     localTax = Math.max(0, Math.min(100, localTax));
 
     // 2. Calculate local famine delta
     let localFamine = famineLvl + (r.id === 'zhongyuan' ? 10 : r.id === 'jiangnan' ? -12 : r.id === 'guanzhong' ? -5 : r.id === 'jingchu' ? 8 : -2);
-    if (r.currentIdeology === 'BUDDHIST_SECTARIAN') {
+    if (r.currentIdeology === 'BUDDHIST') {
       localFamine -= 10; // White Lotus charity soup kitchens mitigate food shocks
     } else if (r.currentIdeology === 'TAOIST') {
       localFamine -= 5; // Taoist simple living
@@ -245,21 +249,21 @@ export default function UprisingCultureSandbox() {
     } else if (r.currentIdeology === 'TAOIST') {
       doctrineModifier = -Math.round(r.influence.TAOIST * 0.5);
       description = `☯️ 老庄退藏 (-${Math.abs(doctrineModifier)}% 离乱消释)`;
-    } else if (r.currentIdeology === 'BUDDHIST_SECTARIAN') {
+    } else if (r.currentIdeology === 'BUDDHIST') {
       if (localTax + localFamine > 80) {
         // Millenarian catalyst triggers!
-        doctrineModifier = Math.round(r.influence.BUDDHIST_SECTARIAN * 0.6);
-        description = `📿 白莲起事催化 (+${doctrineModifier}% 弥勒起义极化)`;
+        doctrineModifier = Math.round(r.influence.BUDDHIST * 0.6);
+        description = `📿 释门起事催化 (+${doctrineModifier}% 弥勒起义极化)`;
       } else {
-        doctrineModifier = -Math.round(r.influence.BUDDHIST_SECTARIAN * 0.2);
-        description = `📿 白莲设赈缓冲 (-${Math.abs(doctrineModifier)}% 难民庇所)`;
+        doctrineModifier = -Math.round(r.influence.BUDDHIST * 0.2);
+        description = `📿 释家设赈缓冲 (-${Math.abs(doctrineModifier)}% 难民庇所)`;
       }
     }
 
     // 4. Ideological Resistance and Escalation Rate Formulation
     const confucianStability = r.influence.CONFUCIAN;
-    const currentIdeologyValue = r.currentIdeology === 'BUDDHIST_SECTARIAN' 
-      ? r.influence.BUDDHIST_SECTARIAN 
+    const currentIdeologyValue = r.currentIdeology === 'BUDDHIST' 
+      ? r.influence.BUDDHIST 
       : r.influence[r.currentIdeology];
     
     // Delta between region's current prevalent ideology value and its Confucian support baseline represents the resistance:
@@ -287,7 +291,7 @@ export default function UprisingCultureSandbox() {
     // Dynamic refugees are modified by famine index and lessened by Taoist (lax) or Buddhist (temple shelters)
     let newRefugees = Math.round((taxRate * 0.45 + famineLvl * 0.55));
     const taoistBonus = Math.round(nationalStats.TAOIST * 0.25);
-    const buddhistBonus = Math.round(nationalStats.BUDDHIST_SECTARIAN * 0.35);
+    const buddhistBonus = Math.round(nationalStats.BUDDHIST * 0.35);
     
     newRefugees = Math.max(5, newRefugees - (taoistBonus + buddhistBonus));
     setRefugeesPercent(Math.min(95, newRefugees));
@@ -314,11 +318,11 @@ export default function UprisingCultureSandbox() {
           if (r.id === 'guanzhong') {
             customLog = `🚨 【京畿风暴】关中天府税课暴涨，禁军戍卒自危哗变，裹挟饥民揭竿抗税！`;
           } else if (r.id === 'zhongyuan') {
-            customLog = `🚨 【中原子弟】中原各郡遭课骨极征且旱荒绝粮！白莲大教首借谶言登高抗拒，乱民十万聚于朝野！`;
+            customLog = `🚨 【中原子弟】中原各郡遭课骨极征且旱荒绝粮！大和尚步入尘世抗拒，乱民十万聚于朝野！`;
           } else if (r.id === 'jiangnan') {
             customLog = `🚨 【江南暴乱】江南榷征课赋极烈！私盐帮众会同玄道门众激起公愤，焚盐务总署抗税！`;
           } else if (r.id === 'jingchu') {
-            customLog = `🚨 【楚泽蜂起】荆楚大泽流亡逃农满载白莲教诀，反丁群首竖起赤巾起义，官逼民反，全境惊溃！`;
+            customLog = `🚨 【楚泽蜂起】荆楚大泽流亡逃农满载佛经谶纬，反丁群首竖起赤巾起义，官逼民反，全境惊溃！`;
           } else {
             customLog = `🚨 【蜀山自据】巴蜀峻谷要害！道家羽士据防抗差抗赋，天师号令法营守隘，自据独立！`;
           }
@@ -341,7 +345,7 @@ export default function UprisingCultureSandbox() {
       }
       return prevRegions;
     });
-  }, [taxRate, famineLvl, nationalStats.TAOIST, nationalStats.BUDDHIST_SECTARIAN, refugeesPercent]);
+  }, [taxRate, famineLvl, nationalStats.TAOIST, nationalStats.BUDDHIST, refugeesPercent]);
 
   // Selected Region Metadata
   const activeRegion = regions.find(r => r.id === selectedRegionId) || regions[0];
@@ -371,18 +375,18 @@ export default function UprisingCultureSandbox() {
           currentInf.CONFUCIAN = Math.min(100, currentInf.CONFUCIAN + gain);
           // Absorb from others
           const rem = 100 - currentInf.CONFUCIAN;
-          const ratio = currentInf.TAOIST + currentInf.BUDDHIST_SECTARIAN || 1;
+          const ratio = currentInf.TAOIST + currentInf.BUDDHIST || 1;
           currentInf.TAOIST = Math.round((currentInf.TAOIST / ratio) * rem);
-          currentInf.BUDDHIST_SECTARIAN = rem - currentInf.TAOIST;
+          currentInf.BUDDHIST = rem - currentInf.TAOIST;
         } else if (school === 'TAOIST') {
           currentInf.TAOIST = Math.min(100, currentInf.TAOIST + gain);
           const rem = 100 - currentInf.TAOIST;
-          const ratio = currentInf.CONFUCIAN + currentInf.BUDDHIST_SECTARIAN || 1;
+          const ratio = currentInf.CONFUCIAN + currentInf.BUDDHIST || 1;
           currentInf.CONFUCIAN = Math.round((currentInf.CONFUCIAN / ratio) * rem);
-          currentInf.BUDDHIST_SECTARIAN = rem - currentInf.CONFUCIAN;
+          currentInf.BUDDHIST = rem - currentInf.CONFUCIAN;
         } else {
-          currentInf.BUDDHIST_SECTARIAN = Math.min(100, currentInf.BUDDHIST_SECTARIAN + gain);
-          const rem = 100 - currentInf.BUDDHIST_SECTARIAN;
+          currentInf.BUDDHIST = Math.min(100, currentInf.BUDDHIST + gain);
+          const rem = 100 - currentInf.BUDDHIST;
           const ratio = currentInf.CONFUCIAN + currentInf.TAOIST || 1;
           currentInf.CONFUCIAN = Math.round((currentInf.CONFUCIAN / ratio) * rem);
           currentInf.TAOIST = rem - currentInf.CONFUCIAN;
@@ -390,19 +394,19 @@ export default function UprisingCultureSandbox() {
 
         // Determine if ideology dominant shifts (school reaches above others)
         let dominantIdeology = r.currentIdeology;
-        if (currentInf.CONFUCIAN >= currentInf.TAOIST && currentInf.CONFUCIAN >= currentInf.BUDDHIST_SECTARIAN) {
+        if (currentInf.CONFUCIAN >= currentInf.TAOIST && currentInf.CONFUCIAN >= currentInf.BUDDHIST) {
           dominantIdeology = 'CONFUCIAN';
-        } else if (currentInf.TAOIST >= currentInf.CONFUCIAN && currentInf.TAOIST >= currentInf.BUDDHIST_SECTARIAN) {
+        } else if (currentInf.TAOIST >= currentInf.CONFUCIAN && currentInf.TAOIST >= currentInf.BUDDHIST) {
           dominantIdeology = 'TAOIST';
         } else {
-          dominantIdeology = 'BUDDHIST_SECTARIAN';
+          dominantIdeology = 'BUDDHIST';
         }
 
         const isChanged = dominantIdeology !== r.currentIdeology;
         if (isChanged) {
           setTimeout(() => {
             addLog(`⚡ 【领土法统覆写】因宣道得成，【${r.chineseName}】郡府官方主轴正式蜕化为 「${
-              dominantIdeology === 'CONFUCIAN' ? '儒字正礼' : dominantIdeology === 'TAOIST' ? '道家太虚' : '白莲弥勒'
+              dominantIdeology === 'CONFUCIAN' ? '儒字正礼' : dominantIdeology === 'TAOIST' ? '道家太虚' : '释家佛理'
             }」，全境信仰地理随之易帜！`, 'success');
           }, 100);
         }
@@ -415,7 +419,7 @@ export default function UprisingCultureSandbox() {
       });
     });
 
-    const schoolDesc = school === 'CONFUCIAN' ? '大儒太学生' : school === 'TAOIST' ? '玄门箓真' : '白莲释众';
+    const schoolDesc = school === 'CONFUCIAN' ? '大儒太学生' : school === 'TAOIST' ? '玄门箓真' : '释门僧众';
     const logDesc = `⛪ 【布道宣谕】耗费库银 ${cost} 贯，发遣「${schoolDesc}」奇袭【${activeRegion.chineseName}】广建法坛，该里乡里皈依率暴增！`;
     addLog(logDesc, 'info');
 
@@ -450,7 +454,7 @@ export default function UprisingCultureSandbox() {
             turn: nextTurn,
             Confucian: stats.CONFUCIAN,
             Taoist: stats.TAOIST,
-            Buddhist: stats.BUDDHIST_SECTARIAN,
+            Buddhist: stats.BUDDHIST,
             events: milestoneName || '天下运转 思想变迁',
             rebelForce: rebelForce
           }
@@ -634,6 +638,28 @@ export default function UprisingCultureSandbox() {
         </div>
       </div>
 
+      {activeCardId && (
+        <div className="mb-4 bg-[#8C2F39]/5 border border-[#8C2F39]/30 p-3 rounded flex items-center justify-between text-xs animate-pulse text-[#8C2F39] font-serif shrink-0">
+          <div className="flex items-center gap-2">
+            <Sparkle className="w-4 h-4 text-[#8C2F39] animate-spin" />
+            <div>
+              <span className="font-bold">【兵法符命加持生效中 · {
+                activeCardId === 'qizheng' ? '《奇正相生》首级御宝' :
+                activeCardId === 'huogong' ? '《火攻奇袭》烈炎秘卷' :
+                activeCardId === 'wujian' ? '《五间妙连》通幽罗网' :
+                '《商战大垄》国课税书'
+              }】</span>
+              <span className="text-[#1A1A1A]/80 ml-1.5 font-sans">
+                {activeCardId === 'huogong' 
+                  ? '野火燎原，本战区起义传教信仰转化率、流民安招与抗灾旱蝗威力瞬间攀升 50% 阶梯极值！' 
+                  : '本部大营正在演武此兵法，四方诸子教化各归其轨，叛意趋于缓和。'}
+              </span>
+            </div>
+          </div>
+          <span className="font-mono text-[9px] bg-[#8C2F39] text-[#F5F2ED] px-2 py-0.5 rounded font-black uppercase tracking-wider">加持中</span>
+        </div>
+      )}
+
       {/* SECTION 2: Territorial Dominance Map & Conversion Control Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
         
@@ -645,7 +671,7 @@ export default function UprisingCultureSandbox() {
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1A1A1A]/10 pb-2 mb-3">
               <h3 className="text-xs font-mono text-[#1A1A1A]/80 flex items-center gap-1.5 font-black uppercase tracking-wider">
                 <Compass className="w-4 h-4 text-[#8C2F39]" />
-                中朝九州疆理形势 (Territorial Influence Map)
+                中朝九州疆理形势
               </h3>
               <div className="flex items-center gap-2">
                 <button
@@ -664,7 +690,7 @@ export default function UprisingCultureSandbox() {
                 <span className="text-[10px] text-[#8C2F39]/60 font-mono flex items-center gap-1 bg-[#8C2F39]/5 px-1.5 py-1 rounded border border-[#8C2F39]/10">
                   <Sparkle className="w-2.5 h-2.5 animate-spin" style={{ animationDuration: '6s' }} /> 
                   官方思想大一统: {
-                    nationalStats.CONFUCIAN > 45 ? '📖 儒家理法' : nationalStats.TAOIST > 45 ? '☯️ 道骨无为' : '📿 白莲降世'
+                    nationalStats.CONFUCIAN > 45 ? '📖 儒家理法' : nationalStats.TAOIST > 45 ? '☯️ 道骨无为' : '📿 佛门降世'
                   }
                 </span>
               </div>
@@ -763,7 +789,7 @@ export default function UprisingCultureSandbox() {
                           ? '儒家秩序' 
                           : r.currentIdeology === 'TAOIST' 
                           ? '道教无为' 
-                          : '白莲秘教'
+                          : '释门子弟'
                       }。局势状况：${r.activeRebellion ? '正在发生起义暴动！' : '地方局势安稳。'}`}
                       aria-pressed={isSelected}
                       onKeyDown={(e) => {
@@ -1048,7 +1074,7 @@ export default function UprisingCultureSandbox() {
               {/* Float Map Compass card */}
               <div className="absolute right-3.5 bottom-3 text-[9px] font-mono bg-white/70 backdrop-blur-md p-2 rounded border border-[#1A1A1A]/12 leading-normal select-none shadow-xs z-20 w-44">
                 <div className="flex items-center justify-between border-b border-[#1A1A1A]/10 pb-1 mb-1.5">
-                  <span className="font-bold text-[8px] text-[#8C2F39] tracking-wider uppercase">疆理图例 Key</span>
+                  <span className="font-bold text-[8px] text-[#8C2F39] tracking-wider uppercase">疆理图例</span>
                   <button
                     id="toggle-map-details-btn"
                     onClick={() => setShowMapLegendDetails(prev => !prev)}
@@ -1072,15 +1098,15 @@ export default function UprisingCultureSandbox() {
                   <div className="space-y-1">
                     <div className="flex items-center gap-1.5">
                       <span className={`w-2 h-2 rounded-full border border-white shadow-3xs ${!showMapLegendDetails ? 'bg-stone-400' : 'bg-[#8C2F39]'}`}></span>
-                      <span className={!showMapLegendDetails ? 'text-stone-400' : ''}>儒学官塾 (CONFUCIAN)</span>
+                      <span className={!showMapLegendDetails ? 'text-stone-400' : ''}>儒学官塾</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className={`w-2 h-2 rounded-full border border-white shadow-3xs ${!showMapLegendDetails ? 'bg-stone-400' : 'bg-emerald-700'}`}></span>
-                      <span className={!showMapLegendDetails ? 'text-stone-400' : ''}>玄门太虚 (TAOIST)</span>
+                      <span className={!showMapLegendDetails ? 'text-stone-400' : ''}>玄门太虚</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className={`w-2 h-2 rounded-full border border-white shadow-3xs ${!showMapLegendDetails ? 'bg-stone-400' : 'bg-amber-600'}`}></span>
-                      <span className={!showMapLegendDetails ? 'text-stone-400' : ''}>白莲法会 (BUDDHIST)</span>
+                      <span className={!showMapLegendDetails ? 'text-stone-400' : ''}>佛门禅寺</span>
                     </div>
                   </div>
                 ) : (
@@ -1114,7 +1140,7 @@ export default function UprisingCultureSandbox() {
               <div className="flex justify-between items-center pb-2 mb-2 border-b border-stone-200">
                 <h4 className="text-[10.5px] font-mono text-stone-700 flex items-center gap-1.5 font-bold uppercase tracking-wider">
                   <Flame className="w-3.5 h-3.5 text-[#8C2F39] animate-pulse" />
-                  义军暴动强度历史波谱 (Rebellion Intensity Last 10 Turns)
+                  义军暴动强度历史波谱
                 </h4>
                 <span className="text-[10px] font-mono text-stone-500">
                   暴民兵马总估: <strong className="text-[#8C2F39] font-black">{rebelForce} 徒</strong>
@@ -1201,7 +1227,7 @@ export default function UprisingCultureSandbox() {
                   }`}>
                     {activeRegion.currentIdeology === 'CONFUCIAN' && '📖 独尊儒术'}
                     {activeRegion.currentIdeology === 'TAOIST' && '☯️ 老庄无为'}
-                    {activeRegion.currentIdeology === 'BUDDHIST_SECTARIAN' && '📿 白莲度世'}
+                    {activeRegion.currentIdeology === 'BUDDHIST' && '📿 佛门度世'}
                   </span>
                 </div>
               </div>
@@ -1209,7 +1235,7 @@ export default function UprisingCultureSandbox() {
               {/* Small detailed progress meters bar mapping influence percentages */}
               <div className="mt-3.5 space-y-1.5 pt-2 border-t border-[#1A1A1A]/10 border-dashed">
                 <div className="flex justify-between text-[10px] font-mono">
-                  <span className="font-semibold text-stone-500">本州教门皈依度 Influence Allocation:</span>
+                  <span className="font-semibold text-stone-500">本州教门皈依度:</span>
                   <span className="text-stone-300">合计 100%</span>
                 </div>
 
@@ -1237,11 +1263,11 @@ export default function UprisingCultureSandbox() {
                   {/* Sectarian bar */}
                   <div className="space-y-0.5">
                     <div className="flex justify-between text-[9px] font-mono">
-                      <span>佛家白莲</span>
-                      <span className="font-black text-amber-600">{activeRegion.influence.BUDDHIST_SECTARIAN}%</span>
+                      <span>释家佛门</span>
+                      <span className="font-black text-amber-600">{activeRegion.influence.BUDDHIST}%</span>
                     </div>
                     <div className="h-1.5 bg-[#1A1A1A]/5 rounded-sm overflow-hidden">
-                      <div className="h-full bg-amber-600" style={{ width: `${activeRegion.influence.BUDDHIST_SECTARIAN}%` }}></div>
+                      <div className="h-full bg-amber-600" style={{ width: `${activeRegion.influence.BUDDHIST}%` }}></div>
                     </div>
                   </div>
                 </div>
@@ -1254,7 +1280,7 @@ export default function UprisingCultureSandbox() {
                 return (
                   <div className="mt-4 pt-3 border-t border-[#1A1A1A]/10 border-dashed space-y-3">
                     <div className="flex justify-between items-center text-[10px] font-mono font-bold uppercase tracking-wider text-stone-600">
-                      <span>本境民变风险评估 (Peasant Rebellion Assessment)</span>
+                      <span>本境民变风险评估</span>
                       <span className={isRebelling ? 'text-red-600 animate-pulse font-extrabold' : metrics.riskDelta >= 65 ? 'text-amber-600 font-extrabold' : 'text-emerald-700'}>
                         {isRebelling ? '⚡ 暴动发生中 (Active Revolt)' : metrics.riskDelta >= 65 ? '⚠️ 极高暴动倾向' : '✓ 局势安定'}
                       </span>
@@ -1285,12 +1311,12 @@ export default function UprisingCultureSandbox() {
                     {/* Ideological Resistance Mechanics details */}
                     <div className="grid grid-cols-2 gap-2 bg-[#8C2F39]/5 p-2.5 rounded border border-[#8C2F39]/12 text-center font-mono text-[10px]">
                       <div className="border-r border-[#1A1A1A]/10 pr-2">
-                        <div className="text-[8.5px] uppercase tracking-wider text-[#8C2F39] font-bold">思想阻受因子 Ideo. Resistance</div>
+                        <div className="text-[8.5px] uppercase tracking-wider text-[#8C2F39] font-bold">思想阻受因子</div>
                         <div className="text-xs font-black text-rose-800 mt-1">{metrics.ideologicalResistance}%</div>
                         <div className="text-[7.5px] text-stone-500 mt-0.5 leading-tight">本位学说与官方儒礼之偏差契合度</div>
                       </div>
                       <div className="pl-2">
-                        <div className="text-[8.5px] uppercase tracking-wider text-amber-800 font-bold">动荡流变流速 Unrest Speed</div>
+                        <div className="text-[8.5px] uppercase tracking-wider text-amber-800 font-bold">动荡流变流速</div>
                         <div className="text-xs font-black text-amber-700 mt-1">+{metrics.escalationRate}% / 纪元</div>
                         <div className="text-[7.5px] text-stone-500 mt-0.5 leading-tight">每一纪元安定率自增蔓延速度</div>
                       </div>
@@ -1298,7 +1324,7 @@ export default function UprisingCultureSandbox() {
 
                     {/* Small helpful description text showing doctrine modifier details */}
                     <p className="text-[9.5px] font-mono text-stone-500 italic leading-snug">
-                      {metrics.doctrineDesc ? `当前思想主轴加成：${metrics.doctrineDesc}` : '当前无思想在野冲突修正'}。儒礼与道风长效静镇民心，而白莲教门在严苛征税下 (地方税+荒&gt;80) 会异化反噬官府，强力催化民变！
+                      {metrics.doctrineDesc ? `当前思想主轴加成：${metrics.doctrineDesc}` : '当前无思想在野冲突修正'}。儒礼与道风长效静镇民心，而释家寺院在严苛征税下 (地方税+荒&gt;80) 会异化反噬官府，强力催化民变！
                     </p>
 
                     {/* Threat indicator risk bar */}
@@ -1364,7 +1390,7 @@ export default function UprisingCultureSandbox() {
               <div className="flex justify-between items-center border-b border-[#1A1A1A]/10 pb-2 mb-3">
                 <h3 className="text-xs font-mono text-[#1A1A1A]/80 flex items-center gap-1.5 font-black uppercase tracking-wider">
                   <BookOpen className="w-4 h-4 text-[#8C2F39]" />
-                  传教司皈依策画 (Missionary Event System)
+                  传教司皈依策画
                 </h3>
               </div>
 
@@ -1419,7 +1445,7 @@ export default function UprisingCultureSandbox() {
                 <div className="bg-white/70 p-2.5 rounded border border-amber-500/15 hover:border-amber-500/40 transition shadow-xs flex justify-between items-center">
                   <div className="space-y-0.5 flex-1 pr-3">
                     <div className="font-serif font-black text-xs text-amber-700 flex items-center gap-1">
-                      白莲大教首授秘密度牒
+                      高僧大德广度流民
                     </div>
                     <div className="text-[9px] text-[#1A1A1A]/55 font-mono leading-tight">
                       于流离难民间私行戒度，派发米面福田。压减流寇，但引狼入室。
@@ -1427,7 +1453,7 @@ export default function UprisingCultureSandbox() {
                   </div>
                   <button
                     id="dispatch-buddhist-btn"
-                    onClick={() => handleMissionaryDispatch('BUDDHIST_SECTARIAN')}
+                    onClick={() => handleMissionaryDispatch('BUDDHIST')}
                     className="shrink-0 bg-amber-600 hover:bg-amber-700 text-[#F5F2ED] font-black text-[9px] font-mono px-2.5 py-2.5 rounded shadow-sm text-center leading-none"
                   >
                     <div>密授度法</div>
@@ -1441,7 +1467,7 @@ export default function UprisingCultureSandbox() {
             {/* Total National Influence status table */}
             <div className="mt-4 pt-3 border-t border-[#1A1A1A]/10 bg-stone-50 p-2 rounded">
               <span className="text-[9px] font-mono text-zinc-500 font-bold block mb-1">
-                中朝社政三教天下比率 National Dominance Statistics:
+                中朝社政三教天下比率:
               </span>
               <div className="grid grid-cols-3 gap-1 grid-flow-row text-[10px] font-mono font-bold text-center">
                 <div className="bg-white p-1 rounded shadow-xs border border-[#8C2F39]/10">
@@ -1453,8 +1479,8 @@ export default function UprisingCultureSandbox() {
                   <div className="text-sm font-black mt-0.5">{nationalStats.TAOIST}%</div>
                 </div>
                 <div className="bg-white p-1 rounded shadow-xs border border-amber-600/10">
-                  <span className="text-amber-600">📿 白莲救世</span>
-                  <div className="text-sm font-black mt-0.5">{nationalStats.BUDDHIST_SECTARIAN}%</div>
+                  <span className="text-amber-600">📿 释门救世</span>
+                  <div className="text-sm font-black mt-0.5">{nationalStats.BUDDHIST}%</div>
                 </div>
               </div>
             </div>
@@ -1473,7 +1499,7 @@ export default function UprisingCultureSandbox() {
             <div className="flex justify-between items-center border-b border-[#1A1A1A]/10 pb-2 mb-3">
               <h3 className="text-xs font-mono text-[#1A1A1A]/80 flex items-center gap-1.5 font-bold uppercase tracking-wider">
                 <TrendingUp className="w-4 h-4 text-[#8C2F39]" />
-                三教地理势力消长波谱图 (D3 Cultural Dominance Over Time)
+                三教地理势力消长波谱图
               </h3>
               
               {/* Reset History action for testing */}
@@ -1628,7 +1654,7 @@ export default function UprisingCultureSandbox() {
                       className="cursor-pointer outline-none focus-visible:outline-none"
                       tabIndex={0}
                       role="button"
-                      aria-label={`第 ${h.turn} 纪：儒家思想 ${h.Confucian}%，道教思想 ${h.Taoist}%，佛门白莲 ${h.Buddhist}%。历史纪实：${h.events}`}
+                      aria-label={`第 ${h.turn} 纪：儒家思想 ${h.Confucian}%，道教思想 ${h.Taoist}%，释门参禅 ${h.Buddhist}%。历史纪实：${h.events}`}
                       onMouseEnter={() => setHoveredSnap(h)}
                       onMouseLeave={() => setHoveredSnap(null)}
                       onFocus={() => setHoveredSnap(h)}
@@ -1650,15 +1676,15 @@ export default function UprisingCultureSandbox() {
             <div className="flex gap-4 items-center justify-center mt-3 text-[9px] font-mono text-[#1A1A1A]/70 select-none">
               <span className="flex items-center gap-1">
                 <span className="w-2.5 h-0.5 bg-[#8C2F39] inline-block"></span> 
-                <strong>儒理法度 (Confucianism)</strong>
+                <strong>儒理法度</strong>
               </span>
               <span className="flex items-center gap-1">
                 <span className="w-2.5 h-0.5 bg-emerald-700 inline-block"></span> 
-                <strong>老庄安息 (Taoism)</strong>
+                <strong>老庄安息</strong>
               </span>
               <span className="flex items-center gap-1">
                 <span className="w-2.5 h-0.5 bg-amber-600 inline-block"></span> 
-                <strong>白莲释渡 (Buddhism Sect)</strong>
+                <strong>佛门释渡</strong>
               </span>
             </div>
 
@@ -1672,7 +1698,7 @@ export default function UprisingCultureSandbox() {
             <div className="flex justify-between items-center border-b border-[#1A1A1A]/10 pb-2">
               <h3 className="text-xs font-mono text-[#1A1A1A]/80 flex items-center gap-1.5 font-bold uppercase tracking-wider">
                 <Compass className="w-4 h-4 text-[#8C2F39]" />
-                执政社稷枢要 (Imperial Knobs)
+                执政社稷枢要
               </h3>
               <span className="text-[10px] text-zinc-500 font-mono">儒理制民 vs 苛征军饷</span>
             </div>
@@ -1681,7 +1707,7 @@ export default function UprisingCultureSandbox() {
             <div className="space-y-3 pt-1">
               <div>
                 <div className="flex justify-between mb-1">
-                  <label className="text-[10px] text-[#1A1A1A]/70 font-mono block font-bold">天下课税负率 T: {taxRate}%</label>
+                  <label className="text-[10px] text-[#1A1A1A]/70 font-mono block font-bold">天下课税负率: {taxRate}%</label>
                   {taxRate > 45 && <span className="text-[8px] text-[#8C2F39] font-black animate-pulse">⚠️ 民穷财尽</span>}
                 </div>
                 <input
@@ -1696,7 +1722,7 @@ export default function UprisingCultureSandbox() {
 
               <div>
                 <div className="flex justify-between mb-1">
-                  <label className="text-[10px] text-[#1A1A1A]/70 font-mono block font-bold">荒歉饥荒指数 F: {famineLvl}%</label>
+                  <label className="text-[10px] text-[#1A1A1A]/70 font-mono block font-bold">荒歉饥荒指数: {famineLvl}%</label>
                   {famineLvl > 65 && <span className="text-[8px] text-[#8C2F39] font-black animate-pulse">🌾 江淮赤地</span>}
                 </div>
                 <input
@@ -1712,7 +1738,7 @@ export default function UprisingCultureSandbox() {
 
             {/* Structural actions board */}
             <div className="pt-2 border-t border-[#1A1A1A]/10">
-              <div className="text-[9px] font-mono font-bold text-[#1A1A1A]/60 uppercase mb-2">天子御前执案 Act Commands:</div>
+              <div className="text-[9px] font-mono font-bold text-[#1A1A1A]/60 uppercase mb-2">天子御前执案:</div>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   id="action-btn-relief-2"
@@ -1761,7 +1787,7 @@ export default function UprisingCultureSandbox() {
               <div className="flex justify-between items-center border-b border-[#1A1A1A]/10 pb-2 mb-2">
                 <h3 className="text-xs font-mono text-[#1A1A1A]/80 flex items-center gap-1.5 font-bold uppercase tracking-wider">
                   <Skull className="w-4 h-4 text-[#8C2F39]" />
-                  皇统安定指数与流寇暴乱宿命 (Operational Theatre)
+                  皇统安定指数与流寇暴乱宿命
                 </h3>
               </div>
 
@@ -1789,7 +1815,7 @@ export default function UprisingCultureSandbox() {
                 </div>
                 <div className="bg-white/60 p-2 rounded border border-[#1A1A1A]/10 shadow-xs">
                   <span className="text-[#1A1A1A]/50 block text-[8px] font-bold uppercase tracking-wider">
-                    白莲压制密率 S
+                    释门压制密率 S
                   </span>
                   <span className="text-xs font-bold text-[#8C2F39] block mt-0.5">
                     {(religiousSuppression * 100).toFixed(0)}% 抑制
@@ -1805,7 +1831,7 @@ export default function UprisingCultureSandbox() {
               }`}>
                 <div className="flex justify-between items-center mb-1.5">
                   <span className="font-mono font-bold text-[9px] uppercase tracking-widest block text-[#1A1A1A]/60">
-                    义兵大部在账 (Rebellion Force Status)
+                    义兵大部在账
                   </span>
                   <span className={`px-2 py-0.5 rounded text-[8px] font-bold ${
                     isUprisingActive ? 'bg-[#8C2F39] text-[#F5F2ED]' : 'bg-[#5A5A40] text-[#F5F2ED]'
@@ -1837,14 +1863,14 @@ export default function UprisingCultureSandbox() {
                           disabled={hasLooted}
                           className="bg-red-50 hover:bg-red-100 text-[#8C2F39] border border-red-200 font-bold p-1 rounded text-[9px] disabled:opacity-40 transition-all text-center leading-normal"
                         >
-                          🔥 纵兵大劫 plunder
+                          🔥 纵兵大劫
                           <span className="block text-[8px] font-normal opacity-75">+2万钱 / 增贼众</span>
                         </button>
                         <button
                           onClick={() => handleRebelPolicy('REGULATE')}
                           className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold p-1 rounded text-[9px] transition-all text-center leading-normal"
                         >
-                          🌾 赈恤收心 regulate
+                          🌾 赈恤收心
                           <span className="block text-[8px] font-normal opacity-75">免岁租 / 聚义理法统</span>
                         </button>
                       </div>
@@ -1866,7 +1892,7 @@ export default function UprisingCultureSandbox() {
             <div>
               <div className="flex justify-between items-center border-b border-[#1A1A1A]/10 pb-1.5 mb-2">
                 <h4 className="text-[10px] font-mono text-[#1A1A1A]/70 tracking-wider font-bold uppercase">
-                  中朝疆舆皈依与反民起居注 (Logs Tracker)
+                  中朝疆舆皈依与反民起居注
                 </h4>
               </div>
               <div className="space-y-1 my-1 max-h-[190px] overflow-y-auto pr-1">

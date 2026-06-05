@@ -5,12 +5,12 @@ import { Shield, Sparkles, UserCheck, Flame, Compass, HelpCircle, FileText, Send
 
 export default function DiplomacySandbox() {
   const [nations, setNations] = useState<DiplomaticNation[]>([
-    { id: '1', name: '大魏 (魏 - Central Empire / Player)', relationship: 100, distance: 1, treaty: 'NONE', strength: 8 },
-    { id: '2', name: '赵国 (赵 - Close neighbor - Threat)', relationship: -45, distance: 2, treaty: 'NONE', strength: 6 },
-    { id: '3', name: '齐国 (齐 - Coastal - Moderate distance)', relationship: 20, distance: 3, treaty: 'FRIENDLY', strength: 7 },
-    { id: '4', name: '秦国 (秦 - Western edge - Far)', relationship: 60, distance: 5, treaty: 'ALLIANCE', strength: 9 },
-    { id: '5', name: '匈奴 (北狄 - Frontier Nomads)', relationship: -90, distance: 4, treaty: 'NONE', strength: 5 },
-    { id: '6', name: '燕国 (燕 - North Western - Tributary)', relationship: 40, distance: 4, treaty: 'VASSAL', strength: 4 },
+    { id: '1', name: '大魏', relationship: 100, distance: 1, treaty: 'NONE', strength: 8 },
+    { id: '2', name: '赵国', relationship: -45, distance: 2, treaty: 'NONE', strength: 6 },
+    { id: '3', name: '齐国', relationship: 20, distance: 3, treaty: 'FRIENDLY', strength: 7 },
+    { id: '4', name: '秦国', relationship: 60, distance: 5, treaty: 'ALLIANCE', strength: 9 },
+    { id: '5', name: '北狄匈奴', relationship: -90, distance: 4, treaty: 'NONE', strength: 5 },
+    { id: '6', name: '燕国', relationship: 40, distance: 4, treaty: 'VASSAL', strength: 4 },
   ]);
 
   const [activeLog, setActiveLog] = useState<string[]>([
@@ -160,7 +160,7 @@ export default function DiplomacySandbox() {
                         <span className={`text-[9px] px-1.5 py-0.5 rounded-sm uppercase font-mono font-bold ${
                           isAlly ? 'bg-[#5A5A40]/10 text-[#5A5A40]' : 'bg-[#8C2F39]/10 text-[#8C2F39]'
                         }`}>
-                          {n.treaty}
+                          {n.treaty === 'ALLIANCE' ? '秦晋同盟' : n.treaty === 'FRIENDLY' ? '通好之国' : n.treaty === 'VASSAL' ? '帝国藩臣' : n.treaty}
                         </span>
                       )}
                     </div>

@@ -1,0 +1,310 @@
+src/components/CourtSandbox.tsx:>{currentEmp.name}<
+src/components/CourtSandbox.tsx:>皇恩依赖度 (D)<
+src/components/CourtSandbox.tsx:>{eunuchState.dValue} / 100<
+src/components/CourtSandbox.tsx:>{eunuchState.sValue} / 100<
+src/components/CourtSandbox.tsx:>宦官专断 (D)<
+src/components/CourtSandbox.tsx:>清官反扑杀 (S)<
+src/components/CourtSandbox.tsx:>● 皇帝清洗窗口正开启 (S &gt; D)！清流可发动【圣旨清抄】<
+src/components/CourtSandbox.tsx:>● 极权稳固 (D &gt; S) 皇帝心怀庇护，朝堂任予取予夺<
+src/components/CourtSandbox.tsx:>{eunuchState.eunuchWealth}两<
+src/components/CourtSandbox.tsx:>{eunuchState.eunuchInfluence}层<
+src/components/CourtSandbox.tsx:>{eunuchState.yearsInPalace} 回合<
+src/components/CourtSandbox.tsx:>咸阳宫·太极殿密闻秘卷 Logs<
+src/components/CourtSandbox.tsx:>{log}<
+src/components/CourtSandbox.tsx:>{log}<
+src/components/DiplomacySandbox.tsx:>{n.name}<
+src/components/DiplomacySandbox.tsx:>= 0 ? "text-[#5A5A40] font-bold" : "text-[#8C2F39] font-bold"}>{n.relationship}<
+src/components/DiplomacySandbox.tsx:> 80 ? 'text-[#5A5A40]' : farNear <
+src/components/DiplomacySandbox.tsx:>{selectedNation.name}<
+src/components/DiplomacySandbox.tsx:>{item.label}<
+src/components/DiplomacySandbox.tsx:>{item.desc}<
+src/components/DynastyTimeline.tsx:> p.year <
+src/components/DynastyTimeline.tsx:> p.year <
+src/components/DynastyTimeline.tsx:> p.branch === 'baseline' && p.year <
+src/components/DynastyTimeline.tsx:> p.branch === node.branch && p.year <
+src/components/DynastyTimeline.tsx:> p.branch === 'baseline' && p.year <
+src/components/DynastyTimeline.tsx:> p.branch === 'baseline' && p.year <
+src/components/DynastyTimeline.tsx:> p.branch === current!.branch && p.year <
+src/components/DynastyTimeline.tsx:> p.branch === 'baseline' && p.year <
+src/components/DynastyTimeline.tsx:>${d.year <
+src/components/DynastyTimeline.tsx:>${d.title}<
+src/components/DynastyTimeline.tsx:>“ ${d.desc.substring(0, 50)}${d.desc.length > 50 ? '...' : ''} ”<
+src/components/DynastyTimeline.tsx:>${d.mandate}%<
+src/components/DynastyTimeline.tsx:>${d.stability}%<
+src/components/DynastyTimeline.tsx:>{selectedSpeed.label}<
+src/components/DynastyTimeline.tsx:>{pres.label}<
+src/components/DynastyTimeline.tsx:>{pres.title}<
+src/components/DynastyTimeline.tsx:>拂平历史褶皱 (Reset)<
+src/components/DynastyTimeline.tsx:>正史基轴 (Baseline)<
+src/components/DynastyTimeline.tsx:>始皇长生 (Qin Eternal)<
+src/components/DynastyTimeline.tsx:>诸子共和 (Republic)<
+src/components/DynastyTimeline.tsx:>霸王联邦 (Federal)<
+src/components/DynastyTimeline.tsx:>余部异闻 (Custom)<
+src/components/DynastyTimeline.tsx:>天轨筛选 / PATH FOCUS:<
+src/components/DynastyTimeline.tsx:>💡 将折线图中命势 node 点击，即可在右侧抄牍中研读该天命褶皱细节 ➡<
+src/components/DynastyTimeline.tsx:>{selectedPoint.mandate}%<
+src/components/DynastyTimeline.tsx:>{selectedPoint.stability}%<
+src/components/DynastyTimeline.tsx:>{selectedPoint.coffers.toLocaleString()} 镒<
+src/components/DynastyTimeline.tsx:>公元前 {Math.abs(proposalYear)} 年<
+src/components/GddBuilder.tsx:>单元 {m.number} — {m.title}<
+src/components/GddBuilder.tsx:>单元 {m.number} — {m.title}<
+src/components/GddBuilder.tsx:>正在执行并发蒙特卡洛客户模型仿真(Step: {simulationProgress}%)<
+src/components/GddBuilder.tsx:>正在扫描 System Loop & Exception Hooks<
+src/components/GddBuilder.tsx:>🛰️ 行为仿真控制台 (Agent Simulation Logs)<
+src/components/GddBuilder.tsx:>Active Clients: 20,700<
+src/components/GddBuilder.tsx:>{c.avatar}<
+src/components/GddBuilder.tsx:>{c.name.split(' ')[0]}<
+src/components/GddBuilder.tsx:>{selectedCohort.name}<
+src/components/GddBuilder.tsx:>{selectedCohort.sub}<
+src/components/GddBuilder.tsx:>{selectedCohort.focusTab}<
+src/components/GddBuilder.tsx:>{selectedCohort.retention7d} (基准30%)<
+src/components/GddBuilder.tsx:>竞品深度诊断索引 (Overview)：<
+src/components/GddBuilder.tsx:>{p.desc}<
+src/components/GddBuilder.tsx:>PROS, CONS & VIABILITY ANALYTICS<
+src/components/GddBuilder.tsx:>：与市场主流页游式高饱和3D SLG形成巨大画风对攻，买量转化及获客成本低。<
+src/components/GddBuilder.tsx:>：因摒弃重度PVP强充，若按单机买断变现较慢。需深设皮肤/卡牌/武将列传。<
+src/components/GddBuilder.tsx:>{log}<
+src/components/GddBuilder.tsx:>{log}<
+src/components/GddBuilder.tsx:>{item.icon}<
+src/components/GddBuilder.tsx:>{item.desc}<
+src/components/GddBuilder.tsx:>✍️ 给 AI 的特调机制改良指令 (Custom Innovation Prompts)<
+src/components/GddBuilder.tsx:>algorithm_core.ts (算法控制单元)<
+src/components/GddBuilder.tsx:>TypeScript v5+ Code View<
+src/components/GddBuilder.tsx:>{variable.name}<
+src/components/GddBuilder.tsx:>{variable.min}<
+src/components/GddBuilder.tsx:>{variable.max}<
+src/components/GddBuilder.tsx:>🏆 天演胜局 (SUCCESS BATTLEVON)<
+src/components/GddBuilder.tsx:>⚠️ 天演命失 (FAILURE SLIPOUT)<
+src/components/GddBuilder.tsx:>{sandboxTestResult}<
+src/components/GddBuilder.tsx:>计算概率公式: {innovationResult.sandboxSimulationConfig?.chanceFormula}<
+src/components/GddBuilder.tsx:>调试结算: {Math.random() > 0.5 ? "REACTION_METIC" : "STATE_STABLE"}<
+src/components/LoginTutorial.tsx:>军事绝境时获取数倍乘算BUFF，绝地反击。<
+src/components/LoginTutorial.tsx:>{section.icon}<
+src/components/MerchantSuccessionSandbox.tsx:>交易单元: {marketInputVal} 石/千斤<
+src/components/MerchantSuccessionSandbox.tsx:>{c.name}<
+src/components/MerchantSuccessionSandbox.tsx:>{c.base}<
+src/components/MerchantSuccessionSandbox.tsx:>{c.highlight}<
+src/components/MerchantSuccessionSandbox.tsx:>批量交割额度: {marketInputVal}<
+src/components/MerchantSuccessionSandbox.tsx:>{cash} 钱<
+src/components/MerchantSuccessionSandbox.tsx:>{grainHoldings} 石<
+src/components/MerchantSuccessionSandbox.tsx:>{saltLicences} 张<
+src/components/MerchantSuccessionSandbox.tsx:>{currentLeader.name}<
+src/components/MerchantSuccessionSandbox.tsx:>{currentLeader.attributes.prestige}<
+src/components/MerchantSuccessionSandbox.tsx:>{currentLeader.identity === 'MERCHANT' ? '商贾' : currentLeader.identity === 'SCHOLAR' ? '士大夫' : currentLeader.identity}<
+src/components/MerchantSuccessionSandbox.tsx:>世代 {member.generation} 门人: <
+src/components/MerchantSuccessionSandbox.tsx:>{member.name}<
+src/components/MerchantSuccessionSandbox.tsx:>{member.identity === 'MERCHANT' ? '商贾' : member.identity === 'SCHOLAR' ? '士大夫' : member.identity}<
+src/components/MerchantSuccessionSandbox.tsx:>曹氏大账房走私记 logs<
+src/components/MilitarySandbox.tsx:>{log}<
+src/components/MilitarySandbox.tsx:>{gen.name}<
+src/components/MilitarySandbox.tsx:>{gen.command}<
+src/components/MilitarySandbox.tsx:>{gen.bravery}<
+src/components/MilitarySandbox.tsx:>{gen.tactics}<
+src/components/MilitarySandbox.tsx:>{gen.training}<
+src/components/MilitarySandbox.tsx:>{TRAIT_DETAILS[t].name}<
+src/components/MilitarySandbox.tsx:>{TRAIT_DETAILS[activeTrait].logic}<
+src/components/MilitarySandbox.tsx:>{morale} 士气点<
+src/components/MilitarySandbox.tsx:> {currentMorale.name} <
+src/components/MilitarySandbox.tsx:>{currentMorale.desc}<
+src/components/MilitarySandbox.tsx:>{combat.attackerRegular}<
+src/components/MilitarySandbox.tsx:>{combat.attackerSurprise}<
+src/components/MilitarySandbox.tsx:>~{Math.round((combat.attackerRegular + combat.attackerSurprise) * 0.95)} (精算)<
+src/components/MilitarySandbox.tsx:>{combat.defenderRegular}<
+src/components/MilitarySandbox.tsx:>{combat.defenderSurprise}<
+src/components/MilitarySandbox.tsx:>~{Math.round((combat.defenderRegular + combat.defenderSurprise) * 1.05)}<
+src/components/MilitarySandbox.tsx:>{land.id.substring(0, 4)}<
+src/components/MilitarySandbox.tsx:>{land.name}<
+src/components/MilitarySandbox.tsx:>{act.label}<
+src/components/MilitarySandbox.tsx:>{selectedGen.name}<
+src/components/MultiplayerSandbox.tsx:>{faction.name}<
+src/components/MultiplayerSandbox.tsx:>{faction.desc}<
+src/components/MultiplayerSandbox.tsx:>{activeRoomId}<
+src/components/MultiplayerSandbox.tsx:>{roomState.mandate}%<
+src/components/MultiplayerSandbox.tsx:>{roomState.stability}%<
+src/components/MultiplayerSandbox.tsx:>{roomState.coffers}<
+src/components/MultiplayerSandbox.tsx:>{roomState.emperorAge}岁<
+src/components/MultiplayerSandbox.tsx:>{roomState.agricultureIndex !== undefined ? roomState.agricultureIndex : 60}%<
+src/components/MultiplayerSandbox.tsx:>{roomState.commerceIndex !== undefined ? roomState.commerceIndex : 50}%<
+src/components/MultiplayerSandbox.tsx:>{incident}<
+src/components/MultiplayerSandbox.tsx:>寇部余党 (Remaining Strength)<
+src/components/MultiplayerSandbox.tsx:>{Math.round(((roomState.enemyPower !== undefined ? roomState.enemyPower : 45000) / (roomState.enemyMaxPower !== undefined ? roomState.enemyMaxPower : 45000)) * 100)}%<
+src/components/MultiplayerSandbox.tsx:>⚔️ 主力大举攻势 (Allied Offensive Stance)<
+src/components/MultiplayerSandbox.tsx:>🛡️ 凭高据隘死守 (Allied Defensive Stance)<
+src/components/MultiplayerSandbox.tsx:>🏹 险途秘密伏击 (Allied Ambush Stance)<
+src/components/MultiplayerSandbox.tsx:>🛡️ 朝廷王师: {alliedTroopsCount.toLocaleString()} 兵甲<
+src/components/MultiplayerSandbox.tsx:>🏹 边境寇叛: {hostileTroopsCount.toLocaleString()} 贼戈<
+src/components/MultiplayerSandbox.tsx:>📡 全境图上驻防师团雷达面板 ({mapUnitsList.length})<
+src/components/MultiplayerSandbox.tsx:>宿定于同联机房间ID<
+src/components/MultiplayerSandbox.tsx:>{unit.size.toLocaleString()}<
+src/components/MultiplayerSandbox.tsx:>部曲军号 Banner Name<
+src/components/MultiplayerSandbox.tsx:>神州边隘要冲 Sector<
+src/components/MultiplayerSandbox.tsx:>{b.name.split(' ')[0]}<
+src/components/MultiplayerSandbox.tsx:>募卒配额 Strength<
+src/components/MultiplayerSandbox.tsx:>战阵所属政权 Alignment<
+src/components/MultiplayerSandbox.tsx:>🗡️ 守护我朝王师 (Allied)<
+src/components/MultiplayerSandbox.tsx:>🏹 边关侵扰贼众 (Enemy Host)<
+src/components/MultiplayerSandbox.tsx:>15% 气血精力 (Vigor)<
+src/components/MultiplayerSandbox.tsx:>得：诱激破甲，下次打击 2.0x 伤害<
+src/components/MultiplayerSandbox.tsx:>{plan.planner}<
+src/components/MultiplayerSandbox.tsx:>已被触发协战: {plan.triggeredCount || 0} 次<
+src/components/MultiplayerSandbox.tsx:>{myFaction.avatar} {myFaction.name}<
+src/components/MultiplayerSandbox.tsx:>{customName}<
+src/components/MultiplayerSandbox.tsx:>{t.name}<
+src/components/MultiplayerSandbox.tsx:>{t.cost} 💰 贯<
+src/components/MultiplayerSandbox.tsx:>{t.desc}<
+src/components/MultiplayerSandbox.tsx:>{spiesList.length}<
+src/components/MultiplayerSandbox.tsx:>📍 潜伏要地：{spy.targetName}<
+src/components/MultiplayerSandbox.tsx:>({spy.targetLat.toFixed(2)}°, {spy.targetLng?.toFixed(2)}°)<
+src/components/MultiplayerSandbox.tsx:> 75 ? 'text-emerald-400' : 'text-amber-500'}>{spy.loyalty}%<
+src/components/MultiplayerSandbox.tsx:>{spy.credibility}%<
+src/components/MultiplayerSandbox.tsx:>{(myPlayerStats.lineageGeneration || 1) + 1} 代<
+src/components/MultiplayerSandbox.tsx:>第 {(myPlayerStats.lineageGeneration || 1)} 代 ➔ 第 {(myPlayerStats.lineageGeneration || 1) + 1} 代<
+src/components/MultiplayerSandbox.tsx:>100% 身命气血 (Full Vigor)<
+src/components/MultiplayerSandbox.tsx:>{myRankTitle}<
+src/components/MultiplayerSandbox.tsx:>气血寿数 (Vigor)<
+src/components/MultiplayerSandbox.tsx:>👑 官爵晋级历履 (Rank Advancement)<
+src/components/MultiplayerSandbox.tsx:>{myActionsCount} 次<
+src/components/MultiplayerSandbox.tsx:>+{myPoints * 300} 万贯<
+src/components/MultiplayerSandbox.tsx:>{Math.floor(myPoints * 3)} 阀<
+src/components/MultiplayerSandbox.tsx:>{log.role || '史宫'} Scribe<
+src/components/RealWorldMapBattle.tsx:> 35.5 && lng <
+src/components/RealWorldMapBattle.tsx:> 0 && iterations <
+src/components/RealWorldMapBattle.tsx:>= rows || nc <
+src/components/RealWorldMapBattle.tsx:> 0 && u.size <
+src/components/RealWorldMapBattle.tsx:>🐎 {isAllied ? '拔营疾驰' : '兵马规避'}<
+src/components/RealWorldMapBattle.tsx:>兵员: {u.size} {isCritical && <
+src/components/RealWorldMapBattle.tsx:>🌾 粮:{(u.provisions !== undefined ? u.provisions : 100)}%<
+src/components/RealWorldMapBattle.tsx:>[{u.creatorName}]<
+src/components/RealWorldMapBattle.tsx:> 95 || posY <
+src/components/RealWorldMapBattle.tsx:> 0 && u.size <
+src/components/RealWorldMapBattle.tsx:>🐎 {isAllied ? '拔营疾驰' : '兵马规避'}<
+src/components/RealWorldMapBattle.tsx:>{isAllied ? (alliedStance === 'offensive' ? '⚔️' : '🛡️') : (isCritical ? '⚠️' : '🏹')}<
+src/components/RealWorldMapBattle.tsx:>{u.name.split(' ')[0]}<
+src/components/RealWorldMapBattle.tsx:>🌾 粮:{(u.provisions !== undefined ? u.provisions : 100)}%<
+src/components/RealWorldMapBattle.tsx:>[{u.creatorName}]<
+src/components/RealWorldMapBattle.tsx:> 95 || posY <
+src/components/RealWorldMapBattle.tsx:> {activeAnalysis.bonusName}<
+src/components/RealWorldMapBattle.tsx:>{strat.effectDesc}<
+src/components/RealWorldMapBattle.tsx:>{t.desc}<
+src/components/RealWorldMapBattle.tsx:>阵战演武正在契受大将军阵法加成中... ({stratagemTimer} 刻)<
+src/components/RealWorldMapBattle.tsx:>CHRONO PLAYBACK / 时空推演回溯 (Tick #{timeTravelIndex + 1})<
+src/components/RealWorldMapBattle.tsx:>{activeAnalysis.lat}° N, {activeAnalysis.lng}° E<
+src/components/RealWorldMapBattle.tsx:>ALT: 3200m<
+src/components/RealWorldMapBattle.tsx:>LAT: 34.3°<
+src/components/RealWorldMapBattle.tsx:> 100 || posY1 <
+src/components/RealWorldMapBattle.tsx:> 100 || posX2 <
+src/components/RealWorldMapBattle.tsx:> 100 || posY2 <
+src/components/RealWorldMapBattle.tsx:> 95 || posY <
+src/components/RealWorldMapBattle.tsx:> 100 || posY <
+src/components/RealWorldMapBattle.tsx:>GOOGLE_MAPS_PLATFORM_KEY<
+src/components/RealWorldMapBattle.tsx:>点击即可前往谷歌开发者控制台，快速创建自己的 Maps 谷歌秘钥<
+src/components/RealWorldMapBattle.tsx:>Settings (⚙️齿轮)<
+src/components/RealWorldMapBattle.tsx:>Secrets (密令)<
+src/components/RealWorldMapBattle.tsx:>GOOGLE_MAPS_PLATFORM_KEY<
+src/components/RealWorldMapBattle.tsx:>CHRONO PLAYBACK / 时空推演回溯 (Tick #{timeTravelIndex + 1})<
+src/components/RealWorldMapBattle.tsx:>{selectedUnit.name}<
+src/components/RealWorldMapBattle.tsx:>代号：【{selectedSpy.name}】<
+src/components/RealWorldMapBattle.tsx:>(纬度:{pendingDeployCoords.lat.toFixed(4)}, 经度:{pendingDeployCoords.lng.toFixed(4)})<
+src/components/RealWorldMapBattle.tsx:>誓立统领: [{selectedUnit.creatorName}]<
+src/components/RealWorldMapBattle.tsx:>{toast.timestamp}<
+src/components/RealWorldMapBattle.tsx:>{toast.stanceBonusLabel}<
+src/components/RealWorldMapBattle.tsx:>Iconic【圮地骤雨】<
+src/components/RealWorldMapBattle.tsx:>3D/4D 战区天演控制台<
+src/components/RealWorldMapBattle.tsx:>天演版 v1.2<
+src/components/RealWorldMapBattle.tsx:>{mapTilt}°<
+src/components/RealWorldMapBattle.tsx:>{mapHeading}°<
+src/components/RealWorldMapBattle.tsx:>[{autoOrbit ? "运行" : "停止"}]<
+src/components/RealWorldMapBattle.tsx:>[{gisAltitudeMesh ? "开启" : "关闭"}]<
+src/components/RealWorldMapBattle.tsx:>⏳ 4D 时空流速<
+src/components/RealWorldMapBattle.tsx:>{timeSpeed} 倍速<
+src/components/RealWorldMapBattle.tsx:>{SHICHENS[displayedShichenIndex].period}<
+src/components/RealWorldMapBattle.tsx:>= 9 || displayedShichenIndex <
+src/components/RealWorldMapBattle.tsx:>当前 (共 {historyStack.length} 局)<
+src/components/RealWorldMapBattle.tsx:>{fogOfWarEnabled ? '🛡️ 迷雾开启' : '👁️ 迷雾彻见'}<
+src/components/RealWorldMapBattle.tsx:>{isSimulating ? '⏸ 暂缓天演' : '🔥 一键实装天演推演'}<
+src/components/RealWorldMapBattle.tsx:>{placedUnits.filter(u => u.side === 'allied').reduce((sum, u) => sum + u.size, 0)} 员<
+src/components/RealWorldMapBattle.tsx:>{placedUnits.filter(u => u.side === 'hostile').reduce((sum, u) => sum + u.size, 0)} 员<
+src/components/SpySandbox.tsx:>{t.name}<
+src/components/SpySandbox.tsx:>工本: {t.cost}金<
+src/components/SpySandbox.tsx:>{gold} 金<
+src/components/SpySandbox.tsx:>当前活跃谍网成员 ({spies.length} 名)<
+src/components/SpySandbox.tsx:>{spy.name}<
+src/components/SpySandbox.tsx:>秦晋飞简情报解譯 logs<
+src/components/UprisingCultureSandbox.tsx:>疆理图例 Key<
+src/components/UprisingCultureSandbox.tsx:>儒学官塾 (CONFUCIAN)<
+src/components/UprisingCultureSandbox.tsx:>玄门太虚 (TAOIST)<
+src/components/UprisingCultureSandbox.tsx:>白莲法会 (BUDDHIST)<
+src/components/UprisingCultureSandbox.tsx:>变乱红区 (Risk ≥ 65%)<
+src/components/UprisingCultureSandbox.tsx:>安定顺民绿区 (&lt; 35%)<
+src/components/UprisingCultureSandbox.tsx:>{rebelForce} 徒<
+src/components/UprisingCultureSandbox.tsx:>纪元 T.{data.turn}<
+src/components/UprisingCultureSandbox.tsx:>叛乱强度: {data.rebelForce ?? 0} 人<
+src/components/UprisingCultureSandbox.tsx:>【{data.events}】<
+src/components/UprisingCultureSandbox.tsx:>{activeRegion.influence.CONFUCIAN}%<
+src/components/UprisingCultureSandbox.tsx:>{activeRegion.influence.TAOIST}%<
+src/components/UprisingCultureSandbox.tsx:>{activeRegion.influence.BUDDHIST_SECTARIAN}%<
+src/components/UprisingCultureSandbox.tsx:>{metrics.localTax}%<
+src/components/UprisingCultureSandbox.tsx:>{metrics.localFamine}%<
+src/components/UprisingCultureSandbox.tsx:>{activeRegion.unrest}%<
+src/components/UprisingCultureSandbox.tsx:>{metrics.ideologicalResistance}%<
+src/components/UprisingCultureSandbox.tsx:>+{metrics.escalationRate}% / 纪元<
+src/components/UprisingCultureSandbox.tsx:>本境变乱兆候: {metrics.riskDelta}%<
+src/components/UprisingCultureSandbox.tsx:>{nationalStats.CONFUCIAN}%<
+src/components/UprisingCultureSandbox.tsx:>{nationalStats.TAOIST}%<
+src/components/UprisingCultureSandbox.tsx:>{nationalStats.BUDDHIST_SECTARIAN}%<
+src/components/UprisingCultureSandbox.tsx:>纪元 {hoveredSnap.turn}<
+src/components/UprisingCultureSandbox.tsx:>儒理法度 (Confucianism)<
+src/components/UprisingCultureSandbox.tsx:>老庄安息 (Taoism)<
+src/components/UprisingCultureSandbox.tsx:>白莲释渡 (Buddhism Sect)<
+src/components/UprisingCultureSandbox.tsx:>儒理制民 vs 苛征军饷<
+src/components/UprisingCultureSandbox.tsx:>天下课税负率 T: {taxRate}%<
+src/components/UprisingCultureSandbox.tsx:>荒歉饥荒指数 F: {famineLvl}%<
+src/components/UprisingCultureSandbox.tsx:>天子御前执案 Act Commands:<
+src/components/UprisingCultureSandbox.tsx:>{stateCoffers} 钱<
+src/components/UprisingCultureSandbox.tsx:>{refugeesPercent}% 丁口<
+src/components/UprisingCultureSandbox.tsx:>{rebelForce} 徒<
+src/components/UprisingCultureSandbox.tsx:>{log.text}<
+src/components/UprisingCultureSandbox.tsx:>{log.time}<
+src/components/WarPhilosophySandbox.tsx:>= -230 && year <
+src/components/WarPhilosophySandbox.tsx:>= -220 && year <
+src/components/WarPhilosophySandbox.tsx:>{currentScen.troops.regular}<
+src/components/WarPhilosophySandbox.tsx:>{currentScen.troops.surprise}<
+src/components/WarPhilosophySandbox.tsx:>{characterFate.militaryExp}<
+src/components/WarPhilosophySandbox.tsx:>{adv}<
+src/components/WarPhilosophySandbox.tsx:>{opt.text}<
+src/components/WarPhilosophySandbox.tsx:>核心：{opt.philosophy}<
+src/components/WarPhilosophySandbox.tsx:>{simulationResult.troopSurvivorPercent}% 大部胜存<
+src/components/WarPhilosophySandbox.tsx:>{simulationResult.comment}<
+src/components/WarPhilosophySandbox.tsx:>{aiReport.verdict || '上谋中用'}<
+src/components/WarPhilosophySandbox.tsx:>{aiReport.survivalChance || 80}%<
+src/components/WarPhilosophySandbox.tsx:>{opt.text}<
+src/components/WarPhilosophySandbox.tsx:>= tier.points && characterFate.militaryExp <
+src/components/WarPhilosophySandbox.tsx:>{tier.desc}<
+src/components/WarPhilosophySandbox.tsx:>要求: {tier.requirement}<
+src/components/WarPhilosophySandbox.tsx:>位阶积分: {tier.points}<
+src/components/WarPhilosophySandbox.tsx:>{ach.icon}<
+src/components/WarPhilosophySandbox.tsx:>{h.scenarioTitle}<
+src/components/WarPhilosophySandbox.tsx:>{h.timestamp}<
+src/components/WarPhilosophySandbox.tsx:>"{h.actionTaken}"<
+src/components/WarPhilosophySandbox.tsx:>{h.verdict}<
+src/components/WarPhilosophySandbox.tsx:>{h.prestigeChange}<
+src/components/WarPhilosophySandbox.tsx:>{h.expGain}<
+src/App.tsx:>suntzu666<
+src/App.tsx:>admin<
+src/App.tsx:>{dynastyFate.mandate}%<
+src/App.tsx:>{dynastyFate.coffers.toLocaleString()} 镒<
+src/App.tsx:>{dynastyFate.stability}%<
+src/App.tsx:>{warlordXp}/{maxXp}<
+src/App.tsx:>{item.name}<
+src/App.tsx:>1 岁朝 = {chronoSpeedSeconds >= 60 ? (chronoSpeedSeconds/60).toFixed(0) + ' 分钟' : chronoSpeedSeconds + ' 现实秒'}<
+src/App.tsx:>{t.name}<
+src/App.tsx:>{t.desc}<
+src/App.tsx:>{t.name}<
+src/App.tsx:>{t.desc}<
+src/App.tsx:>{t.name}<
+src/App.tsx:>{warlord.name}<
+src/App.tsx:>{warlord.level}<
+src/App.tsx:>{tabs.find(t=>t.id===warlord.active)?.name.split(' ')[0] || "推演"}<
+src/App.tsx:>{warlord.ping}<
+src/App.tsx:>{card.name}<
+src/App.tsx:>30S 持续<

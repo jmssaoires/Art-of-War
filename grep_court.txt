@@ -1,0 +1,425 @@
+1:import React, { useState } from 'react';
+2:import { EunuchGameState, QingliuActionState, Character } from '../types';
+3:import { Sparkles, Star, User, ShieldAlert, Award, FileSpreadsheet, Send, ShieldX, HelpCircle, Landmark, Swords, Scroll, UserCheck } from 'lucide-react';
+5:interface CourtSandboxProps {
+6:  activeCardId?: string | null;
+9:export default function CourtSandbox({ activeCardId = null }: CourtSandboxProps) {
+10:  const [role, setRole] = useState<'EUNUCH' | 'QINGLIU'>('EUNUCH');
+12:  // Eunuch state
+13:  const [eunuchState, setEunuchState] = useState<EunuchGameState>({
+14:    step: 'FAVORED',
+15:    emperorType: 'YOUTH',
+16:    yearsInPalace: 7,
+17:    dValue: 40,
+18:    sValue: 20,
+19:    eunuchWealth: 500,
+20:    eunuchInfluence: 30,
+21:    cleansedWindowActive: false,
+22:    courtLog: [
+28:  // Qingliu state
+29:  const [qingliuState, setQingliuState] = useState<QingliuActionState>({
+30:    phase: 'EVIDENCE',
+31:    evidenceCollected: 10,
+32:    publicOpinion: 25,
+33:    courtAllies: 2,
+34:    activeLog: [
+39:  // Emperor attributes for S/D multipliers
+40:  const emperorConfigs = {
+41:    YOUTH: { name: '少年天子', sMult: 0.8, dMult: 1.3, desc: 'D值易满，即位伊始不理政务，全赖大珰，亲政时猜忌突飞' },
+42:    勤政明君: { name: '勤政明君', sMult: 1.5, dMult: 0.6, desc: '极难讨好，猜忌值每日自然成长5点，对越权零容忍' },
+43:    多疑暴君: { name: '多疑暴君', sMult: 1.8, dMult: 0.9, desc: 'S值基础高且波动大。任何扩张权力的行为会成倍催化猜忌' },
+44:    WEAK: { name: '怠政庸君', sMult: 0.5, dMult: 1.5, desc: '唯求声色犬马，将玉玺放手让渡，权力巅峰几乎无限期延长' },
+45:    ROGUISH: { name: '鹰视狼顾', sMult: 1.2, dMult: 1.0, desc: '性格善变阴冷，时而大赏，时而重责，极难捉摸其心理' },
+48:  const currentEmp = emperorConfigs[eunuchState.emperorType as keyof typeof emperorConfigs] || emperorConfigs.YOUTH;
+50:  // Eunuch actions
+51:  const doEunuchAction = (action: 'TOYS' | 'INTEL' | 'BYPASS' | 'SELL_OFFICE' | 'ATTACK_QING') => {
+52:    let { dValue, sValue, eunuchWealth, eunuchInfluence, courtLog, step } = eunuchState;
+53:    const config = currentEmp;
+54:    let deltaD = 0;
+55:    let deltaS = 0;
+56:    let deltaW = 0;
+57:    let deltaI = 0;
+58:    let msg = '';
+60:    if (action === 'TOYS') {
+61:      // Provide entertainment
+62:      deltaD = Math.round(15 * config.dMult);
+63:      deltaS = Math.round(-3 * config.sMult);
+64:      deltaW = -50;
+65:      msg = `🎭 声色娱乐：花费金50两，寻访民间绝技、百戏珍禽。皇帝沉迷声色，对你更加依赖（D+${deltaD}, S-3）。`;
+66:    } else if (action === 'INTEL') {
+67:      // Offer secret gossip/intelligence
+68:      deltaD = Math.round(20 * config.dMult);
+69:      deltaS = Math.round(-5 * config.sMult);
+70:      deltaI = 5;
+71:      msg = `👁️ 共享密报：将几位清流大员在私邸聚餐饮酒、非议朝政的名单递于皇帝。皇帝大怒，大珰忠诚重现（D+${deltaD}, 影响力+5）。`;
+72:    } else if (action === 'BYPASS') {
+73:      // Overreach / bypass memorials
+74:      deltaD = Math.round(-5 * config.dMult);
+75:      deltaS = Math.round(18 * config.sMult);
+76:      deltaI = 15;
+77:      msg = `📜 矫正上奏：将言官弹劾你的奏章行进截留销毁，并伪造密折。你专权扩张（D-5, 猜忌S+${deltaS}, 影响+15）。`;
+78:    } else if (action === 'SELL_OFFICE') {
+79:      // Sell office
+80:      deltaS = Math.round(22 * config.sMult);
+81:      deltaW = 200;
+82:      deltaI = 10;
+83:      msg = `💰 卖官鬻爵：高价出售盐运使司缺口。揽金200两，但外廷清流清议炸锅，皇帝猜忌大加剧（S+${deltaS}）。`;
+84:    } else if (action === 'ATTACK_QING') {
+85:      // Attack scholars
+86:      if (qingliuState.evidenceCollected > 20) {
+87:        deltaS = Math.round(10 * config.sMult);
+88:        deltaI = 10;
+89:        setQingliuState(p => ({
+91:          evidenceCollected: Math.max(0, p.evidenceCollected - 30),
+92:          activeLog: ['⚠️ 廷杖打压！宦官发动文字狱，几家书院被抄家，证据火种被销毁。', ...p.activeLog]
+94:        msg = `🔨 党锢大网：掀起文字逆言案，流放数名言官，将清流的证据收集重创。猜忌上升（S+${deltaS}）。`;
+95:      } else {
+96:        msg = `⚠️ 难寻痛脚：清流儒臣在野并无实权，无法寻找致命错处，大珰在金殿上反被痛驳。`;
+100:    // Accumulate structures
+101:    const newD = Math.max(0, Math.min(100, dValue + deltaD));
+102:    const newS = Math.max(0, Math.min(100, sValue + deltaS));
+103:    const newW = Math.max(0, eunuchWealth + deltaW);
+104:    const newI = Math.max(0, eunuchInfluence + deltaI);
+106:    // Life cycles step update
+107:    let newStep = step;
+108:    if (newS > 75 && newS > newD) {
+109:      newStep = 'CRISIS';
+110:    } else if (newI > 70 && newD > 60) {
+111:      newStep = 'DICTATOR';
+112:    } else if (newS > 90) {
+113:      newStep = 'PURGED';
+116:    const windowActive = newS > newD;
+118:    setEunuchState({
+119:      step: newStep,
+120:      emperorType: eunuchState.emperorType,
+121:      yearsInPalace: eunuchState.yearsInPalace + 1,
+122:      dValue: newD,
+123:      sValue: newS,
+124:      eunuchWealth: newW,
+125:      eunuchInfluence: newI,
+126:      cleansedWindowActive: windowActive,
+127:      courtLog: [msg, ...courtLog].slice(0, 6)
+131:  // Qingliu actions 
+132:  const doQingliuAction = (act: 'SEARCH_VOUCHER' | 'LECTURE' | 'IMPEACH' | 'CONNECT_GENERAL') => {
+133:    let { phase, evidenceCollected, publicOpinion, courtAllies, activeLog } = qingliuState;
+134:    let msg = '';
+136:    if (act === 'SEARCH_VOUCHER') {
+137:      evidenceCollected = Math.min(100, evidenceCollected + 25);
+138:      msg = `🔍 暗探账目：东林书院弟子佯装行商，买通宦官偏宅管事，获得其贩卖私盐、克扣辽饷的第一手赃款单据（证据+25）。`;
+139:    } else if (act === 'LECTURE') {
+140:      publicOpinion = Math.min(100, publicOpinion + 20);
+141:      msg = `🏫 理学清议：集结江南九大书院，讲学议政，直陈十常侍之祸。天下民心群起称赞，舆论声势浩大（民意+20）。`;
+142:    } else if (act === 'CONNECT_GENERAL') {
+143:      courtAllies = Math.min(6, courtAllies + 1);
+144:      msg = `🛡️ 结纳九门：清流领袖拜会九门提督及驻军副将，向其宣讲忠义，为最后兵谏兵马清障（辅臣同盟+1）。`;
+145:    } else if (act === 'IMPEACH') {
+146:      if (evidenceCollected < 50 || publicOpinion < 40) {
+147:        msg = `⚠️ 廷议搁置：清流证据不足或舆论平淡。宦官当庭巧舌如簧撒娇示弱，清流反被冠以“朋党误国”流放。`;
+148:        evidenceCollected = Math.max(0, evidenceCollected - 20);
+149:      } else {
+150:        // Impeachment successful, push S value up dramatically!
+151:        setEunuchState(p => ({
+153:          sValue: Math.min(100, p.sValue + 45),
+154:          step: p.sValue + 45 > p.dValue ? 'CRISIS' : p.step,
+155:          courtLog: ['⚡ 惊天铁弹！清流当庭宣读三大罪状（假传密旨在先、私营私盐在后）。皇帝神情骤冷！', ...p.courtLog]
+157:        msg = `⚡ 龙颜惊雷：言官言辞慷慨，携百姓万民联署、及私盐账册，在金殿死谏。皇帝对宦官的猜忌值暴增45！`;
+158:        phase = 'BLOW';
+162:    setQingliuState({
+163:      phase: evidenceCollected > 60 && publicOpinion > 50 ? 'BLOW' : 'OPINION',
+164:      evidenceCollected,
+165:      publicOpinion,
+166:      courtAllies,
+167:      activeLog: [msg, ...activeLog].slice(0, 6)
+171:  const triggerCleansing = () => {
+172:    // Only works when S > D (the emperor is ready to purify)
+173:    const win = eunuchState.sValue > eunuchState.dValue;
+174:    let logMsg = '';
+176:    if (win) {
+177:      setEunuchState(p => ({
+179:        step: 'PURGED',
+180:        courtLog: ['💀 抄家清网：圣旨已出，九门步军星夜围剿魏督公府第。抄家搜出白银六十万两，魏党凌迟处死，其义子发配苦寒。', ...p.courtLog]
+182:      logMsg = `🏆 清算大捷！皇帝信任天平在猜忌极点倾斜，密调羽林卫斩杀十常侍，十族清剿，朝纲重振，儒家法统胜利！`;
+183:    } else {
+184:      logMsg = `❌ 清算流产！由于皇帝对宦官的心理依赖（D值: ${eunuchState.dValue}）依然过重，皇帝在紧要关头收回密诏，并对发起行动的清流降旨在党禁中诛杀。`;
+187:    setQingliuState(p => ({
+189:      activeLog: [logMsg, ...p.activeLog]
+193:  return (
+194:    <div className="bg-white/40 border border-[#1A1A1A]/15 p-6 rounded-md text-[#1A1A1A]" id="court-sandbox-root">
+195:      {activeCardId && (
+196:        <div className="mb-4 bg-[#8C2F39]/5 border border-[#8C2F39]/30 p-3 rounded flex items-center justify-between text-xs animate-pulse text-[#8C2F39] font-serif shrink-0">
+197:          <div className="flex items-center gap-2">
+198:            <Sparkles className="w-4 h-4 text-[#8C2F39] animate-spin" />
+199:            <div>
+200:              <span className="font-bold">【极速朝堂法纪鸣震 · {
+201:                activeCardId === 'qizheng' ? '《奇正相生》首级御宝' :
+202:                activeCardId === 'huogong' ? '《火攻奇袭》烈炎秘卷' :
+203:                activeCardId === 'wujian' ? '《五间妙连》通幽罗网' :
+205:              }】</span>
+206:              <span className="text-stone-700 ml-1.5 font-sans">
+207:                {activeCardId === 'wujian' 
+210:              </span>
+211:            </div>
+212:          </div>
+213:          <span className="font-mono text-[9px] bg-[#8C2F39] text-[#FAF8F5] px-2 py-0.5 rounded font-black uppercase tracking-wider">星相加成大运</span>
+214:        </div>
+216:      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+217:        <div>
+218:          <h2 className="text-xl font-serif font-black text-[#8C2F39] flex items-center gap-2">
+219:            <Landmark className="text-[#8C2F39] w-5 h-5 font-bold" />
+222:          <p className="text-xs text-[#1A1A1A]/60 mt-1 font-mono">
+225:        </div>
+227:        {/* Role Toggle Selector */}
+228:        <div className="flex border border-[#1A1A1A]/15 bg-white/50 backdrop-blur-sm rounded p-0.5 self-end">
+229:          <button
+230:            id="role-btn-eunuch"
+231:            onClick={() => setRole('EUNUCH')}
+232:            className={`px-3 py-1 text-xs font-serif rounded transition ${
+233:              role === 'EUNUCH' ? 'bg-[#8C2F39] text-[#F5F2ED] font-black' : 'text-[#1A1A1A]/60 hover:text-[#1A1A1A]'
+236:            掌大珰 (Eunuch)
+237:          </button>
+238:          <button
+239:            id="role-btn-qingliu"
+240:            onClick={() => setRole('QINGLIU')}
+241:            className={`px-3 py-1 text-xs font-serif rounded transition ${
+242:              role === 'QINGLIU' ? 'bg-[#8C2F39] text-[#F5F2ED] font-black' : 'text-[#1A1A1A]/60 hover:text-[#1A1A1A]'
+245:            领清流 (Qingliu)
+246:          </button>
+247:        </div>
+248:      </div>
+250:      {/* Trust Dual Axis Grid */}
+251:      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 bg-white/50 p-4 rounded border border-[#1A1A1A]/15 mb-6 shadow-xs">
+252:        {/* State meter */}
+253:        <div className="md:col-span-4 space-y-4">
+254:          <h3 className="text-xs font-mono text-[#1A1A1A]/80 uppercase tracking-widest border-b border-[#1A1A1A]/15 pb-1.5 flex justify-between font-bold">
+255:            <span>天心圣意指标</span>
+256:            <span className="text-[#5A5A40] font-bold">{currentEmp.name}</span>
+259:          <div>
+260:            <div className="flex justify-between text-xs font-mono mb-1">
+261:              <span className="text-[#5A5A40] font-bold flex items-center gap-1">皇恩依赖度 (D)</span>
+262:              <span className="text-[#5A5A40] font-bold">{eunuchState.dValue} / 100</span>
+263:            </div>
+264:            <div className="w-full bg-[#1A1A1A]/5 h-2.5 rounded-full overflow-hidden">
+265:              <div 
+266:                className="h-full bg-[#5A5A40] rounded-full transition-all duration-300"
+267:                style={{ width: `${eunuchState.dValue}%` }}
+268:              ></div>
+269:            </div>
+270:          </div>
+272:          <div>
+273:            <div className="flex justify-between text-xs font-mono mb-1">
+274:              <span className="text-[#8C2F39] font-bold flex items-center gap-1">
+276:                <span className="text-[9px] text-[#F5F2ED] bg-[#8C2F39] px-1 rounded font-bold">隐藏</span>
+277:              </span>
+278:              <span className="text-[#8C2F39] font-bold">{eunuchState.sValue} / 100</span>
+279:            </div>
+280:            <div className="w-full bg-[#1A1A1A]/5 h-2.5 rounded-full overflow-hidden">
+281:              <div 
+282:                className="h-full bg-[#8C2F39] rounded-full transition-all duration-300"
+283:                style={{ width: `${eunuchState.sValue}%` }}
+284:              ></div>
+285:            </div>
+286:          </div>
+288:          <div className="bg-white/60 p-2 text-[11px] text-[#1A1A1A]/80 rounded border border-[#1A1A1A]/5 font-serif">
+289:            <strong>皇帝性格点评:</strong> {currentEmp.desc}
+290:          </div>
+292:          <div className="grid grid-cols-5 gap-1 text-[9px] font-mono">
+293:            {Object.keys(emperorConfigs).map((type) => (
+294:              <button
+295:                key={type}
+296:                id={`emp-type-${type}`}
+297:                onClick={() => setEunuchState(p => ({ ...p, emperorType: type }))}
+298:                className={`py-1 rounded text-center border transition ${
+299:                  eunuchState.emperorType === type
+300:                    ? 'border-[#8C2F39] bg-[#8C2F39]/10 text-[#8C2F39] font-bold'
+301:                    : 'border-[#1A1A1A]/10 text-[#1A1A1A]/50 hover:bg-black/5 hover:text-[#1A1A1A]'
+304:                {emperorConfigs[type as keyof typeof emperorConfigs].name.substring(0, 2)}
+305:              </button>
+307:          </div>
+308:        </div>
+310:        {/* Visual Map of distrust balance */}
+311:        <div className="md:col-span-8 flex flex-col justify-between">
+312:          <div className="flex-1 flex gap-4 items-center justify-center p-3 relative h-36">
+313:            <div className="absolute top-1 left-2 text-[9px] font-mono text-[#1A1A1A]/60 tracking-wider">
+315:            </div>
+317:            <div className="flex flex-col items-center justify-center w-full mt-4">
+318:              <div className="text-xs uppercase font-mono font-bold px-2 py-1 bg-white/80 border border-[#1A1A1A]/15 rounded text-[#1A1A1A]">
+320:                <span className={`px-1.5 py-0.5 rounded font-bold ${
+321:                  eunuchState.step === 'PURGED' ? 'bg-red-100 text-[#8C2F39] line-through' :
+322:                  eunuchState.step === 'CRISIS' ? 'bg-[#8C2F39]/10 text-[#8C2F39] animate-pulse' :
+323:                  eunuchState.step === 'DICTATOR' ? 'bg-[#5A5A40]/10 text-[#5A5A40]' : 'bg-[#5A5A40] text-[#F5F2ED]'
+325:                  {eunuchState.step === 'FAVORED' && '『宠冠内廷得幸』'}
+326:                  {eunuchState.step === 'DICTATOR' && '『权倾天下专执』'}
+327:                  {eunuchState.step === 'CRISIS' && '『危亡大谋危机』'}
+328:                  {eunuchState.step === 'PURGED' && '『朝纲清算清洗』'}
+329:                </span>
+330:              </div>
+332:              {/* Graphical Scale representing S/D comparison */}
+333:              <div className="w-full max-w-sm mt-5 space-y-1">
+334:                <div className="flex justify-between text-[10px] text-[#1A1A1A]/60 font-mono">
+335:                  <span>宦官专断 (D)</span>
+336:                  <span>清官反扑杀 (S)</span>
+337:                </div>
+338:                <div className="h-2 bg-[#1A1A1A]/10 rounded-full flex overflow-hidden">
+339:                  <div className="bg-[#5A5A40]" style={{ width: `${(eunuchState.dValue / (eunuchState.dValue + eunuchState.sValue || 1)) * 100}%` }}></div>
+340:                  <div className="bg-[#8C2F39] animate-pulse" style={{ width: `${(eunuchState.sValue / (eunuchState.dValue + eunuchState.sValue || 1)) * 100}%` }}></div>
+341:                </div>
+342:                <div className="text-center">
+343:                  {eunuchState.sValue > eunuchState.dValue ? (
+344:                    <span className="text-[10px] text-[#8C2F39] animate-pulse font-mono font-bold tracking-wider">● 皇帝清洗窗口正开启 (S &gt; D)！清流可发动【圣旨清抄】</span>
+346:                    <span className="text-[10px] text-[#5A5A40] font-mono tracking-wider">● 极权稳固 (D &gt; S) 皇帝心怀庇护，朝堂任予取予夺</span>
+348:                </div>
+349:              </div>
+350:            </div>
+351:          </div>
+353:          <div className="flex justify-between items-center bg-white/70 p-2 rounded text-[11px] font-mono border border-[#1A1A1A]/10">
+354:            <span>魏珰财富：<strong className="text-[#8C2F39] text-xs font-bold">{eunuchState.eunuchWealth}两</strong></span>
+355:            <span>武断势力：<strong className="text-[#5A5A40] text-xs font-bold">{eunuchState.eunuchInfluence}层</strong></span>
+356:            <span>掖庭工龄：<strong className="text-[#1A1A1A] font-bold">{eunuchState.yearsInPalace} 回合</strong></span>
+357:          </div>
+358:        </div>
+359:      </div>
+361:      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+362:        {/* Eunuch Panel */}
+363:        <div className={`p-4 rounded border transition ${
+364:          role === 'EUNUCH' ? 'bg-white/60 border-[#8C2F39]/35 shadow-sm' : 'bg-white/20 opacity-60 border-[#1A1A1A]/10'
+366:          <div className="flex justify-between items-center mb-3 border-b border-[#1A1A1A]/5 pb-1">
+367:            <h4 className="text-xs font-serif font-black text-[#8C2F39]">
+370:            <span className="text-[9px] text-[#1A1A1A]/40 font-mono">第3、4模块专用</span>
+371:          </div>
+373:          <p className="text-xs text-[#1A1A1A]/70 mb-4 leading-relaxed font-serif">
+377:          <div className="grid grid-cols-2 gap-2">
+378:            <button
+379:               id="eunuch-action-toys"
+380:               disabled={role !== 'EUNUCH' || eunuchState.step === 'PURGED'}
+381:               onClick={() => doEunuchAction('TOYS')}
+382:               className="bg-white hover:bg-neutral-50 border border-[#1A1A1A]/15 hover:border-[#8C2F39]/50 text-[#1A1A1A] text-xs py-2 px-3 rounded text-left transition flex flex-col justify-between shadow-xs disabled:opacity-40"
+384:              <div className="flex justify-between items-center w-full">
+385:                <span className="font-bold text-[#1A1A1A]">声色贡宠</span>
+386:                <span className="text-[9px] text-[#8C2F39] font-bold">-50金</span>
+387:              </div>
+388:              <span className="text-[9px] text-[#1A1A1A]/50 mt-1">大幅上升帝依赖 抑制猜忌成长</span>
+389:            </button>
+391:            <button
+392:               id="eunuch-action-intel"
+393:               disabled={role !== 'EUNUCH' || eunuchState.step === 'PURGED'}
+394:               onClick={() => doEunuchAction('INTEL')}
+395:               className="bg-white hover:bg-neutral-50 border border-[#1A1A1A]/15 hover:border-[#8C2F39]/50 text-[#1A1A1A] text-xs py-2 px-3 rounded text-left transition flex flex-col justify-between shadow-xs disabled:opacity-40"
+397:              <div className="flex justify-between items-center w-full">
+398:                <span className="font-bold text-[#1A1A1A]">私递外朝密折</span>
+399:                <span className="text-[9px] text-[#5A5A40] font-bold">+5影响</span>
+400:              </div>
+401:              <span className="text-[9px] text-[#1A1A1A]/50 mt-1">献上清流黑料 树立自身防卫</span>
+402:            </button>
+404:            <button
+405:               id="eunuch-action-bypass"
+406:               disabled={role !== 'EUNUCH' || eunuchState.step === 'PURGED'}
+407:               onClick={() => doEunuchAction('BYPASS')}
+408:               className="bg-white hover:bg-neutral-50 border border-[#1A1A1A]/15 hover:border-[#8C2F39]/50 text-[#1A1A1A] text-xs py-2 px-3 rounded text-left transition flex flex-col justify-between col-span-2 shadow-xs disabled:opacity-40"
+410:              <div className="flex justify-between items-center w-full font-bold">
+411:                <span className="font-bold text-[#1A1A1A]">中途截奏圣裁 (矫诏越权)</span>
+412:                <span className="text-[9px] text-[#8C2F39]">+18猜忌</span>
+413:              </div>
+414:              <span className="text-[9px] text-[#1A1A1A]/50 mt-1">私自抽干下臣弹劾 扩充魏督公爪牙。由于侵害君主威权，引发极高猜忌积累</span>
+415:            </button>
+417:            <button
+418:               id="eunuch-action-sell"
+419:               disabled={role !== 'EUNUCH' || eunuchState.step === 'PURGED'}
+420:               onClick={() => doEunuchAction('SELL_OFFICE')}
+421:               className="bg-white hover:bg-neutral-50 border border-[#1A1A1A]/15 hover:border-[#8C2F39]/50 text-[#1A1A1A] text-xs py-2 px-3 rounded text-left transition flex flex-col justify-between shadow-xs disabled:opacity-40"
+423:              <div className="flex justify-between items-center w-full">
+424:                <span className="font-bold text-[#1A1A1A]">盐道授职</span>
+425:                <span className="text-[9px] text-[#5A5A40] font-bold">+200金</span>
+426:              </div>
+427:              <span className="text-[9px] text-[#1A1A1A]/50 mt-1">出卖度支缺口 产生极高财富</span>
+428:            </button>
+430:            <button
+431:               id="eunuch-action-attack"
+432:               disabled={role !== 'EUNUCH' || eunuchState.step === 'PURGED'}
+433:               onClick={() => doEunuchAction('ATTACK_QING')}
+434:               className="bg-white hover:bg-neutral-50 border border-[#1A1A1A]/15 hover:border-[#8C2F39]/50 text-[#8C2F39] text-xs py-2 px-3 rounded text-left transition flex flex-col justify-between shadow-xs disabled:opacity-40"
+436:              <div className="flex justify-between items-center w-full font-bold">
+437:                <span>文字党锢清洗</span>
+438:                <span className="text-[9px] text-[#1A1A1A]/50">压制</span>
+439:              </div>
+440:              <span className="text-[9px] text-[#1A1A1A]/50 mt-1">疯狂绞碎清流密谋的物证卷宗</span>
+441:            </button>
+442:          </div>
+443:        </div>
+445:        {/* Qingliu Panel */}
+446:        <div className={`p-4 rounded border transition ${
+447:          role === 'QINGLIU' ? 'bg-white/60 border-[#8C2F39]/35 shadow-sm' : 'bg-white/20 opacity-60 border-[#1A1A1A]/10'
+449:          <div className="flex justify-between items-center mb-3 border-b border-[#1A1A1A]/5 pb-1">
+450:            <h4 className="text-xs font-serif font-black text-[#5A5A40]">
+453:            <span className="text-[9px] text-[#1A1A1A]/40 font-mono">第5模块专用</span>
+454:          </div>
+456:          <p className="text-xs text-[#1A1A1A]/70 mb-4 leading-relaxed font-serif">
+460:          <div className="grid grid-cols-2 gap-2">
+461:            <button
+462:               id="qingliu-action-search"
+463:               disabled={role !== 'QINGLIU' || eunuchState.step === 'PURGED'}
+464:               onClick={() => doQingliuAction('SEARCH_VOUCHER')}
+465:               className="bg-white hover:bg-neutral-50 border border-[#1A1A1A]/15 hover:border-[#8C2F39]/50 text-[#1A1A1A] text-xs py-2 px-3 rounded text-left transition flex flex-col justify-between shadow-xs disabled:opacity-40"
+467:              <div className="flex justify-between items-center w-full">
+468:                <span className="font-bold text-[#1A1A1A]">暗置密探彻查</span>
+469:                <span className="text-[9px] text-[#5A5A40] font-bold">+25证</span>
+470:              </div>
+471:              <span className="text-[9px] text-[#1A1A1A]/50 mt-1">搜集侵占辽饷、私营私盐铁证</span>
+472:            </button>
+474:            <button
+475:               id="qingliu-action-lecture"
+476:               disabled={role !== 'QINGLIU' || eunuchState.step === 'PURGED'}
+477:               onClick={() => doQingliuAction('LECTURE')}
+478:               className="bg-white hover:bg-neutral-50 border border-[#1A1A1A]/15 hover:border-[#8C2F39]/50 text-[#1A1A1A] text-xs py-2 px-3 rounded text-left transition flex flex-col justify-between shadow-xs disabled:opacity-40"
+480:              <div className="flex justify-between items-center w-full">
+481:                <span className="font-bold text-[#1A1A1A]">私人书院讲学</span>
+482:                <span className="text-[9px] text-[#5A5A40] font-bold">+20舆</span>
+483:              </div>
+484:              <span className="text-[9px] text-[#1A1A1A]/50 mt-1">清议造神，散布异端灾星凶兆</span>
+485:            </button>
+487:            <button
+488:               id="qingliu-action-impeach"
+489:               disabled={role !== 'QINGLIU' || eunuchState.step === 'PURGED'}
+490:               onClick={() => doQingliuAction('CONNECT_GENERAL')}
+491:               className="bg-white hover:bg-neutral-50 border border-[#1A1A1A]/15 hover:border-[#8C2F39]/50 text-[#1A1A1A] text-xs py-2 px-3 rounded text-left transition flex flex-col justify-between shadow-xs disabled:opacity-40"
+493:              <div className="flex justify-between items-center w-full">
+494:                <span className="font-bold text-[#1A1A1A]">游说卫戍将军</span>
+495:                <span className="text-[9px] text-[#5A5A40] font-bold">+1同盟</span>
+496:              </div>
+497:              <span className="text-[9px] text-[#1A1A1A]/50 mt-1">结拜军事盟友，为兵谏预作准备</span>
+498:            </button>
+500:            <button
+501:               id="qingliu-action-strike"
+502:               disabled={role !== 'QINGLIU' || eunuchState.step === 'PURGED'}
+503:               onClick={() => doQingliuAction('IMPEACH')}
+504:               className="bg-white hover:bg-neutral-50 border border-[#1A1A1A]/15 hover:border-[#8C2F39]/50 text-[#8C2F39] text-xs py-2 px-3 rounded text-left transition flex flex-col justify-between shadow-xs disabled:opacity-40"
+506:              <div className="flex justify-between items-center w-full font-bold">
+507:                <span>【致命狂弹弹劾】</span>
+508:                <span className="text-[9px] text-[#1A1A1A]/50">死谏</span>
+509:              </div>
+510:              <span className="text-[9px] text-[#1A1A1A]/50 mt-1">需要积累50%以上证据及40%舆论</span>
+511:            </button>
+513:            <button
+514:              id="qingliu-action-cleansing"
+515:              disabled={role !== 'QINGLIU' || eunuchState.step === 'PURGED'}
+516:              onClick={triggerCleansing}
+517:              className={`w-full text-xs font-serif font-black py-2.5 px-3 rounded sm:col-span-2 shadow transition flex items-center justify-center gap-2 ${
+518:                eunuchState.sValue > eunuchState.dValue
+519:                  ? 'bg-[#8C2F39] text-[#F5F2ED] hover:bg-[#8C2F39]/90'
+520:                  : 'bg-neutral-200 text-[#1A1A1A]/40 cursor-not-allowed'
+523:              <ShieldAlert className="w-4 h-4" />
+525:            </button>
+526:          </div>
+527:        </div>
+528:      </div>
+530:      {/* Interactive Log Console */}
+531:      <div className="bg-white/80 rounded border border-[#1A1A1A]/15 p-4 mt-6">
+532:        <h4 className="text-[10px] font-mono text-[#1A1A1A]/60 tracking-wider mb-2 font-bold uppercase">咸阳宫·太极殿密闻秘卷 Logs</h4>
+533:        <div className="space-y-1.5 text-xs font-mono">
+534:          {role === 'EUNUCH' ? (
+535:            eunuchState.courtLog.map((log, i) => (
+536:              <div key={i} className="text-[#8C2F39] border-l-2 border-[#8C2F39]/20 pl-2 py-0.5">{log}</div>
+539:            qingliuState.activeLog.map((log, i) => (
+540:              <div key={i} className="text-[#5A5A40] border-l-2 border-[#5A5A40]/20 pl-2 py-0.5">{log}</div>
+543:        </div>
+544:      </div>
+545:    </div>

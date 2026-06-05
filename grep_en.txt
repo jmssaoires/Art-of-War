@@ -1,0 +1,299 @@
+src/components/CourtSandbox.tsx:256:            <span className="text-[#5A5A40] font-bold">{currentEmp.name}</span>
+src/components/CourtSandbox.tsx:262:              <span className="text-[#5A5A40] font-bold">{eunuchState.dValue} / 100</span>
+src/components/CourtSandbox.tsx:278:              <span className="text-[#8C2F39] font-bold">{eunuchState.sValue} / 100</span>
+src/components/CourtSandbox.tsx:354:            <span>魏珰财富：<strong className="text-[#8C2F39] text-xs font-bold">{eunuchState.eunuchWealth}两</strong></span>
+src/components/CourtSandbox.tsx:355:            <span>武断势力：<strong className="text-[#5A5A40] text-xs font-bold">{eunuchState.eunuchInfluence}层</strong></span>
+src/components/CourtSandbox.tsx:356:            <span>掖庭工龄：<strong className="text-[#1A1A1A] font-bold">{eunuchState.yearsInPalace} 回合</strong></span>
+src/components/CourtSandbox.tsx:532:        <h4 className="text-[10px] font-mono text-[#1A1A1A]/60 tracking-wider mb-2 font-bold uppercase">咸阳宫·太极殿密闻秘卷 Logs</h4>
+src/components/DiplomacySandbox.tsx:158:                      <span className="text-xs font-serif font-black truncate block max-w-[80%] text-[#1A1A1A]">{n.name}</span>
+src/components/DiplomacySandbox.tsx:170:                        局势: <strong className={n.relationship >= 0 ? "text-[#5A5A40] font-bold" : "text-[#8C2F39] font-bold"}>{n.relationship}</strong>
+src/components/DiplomacySandbox.tsx:187:                      <span className={`font-bold ${farNear > 80 ? 'text-[#5A5A40]' : farNear < 10 ? 'text-[#8C2F39]' : 'text-[#1A1A1A]/85'}`}>
+src/components/DiplomacySandbox.tsx:201:              针对目标：<span className="text-[#8C2F39] font-black">{selectedNation.name}</span> 的外交指令
+src/components/DiplomacySandbox.tsx:279:                      <span className="text-xs font-bold block">{item.label}</span>
+src/components/DiplomacySandbox.tsx:280:                      <span className="text-[8px] opacity-70 block mt-0.5 font-mono">{item.desc}</span>
+src/components/DynastyTimeline.tsx:343:        const lastRelativeNode = sortedPoints.filter(p => p.year <= currentBCEYear).pop() || sortedPoints[0];
+src/components/DynastyTimeline.tsx:460:    const lastRelativeNode = sortedPoints.filter(p => p.year <= proposalYear).pop() || sortedPoints[0];
+src/components/DynastyTimeline.tsx:675:        const baselines = timelinePoints.filter(p => p.branch === 'baseline' && p.year < node.year);
+src/components/DynastyTimeline.tsx:681:        const sameBranch = timelinePoints.filter(p => p.branch === node.branch && p.year < node.year);
+src/components/DynastyTimeline.tsx:686:          const baselines = timelinePoints.filter(p => p.branch === 'baseline' && p.year <= node.year);
+src/components/DynastyTimeline.tsx:707:          const baselines = timelinePoints.filter(p => p.branch === 'baseline' && p.year < current!.year);
+src/components/DynastyTimeline.tsx:712:          const sameBranch = timelinePoints.filter(p => p.branch === current!.branch && p.year < current!.year);
+src/components/DynastyTimeline.tsx:716:            const baselines = timelinePoints.filter(p => p.branch === 'baseline' && p.year <= current!.year);
+src/components/DynastyTimeline.tsx:878:                <span class="text-amber-400 font-bold font-serif">${d.year < 0 ? '公元前 ' + Math.abs(d.year) + ' 年' : d.year + ' 年'}</span>
+src/components/DynastyTimeline.tsx:883:              <div class="font-sans text-[11px] font-black text-stone-200 leading-snug">${d.title}</div>
+src/components/DynastyTimeline.tsx:884:              <p class="text-stone-400 text-[9px] leading-relaxed italic">“ ${d.desc.substring(0, 50)}${d.desc.length > 50 ? '...' : ''} ”</p>
+src/components/DynastyTimeline.tsx:887:                  <span class="text-stone-500">天命:</span> <strong class="text-amber-400 font-bold">${d.mandate}%</strong>
+src/components/DynastyTimeline.tsx:890:                  <span class="text-stone-500">稳定:</span> <strong class="text-teal-400 font-bold">${d.stability}%</strong>
+src/components/DynastyTimeline.tsx:997:            <span className="text-stone-500 block text-[7.5px] font-black">时速转换轴率 (SPEED SETTING)</span>
+src/components/DynastyTimeline.tsx:999:              <span className="text-amber-400 font-bold">{selectedSpeed.label}</span>
+src/components/DynastyTimeline.tsx:1005:            <span className="text-stone-500 block text-[7.5px] font-black">当前时流时令 (TIME COMPASS)</span>
+src/components/DynastyTimeline.tsx:1069:              <span className="text-[7.5px] block font-mono opacity-80 uppercase tracking-widest">{pres.label}</span>
+src/components/DynastyTimeline.tsx:1070:              <h5 className="font-serif font-black mt-1 leading-tight">{pres.title}</h5>
+src/components/DynastyTimeline.tsx:1085:            <h5 className="font-serif font-black mt-1 leading-tight">拂平历史褶皱 (Reset)</h5>
+src/components/DynastyTimeline.tsx:1104:                <span>正史基轴 (Baseline)</span>
+src/components/DynastyTimeline.tsx:1108:                <span>始皇长生 (Qin Eternal)</span>
+src/components/DynastyTimeline.tsx:1112:                <span>诸子共和 (Republic)</span>
+src/components/DynastyTimeline.tsx:1116:                <span>霸王联邦 (Federal)</span>
+src/components/DynastyTimeline.tsx:1120:                <span>余部异闻 (Custom)</span>
+src/components/DynastyTimeline.tsx:1126:              <span className="text-[8.5px] font-black text-stone-500 uppercase font-mono">天轨筛选 / PATH FOCUS:</span>
+src/components/DynastyTimeline.tsx:1165:              <span>💡 将折线图中命势 node 点击，即可在右侧抄牍中研读该天命褶皱细节 ➡</span>
+src/components/DynastyTimeline.tsx:1226:                        <strong className="text-amber-400 text-xs">{selectedPoint.mandate}%</strong>
+src/components/DynastyTimeline.tsx:1230:                        <strong className="text-teal-400 text-xs">{selectedPoint.stability}%</strong>
+src/components/DynastyTimeline.tsx:1235:                      <strong className="text-yellow-500 font-bold">{selectedPoint.coffers.toLocaleString()} 镒</strong>
+src/components/DynastyTimeline.tsx:1283:                  <span className="text-amber-400 font-bold font-serif">公元前 {Math.abs(proposalYear)} 年</span>
+src/components/DynastyTimeline.tsx:1296:                <option value="custom">🛡️ 自定义圣王偏属轨 (Custom Branch)</option>
+src/components/DynastyTimeline.tsx:1297:                <option value="qin_forever">👑 万世神秦霸权路 (Qin Everlasting)</option>
+src/components/DynastyTimeline.tsx:1298:                <option value="republic">🔮 诸子百家大共和 (Hundred Schools)</option>
+src/components/DynastyTimeline.tsx:1299:                <option value="feudal_dukedoms">⚔️ 楚霸群雄杜帝法 (Chivalric Dukedoms)</option>
+src/components/GddBuilder.tsx:601:                    <span className="font-serif">单元 {m.number} — {m.title}</span>
+src/components/GddBuilder.tsx:619:                    <span className="font-serif">单元 {m.number} — {m.title}</span>
+src/components/GddBuilder.tsx:731:                <span>正在执行并发蒙特卡洛客户模型仿真(Step: {simulationProgress}%)</span>
+src/components/GddBuilder.tsx:732:                <span>正在扫描 System Loop & Exception Hooks</span>
+src/components/GddBuilder.tsx:752:                  <span>🛰️ 行为仿真控制台 (Agent Simulation Logs)</span>
+src/components/GddBuilder.tsx:753:                  <span className="text-[8px] scroll-smooth font-normal">Active Clients: 20,700</span>
+src/components/GddBuilder.tsx:837:                      <span className="text-base mb-0.5">{c.avatar}</span>
+src/components/GddBuilder.tsx:838:                      <span>{c.name.split(' ')[0]}</span>
+src/components/GddBuilder.tsx:847:                      <h4 className="font-serif font-black text-stone-900">{selectedCohort.name}</h4>
+src/components/GddBuilder.tsx:848:                      <p className="text-[10px] text-stone-500 font-sans mt-0.5">{selectedCohort.sub}</p>
+src/components/GddBuilder.tsx:858:                      <span className="text-[#8C2F39] font-black">{selectedCohort.focusTab}</span>
+src/components/GddBuilder.tsx:862:                      <span className="text-amber-800 font-black">{selectedCohort.retention7d} (基准30%)</span>
+src/components/GddBuilder.tsx:973:                <span className="text-[10px] font-mono text-stone-500 uppercase tracking-wider block font-bold">竞品深度诊断索引 (Overview)：</span>
+src/components/GddBuilder.tsx:986:                      <p className="text-[10px] text-stone-500 leading-relaxed font-sans">{p.desc}</p>
+src/components/GddBuilder.tsx:999:                  <span className="text-[9px] font-mono text-stone-400 font-bold uppercase tracking-wider block">PROS, CONS & VIABILITY ANALYTICS</span>
+src/components/GddBuilder.tsx:1538:                  <span className="text-lg">{item.icon}</span>
+src/components/GddBuilder.tsx:1543:                <p className="text-[10px] text-stone-500 leading-normal">{item.desc}</p>
+src/components/GddBuilder.tsx:1551:              <span>✍️ 给 AI 的特调机制改良指令 (Custom Innovation Prompts)</span>
+src/components/GddBuilder.tsx:1674:                      <span>algorithm_core.ts (算法控制单元)</span>
+src/components/GddBuilder.tsx:1676:                    <span>TypeScript v5+ Code View</span>
+src/components/GddBuilder.tsx:1705:                            <span className="truncate">{variable.name}</span>
+src/components/GddBuilder.tsx:1711:                            <span className="text-[9px] text-stone-400 font-mono">{variable.min}</span>
+src/components/GddBuilder.tsx:1726:                            <span className="text-[9px] text-stone-400 font-mono">{variable.max}</span>
+src/components/GddBuilder.tsx:1788:                              <span className="text-emerald-700">🏆 天演胜局 (SUCCESS BATTLEVON)</span>
+src/components/GddBuilder.tsx:1790:                              <span className="text-rose-800">⚠️ 天演命失 (FAILURE SLIPOUT)</span>
+src/components/GddBuilder.tsx:1793:                          <p>{sandboxTestResult}</p>
+src/components/GddBuilder.tsx:1795:                            <span>计算概率公式: {innovationResult.sandboxSimulationConfig?.chanceFormula}</span>
+src/components/GddBuilder.tsx:1796:                            <span>调试结算: {Math.random() > 0.5 ? "REACTION_METIC" : "STATE_STABLE"}</span>
+src/components/LoginTutorial.tsx:120:          <li><b>《奇正相生》：</b>军事绝境时获取数倍乘算BUFF，绝地反击。</li>
+src/components/LoginTutorial.tsx:161:                  <span className="text-[14px]">{section.icon}</span>
+src/components/MerchantSuccessionSandbox.tsx:137:              <span className="text-[10px] text-[#1A1A1A]/50 font-mono">交易单元: {marketInputVal} 石/千斤</span>
+src/components/MerchantSuccessionSandbox.tsx:147:                  <div className="font-serif font-bold text-[#1A1A1A]/90">{c.name}</div>
+src/components/MerchantSuccessionSandbox.tsx:148:                  <div className="text-[9px] text-[#8C2F39] font-mono mt-0.5 font-bold">{c.base}</div>
+src/components/MerchantSuccessionSandbox.tsx:149:                  <div className="text-[8px] text-[#1A1A1A]/50 mt-1 font-mono">{c.highlight}</div>
+src/components/MerchantSuccessionSandbox.tsx:157:                <label className="text-[10px] text-[#1A1A1A]/60 font-mono block mb-1">批量交割额度: {marketInputVal}</label>
+src/components/MerchantSuccessionSandbox.tsx:212:              <div className="text-[#1A1A1A]/85 mt-1.5">存钞：<strong className="text-[#8C2F39] font-bold">{cash} 钱</strong></div>
+src/components/MerchantSuccessionSandbox.tsx:213:              <div className="text-[#1A1A1A]/85">粮仓：<strong className="text-[#5A5A40] font-bold">{grainHoldings} 石</strong></div>
+src/components/MerchantSuccessionSandbox.tsx:214:              <div className="text-[#1A1A1A]/85">持有盐引：<strong className="text-[#5A5A40] font-bold">{saltLicences} 张</strong></div>
+src/components/MerchantSuccessionSandbox.tsx:245:                <div className="text-xs font-serif font-black text-[#1A1A1A]">{currentLeader.name}</div>
+src/components/MerchantSuccessionSandbox.tsx:247:                  <div>名节声望: <strong className="text-[#8C2F39] font-bold">{currentLeader.attributes.prestige}</strong></div>
+src/components/MerchantSuccessionSandbox.tsx:248:                  <div>特权等级: <strong className="text-[#5A5A40] font-bold">{currentLeader.identity === 'MERCHANT' ? '商贾' : currentLeader.identity === 'SCHOLAR' ? '士大夫' : currentLeader.identity}</strong></div>
+src/components/MerchantSuccessionSandbox.tsx:268:                  <span className="font-serif">世代 {member.generation} 门人: <strong>{member.name}</strong></span>
+src/components/MerchantSuccessionSandbox.tsx:269:                  <span className="text-[9px] text-[#1A1A1A]/50 font-bold">{member.identity === 'MERCHANT' ? '商贾' : member.identity === 'SCHOLAR' ? '士大夫' : member.identity}</span>
+src/components/MerchantSuccessionSandbox.tsx:278:        <h4 className="text-[10px] font-mono text-[#1A1A1A]/60 tracking-wider mb-2 font-bold uppercase">曹氏大账房走私记 logs</h4>
+src/components/MilitarySandbox.tsx:1098:                  <span className={`text-xs font-serif font-bold ${selectedGenIndex === idx ? 'text-[#8C2F39]' : 'text-[#1A1A1A]'}`}>{gen.name}</span>
+src/components/MilitarySandbox.tsx:1106:                  <div>统帅: <strong className="text-[#1A1A1A] font-bold">{gen.command}</strong></div>
+src/components/MilitarySandbox.tsx:1107:                  <div>猛勇: <strong className="text-[#1A1A1A] font-bold">{gen.bravery}</strong></div>
+src/components/MilitarySandbox.tsx:1108:                  <div>奇计: <strong className="text-[#1A1A1A] font-bold">{gen.tactics}</strong></div>
+src/components/MilitarySandbox.tsx:1109:                  <div>练兵: <strong className="text-[#1A1A1A] font-bold">{gen.training}</strong></div>
+src/components/MilitarySandbox.tsx:1140:                              <span>{TRAIT_DETAILS[t].name}</span>
+src/components/MilitarySandbox.tsx:1196:                  <div className="text-[9px] text-[#8C2F39] font-bold">● 【兵道公式赋益】 Logic:</div>
+src/components/MilitarySandbox.tsx:1197:                  <div className="text-[#1A1A1A]/90 text-[10px] sm:text-xs leading-relaxed">{TRAIT_DETAILS[activeTrait].logic}</div>
+src/components/MilitarySandbox.tsx:1234:              <span className="text-[#8C2F39] font-bold">{morale} 士气点</span>
+src/components/MilitarySandbox.tsx:1248:              <strong>当前段位:</strong> {currentMorale.name} <br />
+src/components/MilitarySandbox.tsx:1249:              <span className="text-[#1A1A1A]/60 italic">{currentMorale.desc}</span>
+src/components/MilitarySandbox.tsx:1267:                  真：正兵 <strong className="text-[#1A1A1A] font-bold">{combat.attackerRegular}</strong> • 奇兵{' '}
+src/components/MilitarySandbox.tsx:1268:                  <strong className="text-[#8C2F39] font-bold">{combat.attackerSurprise}</strong>
+src/components/MilitarySandbox.tsx:1276:                    <span className="font-bold text-[#1A1A1A]/70">~{Math.round((combat.attackerRegular + combat.attackerSurprise) * 0.95)} (精算)</span>
+src/components/MilitarySandbox.tsx:1289:                  真：正兵 <strong className="text-[#1A1A1A] font-bold">{combat.defenderRegular}</strong> • 奇袭{' '}
+src/components/MilitarySandbox.tsx:1290:                  <strong className="text-[#5A5A40] font-bold">{combat.defenderSurprise}</strong>
+src/components/MilitarySandbox.tsx:1298:                    <span className="font-bold text-[#1A1A1A]/70">~{Math.round((combat.defenderRegular + combat.defenderSurprise) * 1.05)}</span>
+src/components/MilitarySandbox.tsx:1463:                          <span>{land.id.substring(0, 4)}</span>
+src/components/MilitarySandbox.tsx:1472:                            <span>{land.name}</span>
+src/components/MilitarySandbox.tsx:1637:                              <span>{act.label}</span>
+src/components/MilitarySandbox.tsx:1913:                    <strong className="text-[#8C2F39] underline decoration-dotted font-sans">{selectedGen.name}</strong>
+src/components/MultiplayerSandbox.tsx:2219:                      <span className="text-[11px] font-bold block font-serif tracking-wide">{faction.name}</span>
+src/components/MultiplayerSandbox.tsx:2220:                      <span className="text-[9px] text-[#1A1A1A]/60 block mt-0.5 font-sans line-clamp-2 leading-snug">{faction.desc}</span>
+src/components/MultiplayerSandbox.tsx:2283:                    【山河沙盒说 · 天命大星盘】频道: <span className="text-amber-300 font-mono font-bold uppercase">{activeRoomId}</span>
+src/components/MultiplayerSandbox.tsx:2417:                        <span className="text-2xl font-mono font-black text-amber-300">{roomState.mandate}%</span>
+src/components/MultiplayerSandbox.tsx:2454:                        <span className="text-2xl font-mono font-black text-purple-300">{roomState.stability}%</span>
+src/components/MultiplayerSandbox.tsx:2490:                        <span className="text-[19px] font-mono font-black text-emerald-300">{roomState.coffers}</span>
+src/components/MultiplayerSandbox.tsx:2523:                        <span className="text-2xl font-mono font-black text-blue-300">{roomState.emperorAge}岁</span>
+src/components/MultiplayerSandbox.tsx:2535:                        <span className="text-2xl font-mono font-black text-emerald-400">{roomState.agricultureIndex !== undefined ? roomState.agricultureIndex : 60}%</span>
+src/components/MultiplayerSandbox.tsx:2550:                        <span className="text-2xl font-mono font-black text-amber-200">{roomState.commerceIndex !== undefined ? roomState.commerceIndex : 50}%</span>
+src/components/MultiplayerSandbox.tsx:2573:                            <span>{incident}</span>
+src/components/MultiplayerSandbox.tsx:2775:                        <span>寇部余党 (Remaining Strength)</span>
+src/components/MultiplayerSandbox.tsx:2776:                        <span>{Math.round(((roomState.enemyPower !== undefined ? roomState.enemyPower : 45000) / (roomState.enemyMaxPower !== undefined ? roomState.enemyMaxPower : 45000)) * 100)}%</span>
+src/components/MultiplayerSandbox.tsx:2939:                              <option value="offensive">⚔️ 主力大举攻势 (Allied Offensive Stance)</option>
+src/components/MultiplayerSandbox.tsx:2940:                              <option value="defensive">🛡️ 凭高据隘死守 (Allied Defensive Stance)</option>
+src/components/MultiplayerSandbox.tsx:2941:                              <option value="ambush">🏹 险途秘密伏击 (Allied Ambush Stance)</option>
+src/components/MultiplayerSandbox.tsx:2966:                            <span className="text-blue-400 font-bold">🛡️ 朝廷王师: {alliedTroopsCount.toLocaleString()} 兵甲</span>
+src/components/MultiplayerSandbox.tsx:2968:                            <span className="text-red-400 font-bold">🏹 边境寇叛: {hostileTroopsCount.toLocaleString()} 贼戈</span>
+src/components/MultiplayerSandbox.tsx:3005:                        <span>📡 全境图上驻防师团雷达面板 ({mapUnitsList.length})</span>
+src/components/MultiplayerSandbox.tsx:3030:                                    兵马: <strong className={isAllied ? 'text-blue-400' : 'text-red-400'}>{unit.size.toLocaleString()}</strong> 戈
+src/components/MultiplayerSandbox.tsx:3075:                          <label className="text-slate-400 block font-serif">部曲军号 Banner Name</label>
+src/components/MultiplayerSandbox.tsx:3087:                          <label className="text-slate-400 block font-serif">神州边隘要冲 Sector</label>
+src/components/MultiplayerSandbox.tsx:3094:                              <option key={b.key} value={b.key}>{b.name.split(' ')[0]}</option>
+src/components/MultiplayerSandbox.tsx:3100:                          <label className="text-slate-400 block font-serif">募卒配额 Strength</label>
+src/components/MultiplayerSandbox.tsx:3114:                          <label className="text-slate-400 block font-serif">战阵所属政权 Alignment</label>
+src/components/MultiplayerSandbox.tsx:3120:                            <option value="allied font-serif">🗡️ 守护我朝王师 (Allied)</option>
+src/components/MultiplayerSandbox.tsx:3121:                            <option value="hostile font-serif">🏹 边关侵扰贼众 (Enemy Host)</option>
+src/components/MultiplayerSandbox.tsx:3127:                        💡 <strong>天策开销</strong>：派遣将领折损 <strong>15% 气血精力 (Vigor)</strong>，起草大纛支度 <strong>2500 贯</strong> 辅币饷。此曲部可飞落至三维地图物理轨道，参与多人战略移防。
+src/components/MultiplayerSandbox.tsx:3465:                            <span>布策臣: <strong className="text-blue-400 font-serif">{plan.planner}</strong></span>
+src/components/MultiplayerSandbox.tsx:3466:                            <span className="text-amber-500 font-bold">已被触发协战: {plan.triggeredCount || 0} 次</span>
+src/components/MultiplayerSandbox.tsx:3482:                    流派特权：<span className="text-[#8C2F39]">{myFaction.avatar} {myFaction.name}</span>
+src/components/MultiplayerSandbox.tsx:3500:                    <span className="text-[11px] font-serif font-extrabold text-[#8C2F39] mt-0.5 block tracking-wider">{customName}</span>
+src/components/MultiplayerSandbox.tsx:3603:                              <span>{t.name}</span>
+src/components/MultiplayerSandbox.tsx:3604:                              <span className="text-amber-500 font-mono text-[9px]">{t.cost} 💰 贯</span>
+src/components/MultiplayerSandbox.tsx:3606:                            <p className="text-[9px] text-slate-500 mt-0.5 font-sans leading-relaxed">{t.desc}</p>
+src/components/MultiplayerSandbox.tsx:3700:                        潜夜密网: <strong className="text-amber-500">{spiesList.length}</strong> 员
+src/components/MultiplayerSandbox.tsx:3751:                                      <span>📍 潜伏要地：{spy.targetName}</span>
+src/components/MultiplayerSandbox.tsx:3753:                                        <span className="text-[8.5px] text-slate-500 font-mono">({spy.targetLat.toFixed(2)}°, {spy.targetLng?.toFixed(2)}°)</span>
+src/components/MultiplayerSandbox.tsx:3766:                                    <span>忠诚度: <strong className={spy.loyalty > 75 ? 'text-emerald-400' : 'text-amber-500'}>{spy.loyalty}%</strong></span>
+src/components/MultiplayerSandbox.tsx:3767:                                    <span>凭信性: <strong className="text-amber-500">{spy.credibility}%</strong></span>
+src/components/MultiplayerSandbox.tsx:3837:                        现在，家族的第 <strong className="text-amber-500">{(myPlayerStats.lineageGeneration || 1) + 1} 代</strong> 子嗣已捧诏袭爵，静候承其先人弘愿临朝称制！
+src/components/MultiplayerSandbox.tsx:3844:                        <span className="text-amber-500">第 {(myPlayerStats.lineageGeneration || 1)} 代 ➔ 第 {(myPlayerStats.lineageGeneration || 1) + 1} 代</span>
+src/components/MultiplayerSandbox.tsx:3852:                        <span className="text-emerald-400">100% 身命气血 (Full Vigor)</span>
+src/components/MultiplayerSandbox.tsx:3917:                          朝廷授任官衔：<strong className="text-[#8C2F39] font-serif font-bold text-[12px]">{myRankTitle}</strong>
+src/components/MultiplayerSandbox.tsx:3928:                          <span className="text-[8px] block text-[#1A1A1A]/50 font-bold uppercase tracking-widest leading-none">气血寿数 (Vigor)</span>
+src/components/MultiplayerSandbox.tsx:3953:                      <span>👑 官爵晋级历履 (Rank Advancement)</span>
+src/components/MultiplayerSandbox.tsx:3998:                      <span className="text-base font-mono font-black text-slate-800 block mt-0.5">{myActionsCount} 次</span>
+src/components/MultiplayerSandbox.tsx:4002:                      <span className="text-base font-mono font-black text-purple-700 block mt-0.5">+{myPoints * 300} 万贯</span>
+src/components/MultiplayerSandbox.tsx:4006:                      <span className="text-base font-mono font-black text-emerald-700 block mt-0.5">{Math.floor(myPoints * 3)} 阀</span>
+src/components/MultiplayerSandbox.tsx:4183:                      <span className="font-bold">{log.role || '史宫'} Scribe</span>
+src/components/RealWorldMapBattle.tsx:312:  while (openList.length > 0 && iterations < maxIterations) {
+src/components/RealWorldMapBattle.tsx:332:        if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
+src/components/RealWorldMapBattle.tsx:522:  const isCritical = u.side === 'hostile' && u.size > 0 && u.size <= 5000;
+src/components/RealWorldMapBattle.tsx:566:              <span>🐎 {isAllied ? '拔营疾驰' : '兵马规避'}</span>
+src/components/RealWorldMapBattle.tsx:640:          <p className="text-[7.5px] opacity-95">兵员: {u.size} {isCritical && <span className="text-amber-300 font-serif font-black">(危!)</span>}</p>
+src/components/RealWorldMapBattle.tsx:643:            <span className="opacity-95 text-amber-200">🌾 粮:{(u.provisions !== undefined ? u.provisions : 100)}%</span>
+src/components/RealWorldMapBattle.tsx:655:            <p className="text-[6.5px] text-amber-200 leading-none opacity-80 mt-0.5 text-center font-mono font-light">[{u.creatorName}]</p>
+src/components/RealWorldMapBattle.tsx:693:  if (posX < 5 || posX > 95 || posY < 5 || posY > 95) return null;
+src/components/RealWorldMapBattle.tsx:696:  const isCritical = u.side === 'hostile' && u.size > 0 && u.size <= 5000;
+src/components/RealWorldMapBattle.tsx:748:              <span>🐎 {isAllied ? '拔营疾驰' : '兵马规避'}</span>
+src/components/RealWorldMapBattle.tsx:800:            <span className="text-[10px]">{isAllied ? (alliedStance === 'offensive' ? '⚔️' : '🛡️') : (isCritical ? '⚠️' : '🏹')}</span>
+src/components/RealWorldMapBattle.tsx:801:            <span className="truncate max-w-[80px] font-sans">{u.name.split(' ')[0]}</span>
+src/components/RealWorldMapBattle.tsx:808:            <span className="text-stone-600">🌾 粮:{(u.provisions !== undefined ? u.provisions : 100)}%</span>
+src/components/RealWorldMapBattle.tsx:820:            <span className="text-[7.5px] text-amber-600 font-serif font-semibold block leading-none mt-0.5">[{u.creatorName}]</span>
+src/components/RealWorldMapBattle.tsx:856:        if (posX < 5 || posX > 95 || posY < 5 || posY > 95) return null;
+src/components/RealWorldMapBattle.tsx:2689:                  <option value="GENERAL">🛡️ 镇守大将军 (General)</option>
+src/components/RealWorldMapBattle.tsx:2690:                  <option value="CHANCELLOR">📜 咸阳相国 / 军师 (Chancellor)</option>
+src/components/RealWorldMapBattle.tsx:2691:                  <option value="REBEL">🏹 楚地起义军首脑 (Rebel)</option>
+src/components/RealWorldMapBattle.tsx:2807:                  <span className="text-[10px]">⭐ <b>天演实装加成:</b> {activeAnalysis.bonusName}</span>
+src/components/RealWorldMapBattle.tsx:2882:                        🎯 效用：<span className="font-bold">{strat.effectDesc}</span>
+src/components/RealWorldMapBattle.tsx:2956:                      <p className="text-[8.5px] text-stone-500 mt-0.5 leading-snug">{t.desc}</p>
+src/components/RealWorldMapBattle.tsx:3158:                      <span>阵战演武正在契受大将军阵法加成中... ({stratagemTimer} 刻)</span>
+src/components/RealWorldMapBattle.tsx:3178:                    <span>CHRONO PLAYBACK / 时空推演回溯 (Tick #{timeTravelIndex + 1})</span>
+src/components/RealWorldMapBattle.tsx:3189:                    经纬坐标: <span className="font-bold text-amber-900">{activeAnalysis.lat}° N, {activeAnalysis.lng}° E</span>
+src/components/RealWorldMapBattle.tsx:3327:                        if (posX1 < 0 || posX1 > 100 || posY1 < 0 || posY1 > 100 || posX2 < 0 || posX2 > 100 || posY2 < 0 || posY2 > 100) {
+src/components/RealWorldMapBattle.tsx:3478:                      if (posX < 5 || posX > 95 || posY < 5 || posY > 95) return null;
+src/components/RealWorldMapBattle.tsx:3540:                     if (posX < 0 || posX > 100 || posY < 0 || posY > 100) return null;
+src/components/RealWorldMapBattle.tsx:3592:                    <b>唤醒卫星实景步骤：</b> 在右上角 <b>设置 (⚙️齿轮)</b> 中添加密匙名称为 <code>GOOGLE_MAPS_PLATFORM_KEY</code>，并将密钥保存进去，即可开启高清地形卫星图、路径天演与街景连携推演！
+src/components/RealWorldMapBattle.tsx:3635:                            <p className="text-[9.5px] text-stone-500">点击即可前往谷歌开发者控制台，快速创建自己的 Maps 谷歌秘钥</p>
+src/components/RealWorldMapBattle.tsx:3643:                            <h4 className="font-bold text-[#1A1A1A]">安置入阁门 (Secrets Panel)</h4>
+src/components/RealWorldMapBattle.tsx:3645:                              在大天演仪右上角 <b>Settings (⚙️齿轮)</b> → <b>Secrets (密令)</b> 里输入：
+src/components/RealWorldMapBattle.tsx:3648:                              密匙名称: <strong className="text-stone-900 border-r pr-1 border-stone-300">GOOGLE_MAPS_PLATFORM_KEY</strong> <br/>
+src/components/RealWorldMapBattle.tsx:3698:                          <span>CHRONO PLAYBACK / 时空推演回溯 (Tick #{timeTravelIndex + 1})</span>
+src/components/RealWorldMapBattle.tsx:3948:                                <span>{selectedUnit.name}</span>
+src/components/RealWorldMapBattle.tsx:4071:                                <span>代号：【{selectedSpy.name}】</span>
+src/components/RealWorldMapBattle.tsx:4245:                      已在 <b>现代卫星大地图</b> 上探明哨点坐标 <b>(纬度:{pendingDeployCoords.lat.toFixed(4)}, 经度:{pendingDeployCoords.lng.toFixed(4)})</b>。请于金鼓前誓师建立你的部曲营盘：
+src/components/RealWorldMapBattle.tsx:4250:                        <label className="text-[9.5px] text-stone-600 font-bold font-serif block mb-1">营盘/部曲称号 (Name)</label>
+src/components/RealWorldMapBattle.tsx:4259:                        <label className="text-[9.5px] text-stone-600 font-bold font-serif block mb-1">编制精兵数 (Soldiers)</label>
+src/components/RealWorldMapBattle.tsx:4274:                        <span className="text-[10px] text-stone-600 font-serif font-bold">阵营 (Faction):</span>
+src/components/RealWorldMapBattle.tsx:4346:                      <span className="block text-[8.5px] text-amber-700 font-serif font-bold mt-0.5">誓立统领: [{selectedUnit.creatorName}]</span>
+src/components/RealWorldMapBattle.tsx:4559:                          <span className="text-[7.5px] font-mono text-stone-400">{toast.timestamp}</span>
+src/components/RealWorldMapBattle.tsx:4601:                        <span>{toast.stanceBonusLabel}</span>
+src/components/RealWorldMapBattle.tsx:4648:                          <span>☀️ 晴空万里 (Clear)</span>
+src/components/RealWorldMapBattle.tsx:4675:                          <span>🌧️ 骤雨泥泞 (Rain)</span>
+src/components/RealWorldMapBattle.tsx:4690:                          <span>💨 狂风沙暴 (Wind)</span>
+src/components/RealWorldMapBattle.tsx:4742:                    <span className="text-blue-900 font-bold">Iconic【圮地骤雨】</span> 泥泽没膝。三军战意受阻，大军机动行进 <b>重击减损 -50%</b>，侦视剥离 <b>-20%</b>。
+src/components/RealWorldMapBattle.tsx:4933:                    <span className="text-amber-500 font-bold">{mapTilt}°</span>
+src/components/RealWorldMapBattle.tsx:4984:                    <span className="text-amber-500 font-bold">{mapHeading}°</span>
+src/components/RealWorldMapBattle.tsx:5047:                    <span className="font-mono text-[7px]">[{autoOrbit ? "运行" : "停止"}]</span>
+src/components/RealWorldMapBattle.tsx:5065:                    <span className="font-mono text-[7px]">[{gisAltitudeMesh ? "开启" : "关闭"}]</span>
+src/components/RealWorldMapBattle.tsx:5073:                    <span className="text-amber-500 font-bold">{timeSpeed} 倍速</span>
+src/components/RealWorldMapBattle.tsx:5104:                      <div>{SHICHENS[displayedShichenIndex].period}</div>
+src/components/RealWorldMapBattle.tsx:5106:                        {displayedShichenIndex >= 9 || displayedShichenIndex <= 2 ? "🌙 幽夜" : "☀️ 白昼"}
+src/components/RealWorldMapBattle.tsx:5140:                      <span>当前 (共 {historyStack.length} 局)</span>
+src/components/RealWorldMapBattle.tsx:5190:                  <span>{fogOfWarEnabled ? '🛡️ 迷雾开启' : '👁️ 迷雾彻见'}</span>
+src/components/RealWorldMapBattle.tsx:5214:                  <span>{isSimulating ? '⏸ 暂缓天演' : '🔥 一键实装天演推演'}</span>
+src/components/RealWorldMapBattle.tsx:5281:                  <span className="font-bold">{placedUnits.filter(u => u.side === 'allied').reduce((sum, u) => sum + u.size, 0)} 员</span>
+src/components/RealWorldMapBattle.tsx:5294:                  <span className="font-bold">{placedUnits.filter(u => u.side === 'hostile').reduce((sum, u) => sum + u.size, 0)} 员</span>
+src/components/SpySandbox.tsx:174:                      <div className="font-bold">{t.name}</div>
+src/components/SpySandbox.tsx:175:                      <div className="text-[9px] text-[#1A1A1A]/50 mt-0.5">工本: {t.cost}金</div>
+src/components/SpySandbox.tsx:221:              <strong className="text-[#8C2F39] text-base">{gold} 金</strong>
+src/components/SpySandbox.tsx:235:            <h3 className="text-xs font-mono text-[#1A1A1A]/80 mb-3 font-bold border-b border-[#1A1A1A]/10 pb-2">当前活跃谍网成员 ({spies.length} 名)</h3>
+src/components/SpySandbox.tsx:255:                          <span className="text-xs font-serif font-black text-[#1A1A1A] block">{spy.name}</span>
+src/components/SpySandbox.tsx:297:            <h4 className="text-[9px] font-mono text-[#1A1A1A]/60 tracking-wider mb-2 font-bold uppercase">秦晋飞简情报解譯 logs</h4>
+src/components/UprisingCultureSandbox.tsx:1101:                      <span className={!showMapLegendDetails ? 'text-stone-400' : ''}>儒学官塾 (CONFUCIAN)</span>
+src/components/UprisingCultureSandbox.tsx:1105:                      <span className={!showMapLegendDetails ? 'text-stone-400' : ''}>玄门太虚 (TAOIST)</span>
+src/components/UprisingCultureSandbox.tsx:1109:                      <span className={!showMapLegendDetails ? 'text-stone-400' : ''}>白莲法会 (BUDDHIST)</span>
+src/components/UprisingCultureSandbox.tsx:1117:                      <span>变乱红区 (Risk ≥ 65%)</span>
+src/components/UprisingCultureSandbox.tsx:1146:                  暴民兵马总估: <strong className="text-[#8C2F39] font-black">{rebelForce} 徒</strong>
+src/components/UprisingCultureSandbox.tsx:1181:                              <div><strong>纪元 T.{data.turn}</strong></div>
+src/components/UprisingCultureSandbox.tsx:1182:                              <div className="text-[#EF4444] font-semibold mt-0.5">叛乱强度: {data.rebelForce ?? 0} 人</div>
+src/components/UprisingCultureSandbox.tsx:1183:                              {data.events && <div className="text-stone-400 text-[9px] mt-0.5 max-w-[150px] truncate">【{data.events}】</div>}
+src/components/UprisingCultureSandbox.tsx:1247:                      <span className="font-black text-[#8C2F39]">{activeRegion.influence.CONFUCIAN}%</span>
+src/components/UprisingCultureSandbox.tsx:1257:                      <span className="font-black text-emerald-700">{activeRegion.influence.TAOIST}%</span>
+src/components/UprisingCultureSandbox.tsx:1267:                      <span className="font-black text-amber-600">{activeRegion.influence.BUDDHIST_SECTARIAN}%</span>
+src/components/UprisingCultureSandbox.tsx:1293:                        <div className="text-xs font-bold text-stone-800">{metrics.localTax}%</div>
+src/components/UprisingCultureSandbox.tsx:1297:                        <div className="text-xs font-bold text-amber-700">{metrics.localFamine}%</div>
+src/components/UprisingCultureSandbox.tsx:1301:                        <div className="text-xs font-bold text-[#8C2F39]">{activeRegion.unrest}%</div>
+src/components/UprisingCultureSandbox.tsx:1315:                        <div className="text-xs font-black text-rose-800 mt-1">{metrics.ideologicalResistance}%</div>
+src/components/UprisingCultureSandbox.tsx:1320:                        <div className="text-xs font-black text-amber-700 mt-1">+{metrics.escalationRate}% / 纪元</div>
+src/components/UprisingCultureSandbox.tsx:1333:                        <span>本境变乱兆候: {metrics.riskDelta}%</span>
+src/components/UprisingCultureSandbox.tsx:1475:                  <div className="text-sm font-black mt-0.5">{nationalStats.CONFUCIAN}%</div>
+src/components/UprisingCultureSandbox.tsx:1479:                  <div className="text-sm font-black mt-0.5">{nationalStats.TAOIST}%</div>
+src/components/UprisingCultureSandbox.tsx:1483:                  <div className="text-sm font-black mt-0.5">{nationalStats.BUDDHIST_SECTARIAN}%</div>
+src/components/UprisingCultureSandbox.tsx:1518:                    <strong>纪元 {hoveredSnap.turn}</strong>: 儒({hoveredSnap.Confucian}%) 道({hoveredSnap.Taoist}%) 佛({hoveredSnap.Buddhist}%)
+src/components/UprisingCultureSandbox.tsx:1679:                <strong>儒理法度 (Confucianism)</strong>
+src/components/UprisingCultureSandbox.tsx:1683:                <strong>老庄安息 (Taoism)</strong>
+src/components/UprisingCultureSandbox.tsx:1687:                <strong>白莲释渡 (Buddhism Sect)</strong>
+src/components/UprisingCultureSandbox.tsx:1710:                  <label className="text-[10px] text-[#1A1A1A]/70 font-mono block font-bold">天下课税负率 T: {taxRate}%</label>
+src/components/UprisingCultureSandbox.tsx:1725:                  <label className="text-[10px] text-[#1A1A1A]/70 font-mono block font-bold">荒歉饥荒指数 F: {famineLvl}%</label>
+src/components/UprisingCultureSandbox.tsx:1741:              <div className="text-[9px] font-mono font-bold text-[#1A1A1A]/60 uppercase mb-2">天子御前执案 Act Commands:</div>
+src/components/UprisingCultureSandbox.tsx:1800:                  <span className="text-xs font-bold text-[#5A5A40] block mt-0.5">{stateCoffers} 钱</span>
+src/components/UprisingCultureSandbox.tsx:1814:                  <span className="text-xs font-bold text-[#1A1A1A] block mt-0.5">{refugeesPercent}% 丁口</span>
+src/components/UprisingCultureSandbox.tsx:1846:                      <span>叛贼游骑：<strong className="text-[#8C2F39] font-black">{rebelForce} 徒</strong></span>
+src/components/UprisingCultureSandbox.tsx:1912:                    <span>{log.text}</span>
+src/components/UprisingCultureSandbox.tsx:1913:                    <span className="text-[8px] opacity-40 shrink-0 select-none">{log.time}</span>
+src/components/WarPhilosophySandbox.tsx:213:    if (year >= -230 && year <= -221) {
+src/components/WarPhilosophySandbox.tsx:263:    } else if (year >= -220 && year <= -210) {
+src/components/WarPhilosophySandbox.tsx:761:                ⚔️ 正兵: <strong className="text-[#1A1A1A] font-bold">{currentScen.troops.regular}</strong> • 奇袭铁骑: <strong className="text-[#8C2F39] font-bold">{currentScen.troops.surprise}</strong>
+src/components/WarPhilosophySandbox.tsx:766:                  🎓 <strong className="text-[#8C2F39] font-bold">{characterFate.militaryExp}</strong> 点阅历
+src/components/WarPhilosophySandbox.tsx:893:                    <span className="block font-serif font-bold text-neutral-800">{opt.text}</span>
+src/components/WarPhilosophySandbox.tsx:894:                    <span className="text-[9px] text-[#8C2F39] block mt-1 font-mono font-semibold uppercase">核心：{opt.philosophy}</span>
+src/components/WarPhilosophySandbox.tsx:934:                      主力存活: <strong className="text-green-700">{simulationResult.troopSurvivorPercent}% 大部胜存</strong>
+src/components/WarPhilosophySandbox.tsx:937:                      战略效益: <strong className="text-[#8C2F39]">{simulationResult.comment}</strong>
+src/components/WarPhilosophySandbox.tsx:1048:                        决策宣判: <span className="text-[#8C2F39] text-xl font-bold">{aiReport.verdict || '上谋中用'}</span>
+src/components/WarPhilosophySandbox.tsx:1050:                          (主力生存概率: <strong className="text-green-700 text-sm">{aiReport.survivalChance || 80}%</strong>)
+src/components/WarPhilosophySandbox.tsx:1061:                        <span className="text-[10px] font-mono text-[#5A5A40] block font-bold">● 【圣意深理批判】 (The Critique)</span>
+src/components/WarPhilosophySandbox.tsx:1068:                        <span className="text-[10px] font-mono text-[#8C2F39] block font-bold">● 【临急变备良策】 (Tactical Scribe Remedy)</span>
+src/components/WarPhilosophySandbox.tsx:1141:                    <span className="block font-serif font-bold text-stone-850 leading-tight">{opt.text}</span>
+src/components/WarPhilosophySandbox.tsx:1194:                      <span>已录入大秦兵备 Survival 考评档案</span>
+src/components/WarPhilosophySandbox.tsx:1234:                const isCurrent = characterFate.militaryExp >= tier.points && characterFate.militaryExp < (tier.points + 400 || 9999);
+src/components/WarPhilosophySandbox.tsx:1252:                    <p className="text-[10px] text-[#1A1A1A]/60 font-mono mt-0.5">{tier.desc}</p>
+src/components/WarPhilosophySandbox.tsx:1254:                      <span>要求: {tier.requirement}</span>
+src/components/WarPhilosophySandbox.tsx:1255:                      <span>位阶积分: {tier.points}</span>
+src/components/WarPhilosophySandbox.tsx:1283:                    <span className="text-lg">{ach.icon}</span>
+src/components/WarPhilosophySandbox.tsx:1320:                      <span className="font-serif">{h.scenarioTitle}</span>
+src/components/WarPhilosophySandbox.tsx:1321:                      <span>{h.timestamp}</span>
+src/components/WarPhilosophySandbox.tsx:1323:                    <p className="text-neutral-600 line-clamp-1 italic">"{h.actionTaken}"</p>
+src/components/WarPhilosophySandbox.tsx:1325:                      <span>评价: <strong className="text-amber-800">{h.verdict}</strong></span>
+src/components/WarPhilosophySandbox.tsx:1326:                      <span>{h.prestigeChange}</span>
+src/components/WarPhilosophySandbox.tsx:1327:                      <span>{h.expGain}</span>
+src/App.tsx:640:                      默认测试体验密码为：<b className="text-amber-400 font-mono text-[10.5px]">suntzu666</b> 或 <b className="text-amber-400 font-mono text-[10.5px]">admin</b>。
+src/App.tsx:755:                <span className="bg-amber-950/40 px-1 rounded border border-amber-500/20">{dynastyFate.mandate}%</span>
+src/App.tsx:763:                <span className="text-yellow-400">{dynastyFate.coffers.toLocaleString()} 镒</span>
+src/App.tsx:773:                <span className="font-bold text-emerald-400 text-[11px]">{dynastyFate.stability}%</span>
+src/App.tsx:886:                  <span>{warlordXp}/{maxXp}</span>
+src/App.tsx:1062:                          <span className="font-serif font-black text-stone-300">{item.name}</span>
+src/App.tsx:1087:              <span className="text-stone-500 font-mono">1 岁朝 = {chronoSpeedSeconds >= 60 ? (chronoSpeedSeconds/60).toFixed(0) + ' 分钟' : chronoSpeedSeconds + ' 现实秒'}</span>
+src/App.tsx:1130:                          <span className="text-[11px] block font-semibold">{t.name}</span>
+src/App.tsx:1131:                          <span className={`${isSelected ? 'text-stone-800' : 'text-stone-500'} text-[8px] truncate block mt-0.5`}>{t.desc}</span>
+src/App.tsx:1162:                          <span className="text-[11px] block font-semibold">{t.name}</span>
+src/App.tsx:1163:                          <span className={`${isSelected ? 'text-purple-200/70' : 'text-stone-500'} text-[8px] truncate block mt-0.5`}>{t.desc}</span>
+src/App.tsx:1194:                          <span className="text-[11.5px] block font-semibold font-serif">{t.name}</span>
+src/App.tsx:1214:                      <span className="font-serif font-black text-amber-200">{warlord.name}</span>
+src/App.tsx:1215:                      <span className="text-stone-500">{warlord.level}</span>
+src/App.tsx:1218:                      <span>{tabs.find(t=>t.id===warlord.active)?.name.split(' ')[0] || "推演"}</span>
+src/App.tsx:1219:                      <span className="text-[7px] text-emerald-400 opacity-90">{warlord.ping}</span>
+src/App.tsx:1373:                        <span>{card.name}</span>

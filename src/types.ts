@@ -81,13 +81,15 @@ export interface CombatState {
 export interface SpyAgent {
   id: string;
   name: string;
-  type: 'LOCAL' | 'INTERNAL' | '策反' | 'DEATH' | 'ACTIVE_SURVIVING'; // 五间: 乡、内、反、死、生
+  type: 'WHISPERER' | 'ASSASSIN' | 'COURTIER' | 'MAESTER' | 'DEFECTOR'; 
   cost: number;
   credibility: number; // 0-100
-  motivation: 'MONEY' | 'HATRED' | 'IDEAL' | 'FORCED' | 'FAMILY';
+  motivation: 'POWER' | 'WEALTH' | 'REVENGE' | 'FEAR' | 'DEVOTION';
   loyalty: number; // 0-100
   isDiscovered: boolean;
-  state: 'IDLE' | 'MISSION' | 'CAPTURED' | 'MARTYRED';
+  state: 'IDLE' | 'MISSION' | 'CAPTURED' | 'EXECUTED' | 'TURNED';
+  location?: string;
+  secretInfo?: string;
 }
 
 export interface DiplomaticNation {

@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
+  db, 
+  auth, 
+  loginAnonymously, 
+  handleFirestoreError, 
+  OperationType,
   doc, 
   setDoc, 
   onSnapshot, 
@@ -14,8 +19,7 @@ import {
   getDoc,
   deleteDoc,
   getDocs
-} from 'firebase/firestore';
-import { db, auth, loginAnonymously, handleFirestoreError, OperationType } from '../firebase';
+} from '../firebase';
 import { 
   Users, 
   Sparkles, 
@@ -123,7 +127,7 @@ interface SpyAgent {
 const FACTION_DEFINITIONS = [
   { 
     id: 'CHANCELLOR', 
-    name: '咸阳相国 (Chancellor)', 
+    name: '咸阳相国 / 军师', 
     desc: '百官之首，统御内政，精通赋税调阅与法家权术', 
     avatar: '🏮', 
     color: 'bg-purple-900 border-purple-400', 
@@ -157,7 +161,7 @@ const FACTION_DEFINITIONS = [
   },
   { 
     id: 'GENERAL', 
-    name: '护国上将 (Grand General)', 
+    name: '护国上将', 
     desc: '掌兵马大权，戍卫边疆，善用奇正阵法，威震天下', 
     avatar: '⚔️', 
     color: 'bg-rose-950 border-rose-500', 
@@ -192,7 +196,7 @@ const FACTION_DEFINITIONS = [
   },
   { 
     id: 'EUNUCH', 
-    name: '内廷掌印 (Eunuch Regent)', 
+    name: '内廷掌印', 
     desc: '近侍天子，矫诏弄权，垄断宫禁密文，翻云覆雨', 
     avatar: '👁️', 
     color: 'bg-indigo-950 border-indigo-500', 
@@ -226,7 +230,7 @@ const FACTION_DEFINITIONS = [
   },
   { 
     id: 'MERCHANT', 
-    name: '神州巨贾 (Tycoon Guild)', 
+    name: '神州巨贾', 
     desc: '垄断山河盐铁，富可敌国，操纵天下物产命脉', 
     avatar: '🪙', 
     color: 'bg-amber-950 border-amber-600', 
@@ -260,7 +264,7 @@ const FACTION_DEFINITIONS = [
   },
   { 
     id: 'STRATEGIST', 
-    name: '连横策士 (Lobbyist Envoy)', 
+    name: '连横策士', 
     desc: '纵横捭阖，三寸不烂之舌，操纵六国攻伐制衡之术', 
     avatar: '🗺️', 
     color: 'bg-emerald-950 border-emerald-500', 
@@ -294,7 +298,7 @@ const FACTION_DEFINITIONS = [
   },
   { 
     id: 'REBEL', 
-    name: '起义豪侠 (Rebel Commandant)', 
+    name: '起义豪侠', 
     desc: '斩木为兵，揭竿而起，视君王为土芥，以太行天险为凭', 
     avatar: '🔥', 
     color: 'bg-amber-900 border-amber-500', 
@@ -1209,11 +1213,11 @@ export default function MultiplayerSandbox({
 
   // Option 1: Deploy map unit directly from the Multiplayer board
   const PRESET_BATTLEFIELDS = [
-    { key: 'XIANYANG', name: '咸阳内卫关防 (Xianyang Center)', lat: 34.368, lng: 108.708 },
-    { key: 'HANGU', name: '函谷咽喉雄关 (Hangu Pass)', lat: 34.619, lng: 110.158 },
-    { key: 'YANMEN', name: '雁门塞外古道 (Yanmen Outer Pass)', lat: 39.191, lng: 112.871 },
-    { key: 'JIUJIANG', name: '九江彭城沙洲 (Jiujiang Sands)', lat: 29.707, lng: 115.985 },
-    { key: 'CHUPING', name: '楚豫相交平野 (Chuping Plains)', lat: 32.550, lng: 114.320 }
+    { key: 'XIANYANG', name: '咸阳内卫关防', lat: 34.368, lng: 108.708 },
+    { key: 'HANGU', name: '函谷咽喉雄关', lat: 34.619, lng: 110.158 },
+    { key: 'YANMEN', name: '雁门塞外古道', lat: 39.191, lng: 112.871 },
+    { key: 'JIUJIANG', name: '九江彭城沙洲', lat: 29.707, lng: 115.985 },
+    { key: 'CHUPING', name: '楚豫相交平野', lat: 32.550, lng: 114.320 }
   ];
 
   const handleDeployMapUnit = async (e: React.FormEvent) => {
@@ -2133,14 +2137,14 @@ export default function MultiplayerSandbox({
         <div>
           <div className="flex items-center gap-2">
             <span className="p-1 px-2.5 bg-[#8C2F39] text-[#F5F2ED] text-[10px] font-mono rounded font-bold uppercase tracking-widest animate-pulse">
-              LIVE MULTIPLAYER
+              实时联机推演
             </span>
             <h2 className="text-xl font-serif font-black tracking-wider text-[#1A1A1A]">
               咸阳天命总坛 · 多人实时政略推演
             </h2>
           </div>
           <p className="text-xs text-[#1A1A1A]/60 mt-1 font-mono">
-            Synchronous Dynastic Altar & Real-time Sovereign Co-Op System via Firebase
+            基于分布式同步数据源的多人同朝协同推演沙盘
           </p>
         </div>
         
@@ -2175,7 +2179,7 @@ export default function MultiplayerSandbox({
             {/* Custom Call Name */}
             <div className="space-y-1.5">
               <label className="text-[11px] font-mono font-extrabold text-[#1A1A1A]/80 tracking-widest block uppercase">
-                推演雅号 (Your Avatar Name)
+                推演雅号
               </label>
               <div className="relative">
                 <input
@@ -2193,7 +2197,7 @@ export default function MultiplayerSandbox({
             {/* Faction Class Select */}
             <div className="space-y-2">
               <label className="text-[11px] font-mono font-extrabold text-[#1A1A1A]/80 tracking-widest block uppercase">
-                选择你的社稷朝纲流派 (Select Path Faction)
+                选择你的社稷朝纲流派
               </label>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-1">
@@ -2223,7 +2227,7 @@ export default function MultiplayerSandbox({
             {/* Room ID Passway */}
             <div className="space-y-1.5 pt-2">
               <div className="flex justify-between items-center text-[11px] font-mono font-extrabold text-[#1A1A1A]/80 tracking-widest">
-                <span className="uppercase">山居游说频道 (Room Code)</span>
+                <span className="uppercase">山居游说频道</span>
                 <span className="text-[9px] text-amber-600 font-bold">默认：咸阳公会总坛</span>
               </div>
               <input
@@ -2251,7 +2255,7 @@ export default function MultiplayerSandbox({
                 <>正在颁授金符大印...</>
               ) : (
                 <>
-                  <LogIn className="w-4 h-4" /> 宣制旨意·纵横入世 (Join Push Altar)
+                  <LogIn className="w-4 h-4" /> 宣制旨意·纵横入世
                 </>
               )}
             </button>
@@ -2411,7 +2415,7 @@ export default function MultiplayerSandbox({
                       <span className="text-[9px] text-slate-400 font-mono tracking-wider block font-bold">神州天命值</span>
                       <div className="flex items-baseline gap-1.5 mt-0.5">
                         <span className="text-2xl font-mono font-black text-amber-300">{roomState.mandate}%</span>
-                        <span className="text-[10px] text-slate-400">Mandate</span>
+                        <span className="text-[10px] text-slate-400">天命</span>
                       </div>
                       {/* Compact custom progress bar */}
                       <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden mt-1.5">
@@ -2448,7 +2452,7 @@ export default function MultiplayerSandbox({
                       <span className="text-[9px] text-slate-400 font-mono tracking-wider block font-bold">朝堂政治稳定</span>
                       <div className="flex items-baseline gap-1.5 mt-0.5">
                         <span className="text-2xl font-mono font-black text-purple-300">{roomState.stability}%</span>
-                        <span className="text-[10px] text-slate-400">Stability</span>
+                        <span className="text-[10px] text-slate-400">稳度</span>
                       </div>
                       <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden mt-1.5">
                         <div 
@@ -2517,10 +2521,10 @@ export default function MultiplayerSandbox({
                       <span className="text-[9px] text-slate-400 font-mono tracking-wider block font-bold">幼君天子寿命</span>
                       <div className="flex items-baseline gap-1.5 mt-0.5">
                         <span className="text-2xl font-mono font-black text-blue-300">{roomState.emperorAge}岁</span>
-                        <span className="text-[10px] text-slate-400">Age</span>
+                        <span className="text-[10px] text-slate-400">帝龄</span>
                       </div>
                       <span className={`text-[9px] mt-1.5 block font-serif font-bold ${roomState.emperorAge < 16 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                        {roomState.emperorAge < 16 ? '⚠️ 傀儡幼帝 (Weak)' : '👑 天子辅熟精干'}
+                        {roomState.emperorAge < 16 ? '⚠️ 傀儡幼帝 (稚弱)' : '👑 天子辅熟精干'}
                       </span>
                     </motion.div>
 
@@ -2529,7 +2533,7 @@ export default function MultiplayerSandbox({
                       <span className="text-[9px] text-slate-400 font-mono tracking-wider block font-bold">社稷农耕实力</span>
                       <div className="flex items-baseline gap-1.5 mt-0.5">
                         <span className="text-2xl font-mono font-black text-emerald-400">{roomState.agricultureIndex !== undefined ? roomState.agricultureIndex : 60}%</span>
-                        <span className="text-[10px] text-slate-400">Agri</span>
+                        <span className="text-[10px] text-slate-400">农科</span>
                       </div>
                       <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden mt-1.5">
                         <div 
@@ -2544,7 +2548,7 @@ export default function MultiplayerSandbox({
                       <span className="text-[9px] text-slate-400 font-mono tracking-wider block font-bold">市籍商旅通达</span>
                       <div className="flex items-baseline gap-1.5 mt-0.5">
                         <span className="text-2xl font-mono font-black text-amber-200">{roomState.commerceIndex !== undefined ? roomState.commerceIndex : 50}%</span>
-                        <span className="text-[10px] text-slate-400">Comm</span>
+                        <span className="text-[10px] text-slate-400">商算</span>
                       </div>
                       <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden mt-1.5">
                         <div 
@@ -2654,7 +2658,7 @@ export default function MultiplayerSandbox({
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center border-b border-white/10 pb-3 gap-2">
                   <div>
                     <span className="text-[10px] text-red-400 font-mono tracking-widest block uppercase font-bold">
-                      SUN TZU’S ART OF WAR SURVIVAL CAMPAIGN (实时兵战)
+                      实时兵战
                     </span>
                     <h3 className="font-serif font-extrabold text-white tracking-wider text-base flex items-center gap-1.5 mt-0.5">
                       ⚔️ 兵势生存：孙子兵法实操决局
@@ -2932,9 +2936,9 @@ export default function MultiplayerSandbox({
                               onChange={(e) => handleUpdateMapStance(e.target.value)}
                               className="w-full bg-slate-905 border border-white/10 rounded p-1.5 text-xs text-yellow-105 outline-none focus:border-blue-500 font-mono text-white/90 bg-slate-900"
                             >
-                              <option value="offensive">⚔️ 主力大举攻势 (Allied Offensive Stance)</option>
-                              <option value="defensive">🛡️ 凭高据隘死守 (Allied Defensive Stance)</option>
-                              <option value="ambush">🏹 险途秘密伏击 (Allied Ambush Stance)</option>
+                              <option value="offensive">⚔️ 主力大举攻势</option>
+                              <option value="defensive">🛡️ 凭高据隘死守</option>
+                              <option value="ambush">🏹 险途秘密伏击</option>
                             </select>
                           </div>
 
@@ -3579,11 +3583,11 @@ export default function MultiplayerSandbox({
                       </label>
                       <div className="grid grid-cols-1 gap-1.5 max-h-[160px] overflow-y-auto pr-1">
                         {[
-                          { id: 'LOCAL', name: '乡间 (Local Spy)', cost: 3000, desc: '因其乡人而用之。派遣敌寇本地向导发掘弱点遭遇袭。' },
-                          { id: 'INTERNAL', name: '内间 (Internal Spy)', cost: 5000, desc: '因其官人而用之。分化买通内侍将官，暗毁其制台兵辎。' },
-                          { id: '策反', name: '反间 (Double Agent)', cost: 6000, desc: '因其敌间而用之。使敌探归其主并伪造朝廷王师虚信。' },
-                          { id: 'DEATH', name: '死间 (Doomed Spy)', cost: 4000, desc: '外泄我军虚密。让死士直冲敌牢，散布假战报骗其溃退（50%概率成果）。' },
-                          { id: 'ACTIVE_SURVIVING', name: '生间 (Surviving Agent)', cost: 5000, desc: '刺探虚实完身折返。每季自动为府库秘密掠夺 2000 贯 coffers！' }
+                          { id: 'LOCAL', name: '乡间', cost: 3000, desc: '因其乡人而用之。派遣敌寇本地向导发掘弱点遭遇袭。' },
+                          { id: 'INTERNAL', name: '内间', cost: 5000, desc: '因其官人而用之。分化买通内侍将官，暗毁其制台兵辎。' },
+                          { id: '策反', name: '反间', cost: 6000, desc: '因其敌间而用之。使敌探归其主并伪造朝廷王师虚信。' },
+                          { id: 'DEATH', name: '死间', cost: 4000, desc: '外泄我军虚密。让死士直冲敌牢，散布假战报骗其溃退（50%概率成果）。' },
+                          { id: 'ACTIVE_SURVIVING', name: '生间', cost: 5000, desc: '刺探虚实完身折返。每季自动为府库秘密掠夺 2000 贯！' }
                         ].map((t) => (
                           <button
                             type="button"
@@ -4089,7 +4093,7 @@ export default function MultiplayerSandbox({
                 <span className="flex items-center gap-1.5">
                   <Users className="w-4 h-4 text-[#8C2F39]" /> 朝堂同僚同修录 ({playersList.length}人)
                 </span>
-                <span className="text-[9px] font-mono text-slate-400">Court Presence</span>
+                <span className="text-[9px] font-mono text-slate-400">朝堂影响力</span>
               </h3>
 
               <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1">
@@ -4156,9 +4160,9 @@ export default function MultiplayerSandbox({
               
               <h3 className="text-xs font-serif font-black tracking-wide border-b border-[#1A1A1A]/10 pb-2.5 mb-2 shrink-0 flex items-center justify-between">
                 <span className="flex items-center gap-1.5 text-[#8C2F39]">
-                  <MessageSquare className="w-4 h-4" /> 朝政起居注大厅 (Imperial Logs & Council)
+                  <MessageSquare className="w-4 h-4" /> 朝政起居注大厅
                 </span>
-                <span className="text-[9px] font-mono text-[#8C2F39] px-1.5 bg-[#8C2F39]/5 rounded py-0.5">LIVE</span>
+                <span className="text-[9px] font-mono text-[#8C2F39] px-1.5 bg-[#8C2F39]/5 rounded py-0.5">即时连线</span>
               </h3>
 
               {/* Stream Logs */}

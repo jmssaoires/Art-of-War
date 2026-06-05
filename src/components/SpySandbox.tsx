@@ -1,201 +1,282 @@
 import React, { useState } from 'react';
 import { SpyAgent } from '../types';
-import { Shield, Sparkles, Compass, HelpCircle, Activity, Award, User, RotateCcw, AlertTriangle, KeyRound, Eye, Skull, Radio } from 'lucide-react';
+import { Crown, Feather, User, MapPin, Wine, Gem, MessageSquare, Skull, Award, ScrollText, Flame } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { sfx } from '../utils/sfx';
 
 export default function SpySandbox() {
-  const [gold, setGold] = useState<number>(350);
-  const [morality, setMorality] = useState<number>(80); // 道义值 (0-100)
+  const [gold, setGold] = useState<number>(800); // 金龙币
+  const [influence, setInfluence] = useState<number>(40); // 影响力
+  const [selectedSpyId, setSelectedSpyId] = useState<string | null>(null);
+  const [isShaking, setIsShaking] = useState(false);
 
+  // Initial spies using new GoT-esque themes
   const [spies, setSpies] = useState<SpyAgent[]>([
-    { id: 'spy-1', name: '老里役 (乡间)', type: 'LOCAL', cost: 10, credibility: 65, motivation: 'MONEY', loyalty: 70, isDiscovered: false, state: 'IDLE' },
-    { id: 'spy-2', name: '李侍常 (内间)', type: 'INTERNAL', cost: 120, credibility: 91, motivation: 'FAMILY', loyalty: 85, isDiscovered: false, state: 'IDLE' },
-    { id: 'spy-3', name: '苏谍 (反间)', type: '策反', cost: 80, credibility: 75, motivation: 'HATRED', loyalty: 55, isDiscovered: false, state: 'IDLE' },
-    { id: 'spy-4', name: '赵姬 (生间)', type: 'ACTIVE_SURVIVING', cost: 200, credibility: 95, motivation: 'IDEAL', loyalty: 90, isDiscovered: false, state: 'IDLE' }
+    { id: 'spy-1', name: '君临小小鸟', type: 'WHISPERER', cost: 40, credibility: 95, motivation: 'WEALTH', loyalty: 60, isDiscovered: false, state: 'IDLE' },
+    { id: 'spy-2', name: '黑白院学徒', type: 'ASSASSIN', cost: 150, credibility: 99, motivation: 'DEVOTION', loyalty: 90, isDiscovered: false, state: 'IDLE' },
+    { id: 'spy-3', name: '王领弄臣', type: 'COURTIER', cost: 80, credibility: 75, motivation: 'POWER', loyalty: 40, isDiscovered: false, state: 'IDLE' }
   ]);
 
   const [activeLog, setActiveLog] = useState<string[]>([
-    '【用间部署】孙子曰：凡兴兵十万，出征千里...不急知敌之情者，不仁之至也。五间俱起，莫知其道。',
-    '当前金元 350 两，本朝道义 80。请密令细作深入军情。'
+    '【七国弈局】“混乱不是深渊，混乱是阶梯。”—— 御前会议沙盘已开启。',
+    '注意：特务的【忠诚度】会随差事与欲望而波动。忠诚过低将导致致命背叛。'
   ]);
 
-  const [recruitType, setRecruitType] = useState<'LOCAL' | 'INTERNAL' | 'DEATH' | 'ACTIVE_SURVIVING'>('LOCAL');
-  const [recruitMotiv, setRecruitMotiv] = useState<'MONEY' | 'HATRED' | 'IDEAL' | 'FORCED' | 'FAMILY'>('MONEY');
+  const [activePopup, setActivePopup] = useState<{
+    type: 'BETRAYAL' | 'CAUGHT' | 'SUCCESS' | 'RECRUIT';
+    msg: string;
+    charName: string;
+    emoji: string;
+  } | null>(null);
+
+  const [recruitType, setRecruitType] = useState<'WHISPERER' | 'ASSASSIN' | 'COURTIER' | 'MAESTER'>('WHISPERER');
+  const [recruitMotiv, setRecruitMotiv] = useState<'POWER' | 'WEALTH' | 'REVENGE' | 'FEAR' | 'DEVOTION'>('WEALTH');
 
   const handleRecruit = () => {
+    sfx.playSelect();
     let cost = 0;
     let name = '';
     let cred = 0;
 
-    if (recruitType === 'LOCAL') {
-      cost = 10;
-      name = `山民细作 (乡间)`;
-      cred = 50 + Math.round(Math.random() * 20);
-    } else if (recruitType === 'INTERNAL') {
-      cost = 120;
-      name = `王室偏臣 (内间)`;
-      cred = 80 + Math.round(Math.random() * 15);
-    } else if (recruitType === 'DEATH') {
-      cost = 60;
-      name = `敢死敢亡 (死间)`;
-      cred = 95; // highly convincing false scrolls
+    if (recruitType === 'WHISPERER') {
+      cost = 40; name = `情报总管网眼`; cred = 85; 
+    } else if (recruitType === 'ASSASSIN') {
+      cost = 200; name = `无面者刺客`; cred = 95;
+    } else if (recruitType === 'COURTIER') {
+      cost = 120; name = `宫廷权臣`; cred = 70;
     } else {
-      cost = 200;
-      name = `歌姬名士 (生间)`;
-      cred = 90 + Math.round(Math.random() * 10);
+      cost = 80; name = `学城暗斗学士`; cred = 80;
     }
 
     if (gold < cost) {
-      setActiveLog(prev => [`⚠️ 铜钱不足！雇不起此级别的高级策密大员。`, ...prev]);
+      setActiveLog(prev => [`⚠️ 国库空虚！无足够金龙币招揽此人。`, ...prev]);
       return;
     }
+
+    let initialLoyalty = 40 + Math.round(Math.random() * 40);
+    if (recruitMotiv === 'DEVOTION') initialLoyalty = Math.min(100, initialLoyalty + 25);
+    if (recruitMotiv === 'WEALTH') initialLoyalty = Math.max(0, initialLoyalty - 10);
+    if (recruitMotiv === 'FEAR') initialLoyalty = Math.min(100, initialLoyalty + 15);
 
     const newSpy: SpyAgent = {
       id: `spy-${Date.now()}`,
       name,
-      type: recruitType === 'DEATH' ? 'DEATH' : recruitType,
+      type: recruitType as any,
       cost,
       credibility: cred,
       motivation: recruitMotiv,
-      loyalty: 40 + Math.round(Math.random() * 50),
+      loyalty: initialLoyalty,
       isDiscovered: false,
       state: 'IDLE'
     };
 
     setGold(prev => prev - cost);
     setSpies(prev => [...prev, newSpy]);
-    setActiveLog(prev => [`🕴️ 细作招募：新探子【${name}】怀着《${recruitMotiv}》动机签立死誓，混入死角。`, ...prev]);
+    const recruitMsg = `【暗局契约】出于对《${
+      recruitMotiv === 'POWER' ? '权力' : 
+      recruitMotiv === 'WEALTH' ? '金币' : 
+      recruitMotiv === 'REVENGE' ? '复仇' : 
+      recruitMotiv === 'FEAR' ? '恐惧的屈从' : '狂热信仰'
+    }》的渴望，【${name}】加入麾下。`;
+    setActiveLog(prev => [`📜 ${recruitMsg}`, ...prev]);
+
+    setActivePopup({
+      type: 'RECRUIT',
+      msg: recruitMsg,
+      charName: name,
+      emoji: recruitType === 'ASSASSIN' ? '🥷' : recruitType === 'WHISPERER' ? '🐦' : recruitType === 'MAESTER' ? '🦉' : '🎭'
+    });
+    setTimeout(() => setActivePopup(null), 3500);
   };
 
-  const executeMission = (id: string, missionName: string) => {
+  const executeMission = (id: string, missionType: 'POISON' | 'WHISPER' | 'FORGERY') => {
+    sfx.playSword();
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 400);
+
     const target = spies.find(s => s.id === id);
     if (!target) return;
 
-    let updatedSpies = spies.map(s => {
-      if (s.id === id) {
-        return { ...s, state: 'MISSION' as const };
-      }
-      return s;
-    });
-
-    setSpies(updatedSpies);
+    // Send to mission
+    setSpies(prev => prev.map(s => s.id === id ? { ...s, state: 'MISSION' as const } : s));
+    setSelectedSpyId(null);
     
-    // Simulate mission outcome out of random rolls
     setTimeout(() => {
+      let isBetrayal = false;
       let isCaught = false;
       let msg = '';
-      let goldEarned = 0;
-      let daoLoss = 0;
-      const roll = Math.random() * 100;
-
-      // Local vs Internal catching curves
-      if (target.type === 'LOCAL') {
-        isCaught = roll < 15; // low risk
-      } else if (target.type === 'INTERNAL') {
-        isCaught = roll < 35; // high risk, high reward
-      } else if (target.type === 'DEATH') {
-        isCaught = true; // Death spy is DELIBERATELY caught to transmit false files!
+      
+      // Loyalty Betrayal Check (Lower loyalty = highly likely to betray)
+      const betrayalChance = Math.max(0, 80 - target.loyalty); 
+      if (Math.random() * 100 < betrayalChance) {
+        isBetrayal = true;
       } else {
-        isCaught = roll < 25;
+        const risk = missionType === 'POISON' ? 45 : missionType === 'FORGERY' ? 25 : 10;
+        // Assassin type has much lower poison risk, Whisperer has lower whisper risk
+        let finalRisk = risk;
+        if (missionType === 'POISON' && target.type === 'ASSASSIN') finalRisk = 15;
+        if (missionType === 'WHISPER' && target.type === 'WHISPERER') finalRisk = 2;
+        if (missionType === 'FORGERY' && target.type === 'MAESTER') finalRisk = 5;
+
+        isCaught = (Math.random() * 100) < finalRisk;
       }
 
-      if (isCaught) {
-        if (target.type === 'DEATH') {
-          daoLoss = 10;
-          msg = `💀 死间成功受戮！ ${target.name} 携带假兵防防线图，在边境关卡故意被赵军截获并被斩首。敌军信任假图，将防区侧出破绽！我朝本纪【道义-10】。`;
-        } else {
-          msg = `🚨 噩耗！细作 ${target.name} 遭到盘讯搜身搜出本朝印玺，大牢逼讯下其气节溃退（由于动机为${target.motivation}）。其已被打入天牢，可能已经泄漏我方密局！`;
-        }
-        setSpies(prev => prev.filter(s => s.id !== id)); // dead/escaped
-        if (daoLoss > 0) setMorality(m => Math.max(0, m - daoLoss));
+      const motivMap: Record<string, string> = { POWER: '权力', WEALTH: '贪婪', REVENGE: '仇恨', FEAR: '怯懦', DEVOTION: '狂热' };
+      const mName = missionType === 'POISON' ? '暗杀投毒' : missionType === 'FORGERY' ? '书信伪造' : '散播流言';
+
+      let popType: 'BETRAYAL' | 'CAUGHT' | 'SUCCESS' | 'RECRUIT' = 'SUCCESS';
+
+      if (isBetrayal) {
+         msg = `🗡️ 【血色背叛！】${target.name} 因忠诚涣散（受其${motivMap[target.motivation]}本性驱使），向【君临御前会议】告发了你的阴谋，甚至卷走行动资金！你的影响力暴跌！`;
+         popType = 'BETRAYAL';
+         setInfluence(i => Math.max(0, i - 25));
+         setGold(g => Math.max(0, g - 100)); // Stole some gold
+         setSpies(prev => prev.filter(s => s.id !== id));
+      } else if (isCaught) {
+         msg = `⛓️ 【阴谋败露】执行【${mName}】时，${target.name} 被地牢廷卫抓获。`;
+         popType = 'CAUGHT';
+         setInfluence(i => Math.max(0, i - 10));
+         if (target.motivation === 'WEALTH' || target.motivation === 'FEAR') {
+            msg += ` 狱中不堪酷刑拷打崩溃招供，直接牵连于你！`;
+            setInfluence(i => Math.max(0, i - 15));
+         } else if (target.motivation === 'DEVOTION' || target.motivation === 'REVENGE') {
+            msg += ` 其忠硬似铁，咬舌自尽，未泄半字。`;
+         }
+         setSpies(prev => prev.filter(s => s.id !== id));
       } else {
-        // Mission success
-        if (missionName === 'INTELLIGENCE') {
-          msg = `📡 密报飞至：${target.name} 传回敌重地【赵国邯郸府】战时布署，信誉信赖值高企（精度: ±${Math.round(100 - target.credibility)}%）。报：敌军备虚假，后方粮草不足。`;
-        } else {
-          goldEarned = 40 + Math.round(Math.random() * 80);
-          msg = `💰 反咬吞吐：${target.name} 暗中向敌军太守行贿倒卖劣铜，掠夺走私商饷金 ${goldEarned} 两，反哺我相国府内廷。`;
-          setGold(g => g + goldEarned);
-        }
-        
-        // Return spy to Idle
-        setSpies(prev => prev.map(s => s.id === id ? { ...s, state: 'IDLE' as const, loyalty: Math.min(100, s.loyalty + 5) } : s));
+         if (missionType === 'POISON') {
+           msg = `🍷 【凛冬将至】“勒颈魔”发作！封建大领主在婚宴上暴毙，铁王座动荡。你扶植了傀儡，影响力大增。`;
+           setInfluence(i => i + 30);
+           setGold(g => g + 150);
+         } else if (missionType === 'FORGERY') {
+           msg = `📜 【权谋之术】一纸以领主印泥封缄的伪造书信，成功令北境与西境两大家族互相猜忌爆发冲突。`;
+           setInfluence(i => i + 15);
+           setGold(g => g + 80);
+         } else {
+           msg = `🗣️ 【市井暗语】关于王储血统乃乱伦所出的流言已传遍都城酒馆，教会开始弹劾王室。`;
+           setInfluence(i => i + 8);
+           setGold(g => g + 30);
+         }
+         
+         let loyaltyChange = 0;
+         if (target.motivation === 'WEALTH') loyaltyChange = 12; // Loves successful missions bringing gold
+         else if (target.motivation === 'FEAR') loyaltyChange = -8; // Missions increase paranoia
+         else if (target.motivation === 'POWER') loyaltyChange = 5;
+         else loyaltyChange = 2;
+
+         if (target.motivation === 'FEAR' && loyaltyChange < 0) {
+           msg += ` （由于长期处于高压恐惧，该特务忠诚度下降了！）`;
+         }
+
+         setSpies(prev => prev.map(s => s.id === id ? { ...s, state: 'IDLE' as const, loyalty: Math.max(0, Math.min(100, s.loyalty + loyaltyChange)) } : s));
       }
 
-      setActiveLog(prev => [msg, ...prev].slice(0, 7));
-    }, 900);
+      setActiveLog(prev => [msg, ...prev].slice(0, 8));
+      setActivePopup({
+        type: popType,
+        msg,
+        charName: target.name,
+        emoji: popType === 'BETRAYAL' ? '🗡️' : popType === 'CAUGHT' ? '⛓️' : '🍷'
+      });
+      setTimeout(() => setActivePopup(null), 3500);
+    }, 1500);
   };
 
   return (
-    <div className="bg-white/40 border border-[#1A1A1A]/15 p-6 rounded-md text-[#1A1A1A]" id="spy-sandbox-root">
-      <div className="flex justify-between items-center mb-6 border-b border-[#1A1A1A]/10 pb-4">
+    <div 
+      className={`bg-[#0A0A0C] border border-[#2D3139] p-4 sm:p-6 rounded-lg text-[#C8CDD6] shadow-2xl relative overflow-hidden font-serif ${isShaking ? 'animate-shake' : ''}`} 
+      id="intrigue-sandbox-root"
+      onClick={() => sfx.init()}
+    >
+      {/* Dark fantasy noise overlay */}
+      <div className="absolute inset-0 opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/black-paper.png')] pointer-events-none mix-blend-overlay"></div>
+
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b border-[#2D3139] pb-4 relative z-10 gap-4">
         <div>
-          <h2 className="text-xl font-serif font-black text-[#8C2F39] flex items-center gap-2">
-            <Radio className="text-[#8C2F39] w-5 h-5 animate-pulse font-bold" />
-            【情报局】五间策逆与谍报网络
+          <h2 className="text-2xl font-black text-[#D4AF37] flex items-center gap-2 tracking-widest drop-shadow-md">
+            <Crown className="w-6 h-6 text-[#D4AF37]" />
+            权力的游戏 · 王座密室
           </h2>
-          <p className="text-xs text-[#1A1A1A]/60 mt-1 font-mono">
-            孙子兵法第十三篇《用间篇》核心实现：乡、内、反、死、生，五间俱起，莫知其道，是谓神纪。
+          <p className="text-xs text-[#8A95A5] mt-1 tracking-wide opacity-80">
+            操纵各方势力，平衡金币与恐惧，提防手下的背叛。凡人皆有一死。
           </p>
         </div>
-        <span className="text-xs border border-[#1A1A1A]/15 px-2 py-1 text-[#8C2F39] font-mono rounded bg-white/50 backdrop-blur-xs font-bold shadow-xs">
-          GDD 模块 08 · 交互实验室
+        <span className="text-[10px] border border-[#D4AF37]/40 px-3 py-1.5 text-[#D4AF37]/80 rounded bg-[#1A1A1A] shadow-inner uppercase tracking-widest">
+          御前会议 · 绝密卷宗
         </span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Recruitment office */}
-        <div className="lg:col-span-5 space-y-4">
-          <div className="bg-white/50 p-4 rounded border border-[#1A1A1A]/15 shadow-xs">
-            <h3 className="text-xs font-mono text-[#1A1A1A]/80 flex items-center gap-2 mb-3 font-bold uppercase tracking-wider">
-              <KeyRound className="w-4 h-4 text-[#8C2F39]" />
-              用间招募馆 (Motives & Spies Recruiter)
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 relative z-10">
+        
+        {/* Recruitment office & Stats */}
+        <div className="xl:col-span-4 space-y-6">
+          
+          <div className="bg-[#12141A] border border-[#2D3139] p-4 rounded text-[11px] shadow-inner flex justify-between">
+            <div className="flex flex-col">
+              <span className="text-[#8A95A5] mb-1">国库金龙币</span>
+              <span className="text-[#D4AF37] text-xl font-bold flex items-center gap-1.5">{gold} <span className="text-xs opacity-60">枚</span></span>
+            </div>
+            <div className="w-px bg-[#2D3139]"></div>
+            <div className="flex flex-col items-end">
+              <span className="text-[#8A95A5] mb-1">家族影响力 (成王之基)</span>
+              <span className={`text-xl font-bold flex items-center gap-1.5 ${influence > 70 ? 'text-[#D4AF37]' : influence < 30 ? 'text-[#8C2F39]' : 'text-[#C8CDD6]'}`}>
+                {influence} <span className="text-xs opacity-60">/ 100</span>
+              </span>
+            </div>
+          </div>
+
+          <div className="bg-[#181A20] p-5 rounded border border-[#2D3139] shadow-lg relative">
+            <h3 className="text-sm text-[#D4AF37] flex items-center gap-2 mb-4 font-black tracking-widest border-b border-[#2D3139] pb-2">
+              <User className="w-4 h-4" /> 培植党羽 (雇佣)
             </h3>
 
-            <div className="space-y-3">
+            <div className="space-y-5">
               <div>
-                <label className="text-[10px] text-[#1A1A1A]/50 font-mono block mb-1">九品间谍类型分类：</label>
-                <div className="grid grid-cols-2 gap-1 text-xs">
+                <label className="text-[11px] text-[#8A95A5] block mb-2 tracking-wider">身份阶层</label>
+                <div className="grid grid-cols-2 gap-2 text-xs">
                   {[
-                    { key: 'LOCAL', name: '乡间 (Local)', cost: 10 },
-                    { key: 'INTERNAL', name: '内间 (Internal)', cost: 120 },
-                    { key: 'DEATH', name: '死间 (Death)', cost: 60 },
-                    { key: 'ACTIVE_SURVIVING', name: '生间 (Sleeper)', cost: 200 }
+                    { key: 'WHISPERER', name: '小小鸟', cost: 40, desc: '擅长窃听流言' },
+                    { key: 'ASSASSIN', name: '无面者', cost: 200, desc: '致命稳妥剧毒' },
+                    { key: 'COURTIER', name: '王领弄臣', cost: 120, desc: '宫廷渗透极佳' },
+                    { key: 'MAESTER', name: '灰衣学士', cost: 80, desc: '精通医药伪造' }
                   ].map(t => (
                     <button
                       key={t.key}
-                      id={`rec-type-btn-${t.key}`}
                       onClick={() => setRecruitType(t.key as any)}
-                      className={`p-2 rounded text-left border transition ${
+                      className={`p-2 rounded-md text-left transition-all duration-200 border ${
                         recruitType === t.key
-                          ? 'border-[#8C2F39] bg-[#8C2F39]/5 text-[#8C2F39]'
-                          : 'border-[#1A1A1A]/10 bg-white/50 text-[#1A1A1A]/60 hover:bg-[#1A1A1A]/5'
+                          ? 'border-[#D4AF37] bg-[#D4AF37]/10 text-[#D4AF37]'
+                          : 'border-[#2D3139] bg-[#12141A] text-[#8A95A5] hover:border-[#8A95A5]'
                       }`}
                     >
-                      <div className="font-bold">{t.name}</div>
-                      <div className="text-[9px] text-[#1A1A1A]/50 mt-0.5">工本: {t.cost}金</div>
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="font-bold">{t.name}</span>
+                        <span className="text-[10px] text-[#D4AF37]/70">{t.cost}G</span>
+                      </div>
+                      <div className="text-[9px] opacity-60">{t.desc}</div>
                     </button>
                   ))}
                 </div>
               </div>
 
               <div>
-                <label className="text-[10px] text-[#1A1A1A]/50 font-mono block mb-1">五大死命动机 (决定背叛率)：</label>
-                <div className="grid grid-cols-5 gap-1 text-[9px]">
+                <label className="text-[11px] text-[#8A95A5] block mb-2 tracking-wider">人性欲念 (决定忠诚走向)</label>
+                <div className="grid grid-cols-3 gap-1.5 text-[10px]">
                   {[
-                    { key: 'MONEY', name: '重利' },
-                    { key: 'HATRED', name: '宿怨' },
-                    { key: 'IDEAL', name: '信念' },
-                    { key: 'FORCED', name: '胁迫' },
-                    { key: 'FAMILY', name: '骨肉' }
+                    { key: 'POWER', name: '对权力的渴望' },
+                    { key: 'WEALTH', name: '嗜金如命' },
+                    { key: 'REVENGE', name: '血海深仇' },
+                    { key: 'FEAR', name: '慑于暴虐' },
+                    { key: 'DEVOTION', name: '狂热崇拜' }
                   ].map(m => (
                     <button
                       key={m.key}
-                      id={`rec-motiv-btn-${m.key}`}
                       onClick={() => setRecruitMotiv(m.key as any)}
-                      className={`py-1.5 rounded transition font-bold border border-[#1A1A1A]/10 ${
+                      className={`py-1.5 px-1 rounded-sm transition-all text-center border ${
                         recruitMotiv === m.key
-                          ? 'bg-[#8C2F39] text-[#F5F2ED] font-bold border-[#8C2F39]'
-                          : 'bg-white text-[#1A1A1A]/60 hover:bg-[#1A1A1A]/5'
+                          ? 'bg-[#2D3139] text-[#D4AF37] border-[#D4AF37]/50'
+                          : 'bg-[#12141A] border-[#2D3139] text-[#8A95A5] hover:text-[#C8CDD6]'
                       }`}
                     >
                       {m.name}
@@ -205,106 +286,227 @@ export default function SpySandbox() {
               </div>
 
               <button
-                id="do-recruit-spy-btn"
                 onClick={handleRecruit}
-                className="w-full bg-[#8C2F39] hover:bg-[#8C2F39]/90 text-[#F5F2ED] text-xs font-black py-2 rounded shadow-sm mt-4 transition"
+                className="w-full bg-gradient-to-r from-[#2A2416] to-[#1A1813] hover:from-[#3A3220] border border-[#D4AF37]/30 text-[#D4AF37] text-xs font-black tracking-widest py-3 rounded shadow-lg mt-2 transition-all flex justify-center items-center gap-2"
               >
-                密发印信 · 委任细作
+                缔结血誓 (招揽)
               </button>
-            </div>
-          </div>
-
-          {/* Player stats box */}
-          <div className="bg-white/60 border border-[#1A1A1A]/15 p-3.5 rounded flex justify-between items-center text-xs font-mono shadow-xs">
-            <div>
-              <span className="text-[#1A1A1A]/50 block">廷尉府秘密金帑:</span>
-              <strong className="text-[#8C2F39] text-base">{gold} 金</strong>
-            </div>
-            <div className="text-right">
-              <span className="text-[#1A1A1A]/50 block">朝堂万民道义 (DAO):</span>
-              <strong className={morality > 50 ? 'text-[#5A5A40] text-base font-bold' : 'text-[#8C2F39] text-base font-bold'}>
-                {morality} / 100
-              </strong>
             </div>
           </div>
         </div>
 
-        {/* Existing Spy Roster and Board */}
-        <div className="lg:col-span-7 flex flex-col justify-between space-y-4">
-          <div className="bg-white/50 p-4 rounded border border-[#1A1A1A]/15 flex-1 shadow-xs">
-            <h3 className="text-xs font-mono text-[#1A1A1A]/80 mb-3 font-bold border-b border-[#1A1A1A]/10 pb-2">当前活跃谍网成员 ({spies.length} 名)</h3>
+        {/* Board */}
+        <div className="xl:col-span-8 flex flex-col space-y-6">
+          
+          <div className="bg-[#12141A] p-5 rounded border border-[#2D3139] relative overflow-hidden">
+             {/* Map overlay graphic */}
+             <div className="absolute inset-y-0 right-0 w-2/3 opacity-5 pointer-events-none mix-blend-screen bg-contain bg-right bg-no-repeat" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/diagmonds-light.png")' }}></div>
+            
+            <h3 className="text-sm text-[#C8CDD6] mb-4 font-black tracking-widest flex items-center justify-between border-b border-[#2D3139] pb-3 relative z-10">
+              <span className="flex items-center gap-2"><MapPin className="w-4 h-4 text-[#D4AF37]" /> 君临地图板</span>
+              <span className="text-[10px] text-[#8A95A5] bg-[#0A0A0C] px-2 py-0.5 rounded border border-[#2D3139]">
+                {selectedSpyId ? '请委派阴谋任务' : '点选下方棋子以行动'}
+              </span>
+            </h3>
+
+            <div className="relative h-48 bg-[#0B0D12] rounded border border-[#2D3139] mt-2 p-4 flex justify-around items-center z-10 shadow-inner">
+              
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                disabled={!selectedSpyId || spies.find(s => s.id === selectedSpyId)?.state === 'MISSION'}
+                onClick={() => selectedSpyId && executeMission(selectedSpyId, 'WHISPER')}
+                className="flex flex-col items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed group/node"
+              >
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all ${
+                  selectedSpyId ? 'border-cyan-700 bg-cyan-950/30' : 'border-[#2D3139] bg-[#12141A]'
+                }`}>
+                  <MessageSquare className={`w-5 h-5 ${selectedSpyId ? 'text-cyan-500' : 'text-[#8A95A5]'}`} />
+                </div>
+                <div className="text-center">
+                  <span className={`text-[11px] block transition-colors ${selectedSpyId ? 'text-cyan-400 font-bold' : 'text-[#8A95A5]'}`}>市井酒馆</span>
+                  <span className="text-[9px] text-[#A0A5B1]/50">散播流言</span>
+                </div>
+              </motion.button>
+
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                disabled={!selectedSpyId || spies.find(s => s.id === selectedSpyId)?.state === 'MISSION'}
+                onClick={() => selectedSpyId && executeMission(selectedSpyId, 'FORGERY')}
+                className="flex flex-col items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed group/node"
+              >
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center border-2 transition-all ${
+                  selectedSpyId ? 'border-amber-700 bg-amber-950/30' : 'border-[#2D3139] bg-[#12141A]'
+                }`}>
+                  <ScrollText className={`w-6 h-6 ${selectedSpyId ? 'text-amber-500' : 'text-[#8A95A5]'}`} />
+                </div>
+                <div className="text-center">
+                  <span className={`text-sm block transition-colors ${selectedSpyId ? 'text-amber-500 font-bold' : 'text-[#8A95A5]'}`}>列座封臣</span>
+                  <span className="text-[10px] text-[#A0A5B1]/50">伪造挑拨密信</span>
+                </div>
+              </motion.button>
+
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                disabled={!selectedSpyId || spies.find(s => s.id === selectedSpyId)?.state === 'MISSION'}
+                onClick={() => selectedSpyId && executeMission(selectedSpyId, 'POISON')}
+                className="flex flex-col items-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed group/node"
+              >
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all ${
+                  selectedSpyId ? 'border-[#8C2F39] bg-[#8C2F39]/20' : 'border-[#2D3139] bg-[#12141A]'
+                }`}>
+                  <Wine className={`w-5 h-5 ${selectedSpyId ? 'text-[#EF4444]' : 'text-[#8A95A5]'}`} />
+                </div>
+                <div className="text-center">
+                  <span className={`text-[11px] block transition-colors ${selectedSpyId ? 'text-[#EF4444] font-bold' : 'text-[#8A95A5]'}`}>红堡寝宫</span>
+                  <span className="text-[9px] text-[#A0A5B1]/50">赐下毒酒</span>
+                </div>
+              </motion.button>
+
+            </div>
+          </div>
+
+          {/* Roster */}
+          <div className="bg-[#12141A] p-4 rounded border border-[#2D3139] flex-1">
+            <h3 className="text-xs text-[#8A95A5] mb-3 flex justify-between border-b border-[#2D3139] pb-2">
+              <span>手中暗子 (存活: {spies.length})</span>
+            </h3>
 
             {spies.length === 0 ? (
-              <div id="empty-spy-grid" className="text-center py-8 text-[#1A1A1A]/40 text-xs italic">
-                谍报网已被彻底端除！急切补充新鲜细作。
+              <div className="flex-1 flex flex-col items-center justify-center py-6 text-[#8A95A5] text-[11px] gap-2">
+                <Skull className="w-8 h-8 opacity-40 mb-2" />
+                满盘皆输，无棋可用。
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3" id="spies-grid-container">
-                {spies.map(spy => {
-                  const isSleeper = spy.type === 'ACTIVE_SURVIVING';
-                  const isDeath = spy.type === 'DEATH';
+              <div className="flex gap-3 overflow-x-auto pb-2 px-1">
+                <AnimatePresence>
+                  {spies.map(spy => {
+                    const isSelected = selectedSpyId === spy.id;
+                    const isMission = spy.state === 'MISSION';
 
-                  return (
-                    <div
-                      key={spy.id}
-                      id={`spy-card-${spy.id}`}
-                      className="bg-white/85 p-3 rounded border border-[#1A1A1A]/10 relative flex flex-col justify-between shadow-xs"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <span className="text-xs font-serif font-black text-[#1A1A1A] block">{spy.name}</span>
-                          <span className="text-[9px] text-[#8C2F39] font-mono font-bold">
-                            动机: {spy.motivation === 'MONEY' ? '重利' : spy.motivation === 'IDEAL' ? '理想' : '家世'} • 忠臣度: {spy.loyalty}
-                          </span>
+                    // Danger coloring for loyalty
+                    const loyColor = spy.loyalty < 30 ? 'text-[#EF4444]' : spy.loyalty > 80 ? 'text-[#10B981]' : 'text-[#D4AF37]';
+
+                    return (
+                      <motion.button
+                        layout
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        key={spy.id}
+                        onClick={() => {
+                          sfx.playBlip();
+                          setSelectedSpyId(isSelected ? null : spy.id);
+                        }}
+                        disabled={isMission}
+                        className={`min-w-[180px] text-left p-3 rounded border relative flex flex-col justify-between transition-all group ${
+                          isSelected 
+                            ? 'bg-[#1A1A1A] border-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.15)]' 
+                            : isMission
+                              ? 'opacity-0 hidden'
+                              : 'bg-[#0B0D12] border-[#2D3139] hover:border-[#5C6575]'
+                        }`}
+                        style={{ display: isMission ? 'none' : 'flex' }}
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <span className={`text-[13px] font-black block mb-0.5 ${isSelected ? 'text-[#D4AF37]' : 'text-[#C8CDD6]'}`}>{spy.name}</span>
+                            <span className="text-[9px] text-[#8A95A5] flex gap-1 opacity-80">
+                              欲望: {spy.motivation === 'POWER' ? '权力' : spy.motivation === 'WEALTH' ? '金流' : spy.motivation === 'REVENGE' ? '复仇' : spy.motivation === 'FEAR' ? '恐惧' : '狂热'}
+                            </span>
+                          </div>
                         </div>
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded-sm uppercase font-mono font-bold ${
-                          spy.state === 'MISSION' ? 'bg-[#8C2F39]/10 text-[#8C2F39] animate-pulse' : 'bg-[#1A1A1A]/5 text-[#1A1A1A]/50'
-                        }`}>
-                          {spy.state}
-                        </span>
-                      </div>
 
-                      <div className="grid grid-cols-2 gap-2 mt-4">
-                        <button
-                          id={`spy-miss-intel-btn-${spy.id}`}
-                          disabled={spy.state === 'MISSION'}
-                          onClick={() => executeMission(spy.id, 'INTELLIGENCE')}
-                          className="bg-white hover:bg-neutral-50 text-[10px] text-[#1A1A1A]/80 py-1.5 rounded border border-[#1A1A1A]/15 hover:border-[#8C2F39]/40 transition shadow-xs flex items-center justify-center gap-1 disabled:opacity-55"
-                        >
-                          <Eye className="w-3 h-3 text-[#5A5A40] font-bold" />
-                          打探敌国设防
-                        </button>
-
-                        <button
-                          id={`spy-miss-gold-btn-${spy.id}`}
-                          disabled={spy.state === 'MISSION'}
-                          onClick={() => executeMission(spy.id, '走私掠夺')}
-                          className="bg-white hover:bg-neutral-50 text-[10px] text-[#1A1A1A]/80 py-1.5 rounded border border-[#1A1A1A]/15 hover:border-[#8C2F39]/40 transition shadow-xs flex items-center justify-center gap-1 disabled:opacity-55"
-                        >
-                          <Skull className="w-3 h-3 text-[#8C2F39] font-bold" />
-                          暗度金元倒卖
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                        <div className="bg-[#12141A] p-2 rounded-sm border border-[#2D3139]">
+                           <div className="flex justify-between items-center text-[10px]">
+                              <span className="text-[#8A95A5]">忠诚度</span>
+                              <span className={`font-bold ${loyColor}`}>{spy.loyalty} / 100</span>
+                           </div>
+                           {spy.loyalty < 40 && <div className="text-[8px] text-[#EF4444] mt-1 animate-pulse">⚠️ 背叛风险极高</div>}
+                        </div>
+                      </motion.button>
+                    );
+                  })}
+                </AnimatePresence>
               </div>
             )}
           </div>
 
-          {/* Intercepted Logs */}
-          <div className="bg-white/85 p-3.5 rounded border border-[#1A1A1A]/15 max-h-[140px] overflow-y-auto shadow-xs">
-            <h4 className="text-[9px] font-mono text-[#1A1A1A]/60 tracking-wider mb-2 font-bold uppercase">秦晋飞简情报解譯 logs</h4>
-            <div className="space-y-1.5 text-[11px] font-mono leading-relaxed">
+          {/* Logs */}
+          <div className="bg-[#0B0D12] p-4 rounded border border-[#2D3139]">
+            <h4 className="text-[10px] text-[#D4AF37] mb-2 font-bold flex items-center gap-2">
+              <Feather className="w-3.5 h-3.5" /> 暗网渡鸦卷宗
+            </h4>
+            <div className="space-y-1.5 text-[11px] leading-relaxed h-[110px] overflow-y-auto pr-2 custom-scrollbar flex flex-col">
               {activeLog.map((log, index) => (
-                <div key={index} className="text-[#1A1A1A]/85 border-l-2 border-[#8C2F39]/20 pl-2">
+                <div key={index} className={`border-l-2 pl-2.5 py-1 ${
+                  log.includes('🗡️') || log.includes('⛓️') ? 'border-[#8C2F39] text-[#EF4444] bg-[#8C2F39]/10' :
+                  log.includes('🍷') || log.includes('📜') ? 'border-[#D4AF37] text-[#D4AF37]/90' :
+                  log.includes('🗣️') ? 'border-cyan-800 text-cyan-200' :
+                  'border-[#5C6575] text-[#8A95A5]'
+                }`}>
                   {log}
                 </div>
               ))}
             </div>
           </div>
+
         </div>
       </div>
+
+      {/* Floating Animated Character Popup overlay */}
+      <AnimatePresence>
+        {activePopup && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: 50 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: -20 }}
+            transition={{ type: 'spring', damping: 20, stiffness: 200 }}
+            className={`absolute z-50 bottom-8 md:bottom-auto md:top-1/3 left-1/2 -translate-x-1/2 min-w-[300px] max-w-[85vw] p-5 rounded-xl border border-[#2D3139] shadow-2xl backdrop-blur-xl ${
+              activePopup.type === 'BETRAYAL' ? 'bg-[#8C2F39]/90 border-red-500/50' :
+              activePopup.type === 'CAUGHT' ? 'bg-[#181A20]/90 border-[#A0A5B1]/30' :
+              activePopup.type === 'SUCCESS' ? 'bg-[#162A1F]/90 border-emerald-700/50' :
+              'bg-[#2A2416]/90 border-[#D4AF37]/50'
+            }`}
+          >
+            <div className="flex items-start gap-4">
+              <div className="text-5xl drop-shadow-md">
+                <motion.div
+                  initial={{ rotate: -15, scale: 0.5 }}
+                  animate={{ rotate: 0, scale: 1 }}
+                  transition={{ type: 'spring', delay: 0.1 }}
+                >
+                  {activePopup.emoji}
+                </motion.div>
+              </div>
+              <div className="flex-1">
+                <h4 className={`text-sm font-black mb-1.5 ${
+                  activePopup.type === 'BETRAYAL' ? 'text-red-200' :
+                  activePopup.type === 'CAUGHT' ? 'text-stone-300' :
+                  activePopup.type === 'SUCCESS' ? 'text-emerald-200' :
+                  'text-[#D4AF37]'
+                }`}>
+                  {activePopup.type === 'BETRAYAL' ? '⚠️ 背叛发生！' :
+                   activePopup.type === 'CAUGHT' ? '⛓️ 情报官被捕' :
+                   activePopup.type === 'SUCCESS' ? '🍷 密谋得手' :
+                   '📜 新盟友效忠'}
+                </h4>
+                <p className="text-xs leading-relaxed text-stone-100/90 font-medium">
+                  <span className="font-bold opacity-100 text-white">[{activePopup.charName}]</span> 
+                  {' '} {activePopup.msg.replace(/^.*?[\]】]\s*/, '') /* Remove the prefix from msg */}
+                </p>
+              </div>
+            </div>
+            
+            <div className="mt-3 text-[9px] text-right opacity-60 uppercase tracking-widest text-[#D4AF37]">
+              君临密报局
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

@@ -10,6 +10,11 @@ import {
   useMap
 } from '@vis.gl/react-google-maps';
 import { 
+  db, 
+  auth, 
+  loginAnonymously, 
+  handleFirestoreError, 
+  OperationType,
   doc, 
   setDoc, 
   onSnapshot, 
@@ -21,10 +26,12 @@ import {
   orderBy, 
   limit, 
   getDoc,
-  deleteDoc
-} from 'firebase/firestore';
-import { db, auth, loginAnonymously, handleFirestoreError, OperationType } from '../firebase';
-import { onAuthStateChanged, signInAnonymously, updateProfile } from 'firebase/auth';
+  deleteDoc,
+  onAuthStateChanged, 
+  signInAnonymously, 
+  updateProfile
+} from '../firebase';
+import { soundManager } from '../utils/soundManager';
 import { 
   Swords, 
   Compass, 
@@ -72,61 +79,61 @@ interface Battlefield {
 const HISTORICAL_BATTLEFIELDS: Battlefield[] = [
   {
     id: "changping",
-    name: "长平之战 (Battle of Changping)",
-    dynasty: "战国 (Qin vs Zhao)",
-    combatants: "白起 (Qin) vs 赵括 (Zhao)",
+    name: "长平之战",
+    dynasty: "战国",
+    combatants: "白起 vs 赵括",
     lat: 35.7947,
     lng: 112.9238,
     terrain: "DEATH",
-    classicQuote: "疾战则存，不疾战则亡，为死地。在死地则战。(In desperate territory, you must fight immediately.)",
+    classicQuote: "疾战则存，不疾战则亡，为死地。在死地则战。",
     description: "史上最大规模的围歼战，秦将白起利用狭谷地形设伏，合围赵军四十万。",
     historyText: "山西高平长平古战场。此处两山夹峙，谷深林密。白起利用赵括轻敌犯险，以两奇兵截断赵军归路及粮道，实施史上最经典的瓮中捉鳖歼灭战。"
   },
   {
     id: "maling",
-    name: "马陵之战 (Battle of Maling)",
-    dynasty: "战国 (Qi vs Wei)",
-    combatants: "孙膑 (Qi) vs 庞涓 (Wei)",
+    name: "马陵之战",
+    dynasty: "战国",
+    combatants: "孙膑 vs 庞涓",
     lat: 36.1912,
     lng: 115.8239,
     terrain: "HEAVY",
-    classicQuote: "入人之地深，背城邑多者，为重地。重地则掠。(When you enter deep into enemy territory, it is heavy ground. Forage on the enemy.)",
+    classicQuote: "入人之地深，背城邑多者，为重地。重地则掠。",
     description: "孙膑著名的‘增兵减灶’退兵设伏妙计，于狭长通道设伏全歼魏军，庞涓自刎。",
     historyText: "马陵道两旁峭壁如刀削。孙膑算准时间，剥去大树之皮刻下‘庞涓死于此树之下’。魏军夜行举火照读瞬间，万弩齐发，一战消灭魏国精锐主力。"
   },
   {
     id: "chibi",
-    name: "赤壁之战 (Battle of Chibi)",
-    dynasty: "三国 (Allies vs Cao Cao)",
-    combatants: "周瑜/刘备 (Allies) vs 曹操 (Wei)",
+    name: "赤壁之战",
+    dynasty: "三国",
+    combatants: "周瑜/刘备 vs 曹操",
     lat: 29.8516,
     lng: 113.6214,
     terrain: "ENTRAPPING",
-    classicQuote: "可以往，难以返，曰挂。彼无备，出而胜之；彼若有备，难复，不利。(An entrapping ground is easy to abandon but difficult to re-occupy. Advance only with a surprise element.)",
+    classicQuote: "可以往，难以返，曰挂。彼无备，出而胜之；彼若有备，难复，不利。",
     description: "诸葛亮巧测东风，周瑜火烧连环船。联军以弱胜强，奠定三国鼎立基础。",
     historyText: "湖北赤壁长江天险。由于北方魏军大军不习水战且染疾，曹操将战船连锁成排。联军趁东南风起，派遣精锐火船冲突冲撞曹营，烈火张天，烧尽魏军数十万水师。"
   },
   {
     id: "guandu",
-    name: "官渡之战 (Battle of Guandu)",
-    dynasty: "三国 (Cao Cao vs Yuan Shao)",
-    combatants: "曹操 (Cao Cao) vs 袁绍 (Yuan Shao)",
+    name: "官渡之战",
+    dynasty: "三国",
+    combatants: "曹操 vs 袁绍",
     lat: 34.6189,
     lng: 114.1952,
     terrain: "CONTENTIOUS",
-    classicQuote: "我得亦利，彼得亦利，为争地。攻之则不利，守之则安。(Ground this is highly advantageous to both sides is contentious ground. Do not attack blindly.)",
+    classicQuote: "我得亦利，彼得亦利，为争地。攻之则不利，守之则安。",
     description: "曹操奇袭乌巢粮仓以弱胜强，歼其辎重精锐，一战平定北方霸权。",
     historyText: "官渡地处黄河南岸要道。曹袁两军在官渡相持数月，曹操奇兵夜行，抄小道直取乌巢，焚尽袁军粮食守备。袁绍军心大火大乱分崩离析，彻底改变了北方的地缘局势。"
   },
   {
     id: "hulaoguan",
-    name: "虎牢关之战 (Battle of Hulao Pass)",
-    dynasty: "唐代 (Li Shimin vs Multi-States)",
-    combatants: "李世民 (Tang) vs 窦建德 (Xia) / 王世充 (Zheng)",
+    name: "虎牢关之战",
+    dynasty: "唐代",
+    combatants: "李世民 vs 窦建德 / 王世充",
     lat: 34.8219,
     lng: 113.1558,
     terrain: "FOCAL",
-    classicQuote: "诸侯之地三宾，先至而得天下之众者，为衢地。衢地则合。(Focal ground controls multiple highway nodes. Whosoever controls it gains the crowd.)",
+    classicQuote: "诸侯之地三宾，先至而得天下之众者，为衢地。衢地则合。",
     description: "李世民以三千玄甲精骑突袭雄关，阻断数十万援兵咽喉重地，立吞双雄。",
     historyText: "河南荥阳虎牢关关隘，南依嵩山，北阻黄河，绝崖万仞。属于典型的扼据天下枢机、谁先至即能称天下之势的‘衢地’。唐军以逸待劳，攻守转换破窦主力，创下战史神话。"
   }
@@ -138,44 +145,44 @@ function analyzePoint(lat: number, lng: number) {
   const distanceToNanjing = Math.sqrt(Math.pow(lat - 32.0603, 2) + Math.pow(lng - 118.7969, 2));
 
   let terrainId = "SCATTERED";
-  let terrainName = "散地 (Scattered Ground)";
-  let classicQuote = "诸侯自战其地者，为散地。其卒易散。(When an army fights on its own territory, it is scattered ground.)";
+  let terrainName = "散地";
+  let classicQuote = "诸侯自战其地者，为散地。其卒易散。";
   let adviser = "处于本土自战防御圈，退路纵横。虽行军有利，但部卒易生懈怠，心思归家。行军切忌死打硬拼，应该深挖沟壕，坚壁清野，诱敌速胜。";
   let bonusName = "【乡关情结】主防守、御城工事系数额外提升+15%";
   let badgeColor = "bg-[#1A1A1A] border-stone-300 text-stone-200";
 
   if (distanceToXiAn < 2.2) {
     terrainId = "FOCAL";
-    terrainName = "衢地 (Focal Ground)";
-    classicQuote = "先至而得天下之众者，为衢地。交合其四达。(Whosoever occupies it first will have the whole empire. It has multiple highways.)";
+    terrainName = "衢地";
+    classicQuote = "先至而得天下之众者，为衢地。交合其四达。";
     adviser = "地处天下大国的战略枢纽交汇点，兵家必争。任何部队在此应立刻开启外交纵横，招抚外援势力，若无法独占则绝不可在此长期孤立防御。";
     bonusName = "【四通八达】战场调兵调度时间缩短50%，外交速率+30%";
     badgeColor = "bg-amber-600 border-amber-400 text-white";
   } else if (distanceToBeijing < 3.2 && distanceToBeijing > 1.0) {
     terrainId = "CONTENTIOUS";
-    terrainName = "争地 (Contentious Ground)";
-    classicQuote = "我得亦利，彼得亦利，为争地。不可攻也。(Ground that offers strategic gains to both sides is contentious. Do not attack blindly.)";
+    terrainName = "争地";
+    classicQuote = "我得亦利，彼得亦利，为争地。不可攻也。";
     adviser = "地势多奇险山峡，谁若占去一险便能立判乾坤。切勿迎风正面攻坚，要派遣偏军声东击西，在后方扼断敌之粮道或辎重供应线。";
     bonusName = "【奇兵扼喉】伏兵及后勤打击造成的震慑士气效果提升80%";
     badgeColor = "bg-purple-700 border-purple-500 text-purple-100";
   } else if (lat > 35.5 && lng < 111.0) {
     terrainId = "DEATH";
-    terrainName = "死地 (Death Ground)";
-    classicQuote = "疾战则存，不疾战则亡，为死地。在死地则战。(Where delay means destruction, it is death ground. In death ground, fight!)";
+    terrainName = "死地";
+    classicQuote = "疾战则存，不疾战则亡，为死地。在死地则战。";
     adviser = "地势绝断，前有阻碍后无退路。置之死地而后生！此时撤兵毫无可能，唯有向将士宣示退无归处，破釜沉舟，三军全力猛攻以求搏命求生！";
     bonusName = "【决死陷阵】合军搏命猛攻，基础攻击暴击率+120%，攻击力提升50%";
     badgeColor = "bg-[#8C2F39] border-red-500 text-white";
   } else if (distanceToNanjing < 3.2) {
     terrainId = "ENTRAPPING";
-    terrainName = "挂地 (Entrapping Ground)";
-    classicQuote = "可以往，难以返，曰挂。彼无备，出而胜之；彼若有备，难复，不利。(An entrapping ground is easy to abandon but difficult to re-occupy. Advance only with a surprise element.)";
+    terrainName = "挂地";
+    classicQuote = "可以往，难以返，曰挂。彼无备，出而胜之；彼若有备，难复，不利。";
     adviser = "水域广覆，沟壑密布。易进难出，部队在此切忌孤军追击敌散兵。必须确保有足够战船作为退路，若敌军已经布防，强攻则必遭围歼。";
     bonusName = "【扼流入伏】战场机动范围和水域包抄反甲克制率提升40%";
     badgeColor = "bg-teal-700 border-teal-500 text-teal-100";
   } else if (lat < 30.0 && lng < 105.0) {
     terrainId = "FRONTIER";
-    terrainName = "圮地 (Swamp Ground / Difficult Land)";
-    classicQuote = "山林、险阻、沮泽，凡难行之道者，为圮地。圮地则行。(Mountain forests, rugged defiles, swamps... all difficult trails. Move on.)";
+    terrainName = "圮地";
+    classicQuote = "山林、险阻、沮泽，凡难行之道者，为圮地。圮地则行。";
     adviser = "属深林泽沼、瘴气湿热，全军补给与辎重车马移动十分艰难。不得长期停留、安营筑城。应调动轻兵，疾行离境，快速通过此复杂地带。";
     bonusName = "【轻军疾足】山林沼泽行军移动加成+60%，不易受阻";
     badgeColor = "bg-emerald-700 border-emerald-500 text-emerald-100";
@@ -183,15 +190,15 @@ function analyzePoint(lat: number, lng: number) {
     const isEven = Math.floor(lat + lng) % 2 === 0;
     if (isEven) {
       terrainId = "HEAVY";
-      terrainName = "重地 (Heavy Ground)";
-      classicQuote = "入人之地深，背城邑多者，为重地。重地则掠。(When you enter deep into enemy territory, it is heavy ground. Forage on the enemy.)";
+      terrainName = "重地";
+      classicQuote = "入人之地深，背城邑多者，为重地。重地则掠。";
       adviser = "大军已长驱直入敌国战略纵深，腹背受敌风险高。兵书云重地则掠，因战线过长，后方补给困难，必须采取以战养战之策，就地夺粮，安抚沿边百姓。";
       bonusName = "【以战养战】军需后勤行军开支自动缩减70%，掠获黄金效率+150%";
       badgeColor = "bg-orange-700 border-orange-500 text-orange-100";
     } else {
       terrainId = "LIGHT";
-      terrainName = "轻地 (Light Ground)";
-      classicQuote = "入人之地不深者，为轻地。其卒易返。轻地则无止。(When you enter enemy territory but not deep, it is light ground. Do not stop.)";
+      terrainName = "轻地";
+      classicQuote = "入人之地不深者，为轻地。其卒易返。轻地则无止。";
       adviser = "刚跨过敌国边界，士兵依然能看得见家乡的烽火，部卒容易出现溃退逃跑。不可以安营扎寨拖延战机，必须以雷霆攻势迅速夺取边城险隘，迫卒前冲。";
       bonusName = "【首战冲阵】首次伏击、奇袭或攻城突破概率加倍+100%";
       badgeColor = "bg-stone-500 border-stone-400 text-stone-100";
@@ -631,6 +638,19 @@ const SmoothAdvancedMarker = ({ u, onClick, alliedStance, isDamaged }: { u: any,
             {u.name}
           </p>
           <p className="text-[7.5px] opacity-95">兵员: {u.size} {isCritical && <span className="text-amber-300 font-serif font-black">(危!)</span>}</p>
+          
+          <div className="flex items-center gap-0.5 mt-0.5 text-[6.5px] font-sans justify-center bg-black/25 rounded py-[1px] px-0.5">
+            <span className="opacity-95 text-amber-200">🌾 粮:{(u.provisions !== undefined ? u.provisions : 100)}%</span>
+            <div className="w-8 h-1 bg-stone-700 rounded-full overflow-hidden inline-block ml-0.5 border border-stone-600">
+              <div 
+                className={`h-full ${
+                  (u.provisions !== undefined ? u.provisions : 100) > 40 ? 'bg-amber-400' : 'bg-red-500 animate-pulse'
+                }`}
+                style={{ width: `${(u.provisions !== undefined ? u.provisions : 100)}%` }}
+              />
+            </div>
+          </div>
+
           {u.creatorName && (
             <p className="text-[6.5px] text-amber-200 leading-none opacity-80 mt-0.5 text-center font-mono font-light">[{u.creatorName}]</p>
           )}
@@ -640,7 +660,7 @@ const SmoothAdvancedMarker = ({ u, onClick, alliedStance, isDamaged }: { u: any,
   );
 };
 
-const SmoothInkMarker = ({ u, selectedBattlefield, isDamaged, alliedStance, onClick, setSelectedUnit }: { 
+const SmoothInkMarker = ({ u, selectedBattlefield, isDamaged, alliedStance, onClick, setSelectedUnit, mapTilt = 0, mapHeading = 0 }: { 
   u: any; 
   selectedBattlefield: any; 
   isDamaged: boolean; 
@@ -648,6 +668,8 @@ const SmoothInkMarker = ({ u, selectedBattlefield, isDamaged, alliedStance, onCl
   onClick: (e: React.MouseEvent) => void;
   setSelectedUnit: (u: any) => void;
   key?: any;
+  mapTilt?: number;
+  mapHeading?: number;
 }) => {
   const deltaLat = u.lat - (selectedBattlefield ? selectedBattlefield.lat : 34.3415);
   const deltaLng = u.lng - (selectedBattlefield ? selectedBattlefield.lng : 108.9404);
@@ -676,7 +698,7 @@ const SmoothInkMarker = ({ u, selectedBattlefield, isDamaged, alliedStance, onCl
   return (
     <motion.div 
       className="absolute cursor-pointer group animate-fade-in drop-shadow-[2px_4px_5px_rgba(0,0,0,0.55)]"
-      style={{ x: "-50%", y: "-50%" }}
+      style={{ x: "-50%", y: "-50%", transformStyle: 'preserve-3d' }}
       initial={{ scale: 0, opacity: 0 }}
       animate={{ 
         scale: isDamaged ? [1, 1.25, 0.9, 1.1, 1] : 1, 
@@ -696,7 +718,13 @@ const SmoothInkMarker = ({ u, selectedBattlefield, isDamaged, alliedStance, onCl
       }}
       onClick={onClick}
     >
-      <div className="relative flex items-center justify-center">
+      <div 
+        className="relative flex items-center justify-center transition-transform duration-350 ease-out"
+        style={{ 
+          transform: `rotateX(${-mapTilt}deg) rotateY(0deg) rotateZ(${mapHeading}deg)`, 
+          transformStyle: 'preserve-3d' 
+        }}
+      >
         {isDamaged && (
           <motion.div 
             initial={{ y: 0, opacity: 1, scale: 0.8 }}
@@ -775,6 +803,19 @@ const SmoothInkMarker = ({ u, selectedBattlefield, isDamaged, alliedStance, onCl
           <span className="font-mono text-[8px] font-bold block mt-0.5 mt-shadow opacity-80">
             兵力: {u.size} {isCritical && <span className="text-red-700 font-extrabold font-serif">(溃!)</span>}
           </span>
+          
+          <div className="flex items-center gap-1 mt-1 text-[7.5px] font-sans justify-center bg-black/5 rounded py-[1px] px-0.5">
+            <span className="text-stone-600">🌾 粮:{(u.provisions !== undefined ? u.provisions : 100)}%</span>
+            <div className="w-9 h-1 bg-stone-300 rounded overflow-hidden inline-block border border-stone-400">
+              <div 
+                className={`h-full ${
+                  (u.provisions !== undefined ? u.provisions : 100) > 40 ? 'bg-amber-600' : 'bg-red-650 animate-pulse'
+                }`}
+                style={{ width: `${(u.provisions !== undefined ? u.provisions : 100)}%` }}
+              />
+            </div>
+          </div>
+
           {u.creatorName && (
             <span className="text-[7.5px] text-amber-600 font-serif font-semibold block leading-none mt-0.5">[{u.creatorName}]</span>
           )}
@@ -801,9 +842,11 @@ MemoizedBackgroundSVG.displayName = "MemoizedBackgroundSVG";
 interface MountainRendererProps {
   centerLat: number;
   centerLng: number;
+  mapTilt?: number;
+  mapHeading?: number;
 }
 
-const MemoizedMountainObstacles = React.memo(({ centerLat, centerLng }: MountainRendererProps) => {
+const MemoizedMountainObstacles = React.memo(({ centerLat, centerLng, mapTilt = 0, mapHeading = 0 }: MountainRendererProps) => {
   return (
     <>
       {TACTICAL_MOUNTAINS.map((obs) => {
@@ -817,8 +860,13 @@ const MemoizedMountainObstacles = React.memo(({ centerLat, centerLng }: Mountain
         return (
           <div 
             key={obs.id}
-            className="absolute transform -translate-x-1/2 -translate-y-1/2 pointer-events-none flex flex-col items-center z-5"
-            style={{ left: `${posX}%`, top: `${posY}%` }}
+            className="absolute pointer-events-none flex flex-col items-center z-5 transition-transform duration-350 ease-out"
+            style={{ 
+              left: `${posX}%`, 
+              top: `${posY}%`,
+              transform: `translate(-50%, -50%) rotateX(${-mapTilt}deg) rotateY(0deg) rotateZ(${mapHeading}deg)`,
+              transformStyle: 'preserve-3d'
+            }}
           >
             <svg className="overflow-visible" width={radPercent * 6} height={radPercent * 4} viewBox="0 0 100 60">
               {/* Left supportive peak */}
@@ -839,7 +887,109 @@ const MemoizedMountainObstacles = React.memo(({ centerLat, centerLng }: Mountain
 });
 MemoizedMountainObstacles.displayName = "MemoizedMountainObstacles";
 
-export default function RealWorldMapBattle() {
+export const SHICHENS = [
+  { key: 'zi', name: '子时', period: '23:00 - 01:00', style: 'rgba(15, 23, 42, 0.45)', color: '#6366F1' },
+  { key: 'chou', name: '丑时', period: '01:00 - 03:00', style: 'rgba(30, 27, 75, 0.55)', color: '#4F46E5' },
+  { key: 'yin', name: '寅时', period: '03:00 - 05:00', style: 'rgba(49, 12, 102, 0.55)', color: '#818CF8' },
+  { key: 'mao', name: '卯时', period: '05:00 - 07:00', style: 'rgba(124, 45, 18, 0.35)', color: '#F97316' },
+  { key: 'chen', name: '辰时', period: '07:00 - 09:00', style: 'rgba(251, 191, 36, 0.25)', color: '#FBBF24' },
+  { key: 'si', name: '巳时', period: '09:00 - 11:00', style: 'rgba(0, 0, 0, 0.1)', color: '#FAF8F5' },
+  { key: 'wu', name: '午时', period: '11:00 - 13:00', style: 'rgba(0, 0, 0, 0)', color: '#FAF8F5' },
+  { key: 'wei', name: '未时', period: '13:00 - 15:00', style: 'rgba(0, 0, 0, 0)', color: '#FAF8F5' },
+  { key: 'shen', name: '申时', period: '15:00 - 17:00', style: 'rgba(180, 83, 9, 0.25)', color: '#D97706' },
+  { key: 'you', name: '酉时', period: '17:00 - 19:00', style: 'rgba(153, 27, 27, 0.35)', color: '#EF4444' },
+  { key: 'xu', name: '戌时', period: '19:00 - 21:00', style: 'rgba(88, 28, 135, 0.40)', color: '#A855F7' },
+  { key: 'hai', name: '亥时', period: '21:00 - 23:00', style: 'rgba(14, 116, 144, 0.45)', color: '#06B6D4' }
+];
+
+export interface Stratagem {
+  id: string;
+  name: string;
+  general: 'baiqi' | 'hanxin' | 'caocao' | 'caoren' | 'any';
+  terrain: 'SCATTERED' | 'FOCAL' | 'CONTENTIOUS' | 'DEATH' | 'ENTRAPPING' | 'FRONTIER' | 'HEAVY' | 'LIGHT' | 'any';
+  desc: string;
+  effectDesc: string;
+  cooldown: number;
+}
+
+export const STRATAGEMS: Stratagem[] = [
+  {
+    id: 'ambush',
+    name: '十面埋伏',
+    general: 'hanxin',
+    terrain: 'any',
+    desc: '兵仙韩信指挥下的经典合围妙阵。在敌侧翼与后路形成十层合围，令敌防不胜防。',
+    effectDesc: '敌军全员兵力立刻锐减 25%，且遭受 1.5 倍的额外损伤打击！',
+    cooldown: 8
+  },
+  {
+    id: 'waterbattle',
+    name: '背水一战',
+    general: 'hanxin',
+    terrain: 'DEATH',
+    desc: '投之亡地然后存，置之死地然后生！命令军队背水结阵，切断一切退兵路径以激发将士死战气概。',
+    effectDesc: '我军瞬间激发「决死」斗志！攻击力提升 2.5 倍，并奇攻回复 8000 兵力编制！',
+    cooldown: 10
+  },
+  {
+    id: 'fortify',
+    name: '坚壁清野',
+    general: 'caoren',
+    terrain: 'any',
+    desc: '守城名将曹仁的无双防术。加固城塞沟垒坚守不退，尽收郊野粮秣物资以困弊敌。',
+    effectDesc: '未来 5 刻推演中，我方所有守军享受【铁壁防护】状态，受创削减 85%！',
+    cooldown: 7
+  },
+  {
+    id: 'feint',
+    name: '声东击西 (Feigned Tactical Diversion)',
+    general: 'caocao',
+    terrain: 'any',
+    desc: '魏武帝曹操的虚实奇谋。虚张声势指东打西，伪造行军方向以令敌方主力指挥体系陷入混乱。',
+    effectDesc: '敌对编制攻击烈度被压低 80%，且由于后方起火，敌寇战场斥候/眼线悉数暴露！',
+    cooldown: 6
+  },
+  {
+    id: 'firestorm',
+    name: '神火燎原 (Blazing Wildfire)',
+    general: 'baiqi',
+    terrain: 'CONTENTIOUS',
+    desc: '杀神白起的毁天灭地火攻策。在争地要冲、狭窄峡口，借用风势（或大雨积炭）大举播洒火箭猛火油。',
+    effectDesc: '万火齐发！敌寇所有在场单位瞬间遭受 8000 点致命连环火焰打击，化为焦土！',
+    cooldown: 8
+  },
+  {
+    id: 'risestrat',
+    name: '死地后生 (Rise from Dead Lands)',
+    general: 'any',
+    terrain: 'DEATH',
+    desc: '九地篇终极兵理：诸侯绝境！陷入死地则疾战，兵士因无求存后路，必发挥惊天动地死战之力。',
+    effectDesc: '推演进入天演绝杀态势！不仅大幅触发双方杀伤 +300%，且我方必定重创敌帅！',
+    cooldown: 9
+  }
+];
+
+export interface FireTacticInfo {
+  id: 'fire_men' | 'fire_goods' | 'fire_carts' | 'fire_arm' | 'fire_camp';
+  name: string;
+  zhName: string;
+  desc: string;
+  effect: string;
+}
+
+export const FIRE_TACTICS: FireTacticInfo[] = [
+  { id: 'fire_men', name: 'Incinerate Force (火人)', zhName: '一曰火人', desc: '烧杀敌军人马主力营地，以猛火扰乱其心神、折损其有生编制。', effect: '每刻摧毁敌寇 2500 - 4500 兵马。' },
+  { id: 'fire_goods', name: 'Burn Provisions (火积)', zhName: '二曰火积', desc: '烧毁其粮草积蓄、屯粮重镇，断绝敌寇生存持久之源。', effect: '每刻摧毁敌寇 1500 - 2500 粮秣守军并限制其反攻增幅。' },
+  { id: 'fire_carts', name: 'Burn Baggage (火辎)', zhName: '三曰火辎', desc: '突袭纵火其后勤资装、行军马车，延迟敌寇战车与运输。', effect: '使范围内敌军陷入混乱，减缓其对齐行军速度 50%。' },
+  { id: 'fire_arm', name: 'Ignite Arsenal (火库)', zhName: '四曰火库', desc: '奇袭敌方军械仓库，引爆弩机床子弩与火器油脂，产生爆燃。', effect: '瞬间造成 6000 编制爆发性打击！在雷雨中减退。' },
+  { id: 'fire_camp', name: 'Structural Sapping (火队)', zhName: '五曰火队', desc: '派遣校尉死士深入敌后，纵火焚毁行军廊关、哨岗营门。', effect: '完全揭开周围 15 公里敌军行军线，撕碎诡道伪装迷雾。' }
+];
+
+interface RealWorldMapBattleProps {
+  activeCardId?: string | null;
+}
+
+export default function RealWorldMapBattle({ activeCardId = null }: RealWorldMapBattleProps) {
   const [mapMode, setMapMode] = useState<'ink' | 'google'>('ink');
   const [isMapLoading, setIsMapLoading] = useState<boolean>(false);
   const [selectedBattlefield, setSelectedBattlefield] = useState<Battlefield | null>(HISTORICAL_BATTLEFIELDS[0]);
@@ -857,8 +1007,76 @@ export default function RealWorldMapBattle() {
   const [logFilter, setLogFilter] = useState<'all' | 'allied' | 'hostile' | 'alerts'>('all');
   const [generalChoice, setGeneralChoice] = useState<'baiqi' | 'hanxin' | 'caocao' | 'caoren'>('caocao');
 
+  // ============================================
+  // 3D/4D GIS TACTICAL SANDTABLE STATE (Phase 1 & Phase 2)
+  // ============================================
+  const [mapTilt, setMapTilt] = useState<number>(0);
+  const [mapHeading, setMapHeading] = useState<number>(0);
+  const [autoOrbit, setAutoOrbit] = useState<boolean>(false);
+  const [gisAltitudeMesh, setGisAltitudeMesh] = useState<boolean>(true);
+
+  // Phase 2: temporal 4D clock states
+  const [timeSpeed, setTimeSpeed] = useState<number>(1); // simulation speed multiply: 1x, 2x, 5x
+  const [timelineTick, setTimelineTick] = useState<number>(0); // how many progression ticks
+  const [shichenIndex, setShichenIndex] = useState<number>(6); // starting at Noon (午时)
+  const [timeTravelIndex, setTimeTravelIndex] = useState<number>(-1); // snapshot lookup: -1 means real-time active, otherwise history lookup
+  const [historyStack, setHistoryStack] = useState<Array<{
+    tick: number;
+    shichen: string;
+    shichenIndex: number;
+    units: any[];
+    simLogs: string[];
+    weather: 'none' | 'fog' | 'rain' | 'wind';
+    alliedStrength: number;
+    hostileStrength: number;
+  }>>([]);
+
+  // ============================================
+  // ANIMATED WEATHER OVERLAY CONFIG & STATE (Sun Tzu Nine Lands)
+  // ============================================
+  const [weather, setWeather] = useState<'none' | 'fog' | 'rain' | 'wind'>('none');
+  const [showWeatherTooltip, setShowWeatherTooltip] = useState<boolean>(false);
+
   // Markers placed by user on the map
   const [placedUnits, setPlacedUnits] = useState<Array<{ id: string; name: string; side: 'allied' | 'hostile'; lat: number; lng: number; size: number; creatorUid?: string; creatorName?: string }>>([]);
+
+  const displayedUnits = timeTravelIndex >= 0 && historyStack[timeTravelIndex]
+    ? historyStack[timeTravelIndex].units
+    : placedUnits;
+
+  const displayedSimLog = timeTravelIndex >= 0 && historyStack[timeTravelIndex]
+    ? historyStack[timeTravelIndex].simLogs
+    : simLog;
+
+  const displayedWeather = timeTravelIndex >= 0 && historyStack[timeTravelIndex]
+    ? historyStack[timeTravelIndex].weather
+    : weather;
+
+  const displayedShichenIndex = timeTravelIndex >= 0 && historyStack[timeTravelIndex]
+    ? historyStack[timeTravelIndex].shichenIndex
+    : shichenIndex;
+
+  // ============================================
+  // Phase 3: Nine Lands Stratagem Sandtable Deck State
+  // ============================================
+  const [activeStratagem, setActiveStratagem] = useState<string | null>(null);
+  const [stratagemTimer, setStratagemTimer] = useState<number>(0);
+  const [stratagemCooldowns, setStratagemCooldowns] = useState<Record<string, number>>({});
+
+  // ============================================
+  // Phase 4: Fire Attack (火攻篇) & Pathfinder (五路行军推荐) State
+  // ============================================
+  const [fireFlares, setFireFlares] = useState<Array<{
+    id: string;
+    lat: number;
+    lng: number;
+    intensity: number; // 1 to 5 scale
+    tactic: 'fire_men' | 'fire_goods' | 'fire_carts' | 'fire_arm' | 'fire_camp';
+    timer: number;
+  }>>([]);
+  const [selectedFireTactic, setSelectedFireTactic] = useState<'fire_men' | 'fire_goods' | 'fire_carts' | 'fire_arm' | 'fire_camp' | null>(null);
+  const [showPathfinders, setShowPathfinders] = useState<boolean>(true);
+  const [pathfinderType, setPathfinderType] = useState<'direct' | 'detour'>('detour');
 
   // ============================================
   // MULTIPLAYER & DEPLOYMENT ENHANCED STATE
@@ -938,12 +1156,6 @@ export default function RealWorldMapBattle() {
     }
   }, [placedUnits]);
 
-  // ============================================
-  // ANIMATED WEATHER OVERLAY CONFIG & STATE (Sun Tzu Nine Lands)
-  // ============================================
-  const [weather, setWeather] = useState<'none' | 'fog' | 'rain' | 'wind'>('none');
-  const [showWeatherTooltip, setShowWeatherTooltip] = useState<boolean>(false);
-
   // Randomly trigger weather conditions during simulation
   useEffect(() => {
     let interval: any;
@@ -978,13 +1190,30 @@ export default function RealWorldMapBattle() {
     };
   }, [isSimulating, weather]);
 
+  // Orbit rotation loop for 4D telemetry mapping
+  useEffect(() => {
+    let orbitTimer: any;
+    if (autoOrbit) {
+      orbitTimer = setInterval(() => {
+        setMapHeading(prev => (prev + 0.35) % 360);
+      }, 45); // highly responsive, premium rotation
+    }
+    return () => {
+      if (orbitTimer) clearInterval(orbitTimer);
+    };
+  }, [autoOrbit]);
+
+  const [mapVisualFx, setMapVisualFx] = useState<Array<{ id: string; type: 'clash' | 'fire' | 'blood'; lat: number; lng: number }>>([]);
+
   const triggerCombatToast = (
     type: 'allied_attack' | 'hostile_attack',
     alliedName: string,
     hostileName: string,
     impact: string,
     remainingHealth: string,
-    stanceBonusLabel: string
+    stanceBonusLabel: string,
+    lat?: number,
+    lng?: number
   ) => {
     const id = `toast_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     const timestamp = new Date().toLocaleTimeString('zh-CN', { hour12: false });
@@ -1000,6 +1229,14 @@ export default function RealWorldMapBattle() {
     };
     setCombatToasts(prev => [newToast, ...prev].slice(0, 5));
     
+    if (lat !== undefined && lng !== undefined) {
+      const fxId = `fx_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      setMapVisualFx(prev => [...prev, { id: fxId, type: type === 'allied_attack' ? 'clash' : 'blood', lat, lng }]);
+      setTimeout(() => {
+        setMapVisualFx(prev => prev.filter(f => f.id !== fxId));
+      }, 1500);
+    }
+
     // Auto clear toast after 5 seconds
     setTimeout(() => {
       setCombatToasts(prev => prev.filter(t => t.id !== id));
@@ -1032,7 +1269,9 @@ export default function RealWorldMapBattle() {
               '楚军骁骑劲卒',
               `折损 ${dmg.toLocaleString()} 人`,
               `我部余力: ${newUnit.size.toLocaleString()} 员`,
-              stanceBonusLabel
+              stanceBonusLabel,
+              newUnit.lat,
+              newUnit.lng
             );
           } else if (newUnit.side === 'hostile') {
             // Hostile unit was attacked by Allied! (Allied attacks Hostile)
@@ -1052,7 +1291,9 @@ export default function RealWorldMapBattle() {
               newUnit.name,
               `折将斩数 ${dmg.toLocaleString()} 人`,
               `逆贼余卒: ${newUnit.size.toLocaleString()} 兵`,
-              stanceBonusLabel
+              stanceBonusLabel,
+              newUnit.lat,
+              newUnit.lng
             );
           }
         }
@@ -1083,6 +1324,21 @@ export default function RealWorldMapBattle() {
 
   // Sync / write a battle log to Firestore rooms/{roomId}/logs
   const addRoomLog = async (text: string) => {
+    // Dynamic strategic sound dispatcher based on military event keywords
+    try {
+      if (text.includes('🔥') || text.includes('火') || text.includes('起火') || text.includes('引燃') || text.includes('爆裂')) {
+        soundManager.playHorn();
+      } else if (text.includes('⚔️') || text.includes('攻') || text.includes('歼') || text.includes('合击') || text.includes('强袭')) {
+        soundManager.playDrum();
+      } else if (text.includes('🏆') || text.includes('大胜') || text.includes('天命') || text.includes('妙算')) {
+        soundManager.playChime();
+      } else {
+        soundManager.playDrum();
+      }
+    } catch (e) {
+      // Background audio error suppression
+    }
+
     if (!multiplayerMode || !remoteRoomId) {
       setSimLog(prev => [text, ...prev].slice(0, 30));
       return;
@@ -1164,10 +1420,10 @@ export default function RealWorldMapBattle() {
         const latBase = selectedBattlefield ? selectedBattlefield.lat : 34.3415;
         const lngBase = selectedBattlefield ? selectedBattlefield.lng : 108.9404;
         const presets = [
-          { id: 'u1', name: '大本营军帐', side: 'allied', lat: latBase - 0.015, lng: lngBase - 0.015, size: 25000, creatorName: '系统预编' },
-          { id: 'u2', name: '先锋突击骑兵', side: 'allied', lat: latBase - 0.005, lng: lngBase - 0.005, size: 10000, creatorName: '系统预编' },
-          { id: 'u3', name: '敌中军主帅营', side: 'hostile', lat: latBase + 0.015, lng: lngBase + 0.015, size: 45000, creatorName: '系统预编' },
-          { id: 'u4', name: '敌侧翼伏兵弓弩手', side: 'hostile', lat: latBase + 0.005, lng: lngBase + 0.012, size: 15000, creatorName: '系统预编' },
+          { id: 'u1', name: '大本营军帐', side: 'allied', lat: latBase - 0.015, lng: lngBase - 0.015, size: 25000, provisions: 100, creatorName: '系统预编' },
+          { id: 'u2', name: '先锋突击骑兵', side: 'allied', lat: latBase - 0.005, lng: lngBase - 0.005, size: 10000, provisions: 100, creatorName: '系统预编' },
+          { id: 'u3', name: '敌中军主帅营', side: 'hostile', lat: latBase + 0.015, lng: lngBase + 0.015, size: 45000, provisions: 100, creatorName: '系统预编' },
+          { id: 'u4', name: '敌侧翼伏兵弓弩手', side: 'hostile', lat: latBase + 0.005, lng: lngBase + 0.012, size: 15000, provisions: 100, creatorName: '系统预编' },
         ];
         presets.forEach(p => {
           setDoc(doc(unitsColRef, p.id), p);
@@ -1271,6 +1527,8 @@ export default function RealWorldMapBattle() {
 
   // Fog of War States & References
   const [fogOfWarEnabled, setFogOfWarEnabled] = useState<boolean>(true);
+  const [showHudOverlays, setShowHudOverlays] = useState<boolean>(false); // Start hidden by default? No, user just complained it always covers. We can let them toggle it.
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [mapZoom, setMapZoom] = useState<number>(11);
   const [alliedScreenPoints, setAlliedScreenPoints] = useState<Array<{ x: number; y: number; id: string }>>([]);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -1409,10 +1667,10 @@ export default function RealWorldMapBattle() {
     const lngBase = selectedBattlefield ? selectedBattlefield.lng : (customPoint ? customPoint.lng : 108.9404);
     
     const defaultUnits = [
-      { id: 'u1', name: '大本营军帐', side: 'allied' as const, lat: latBase - 0.015, lng: lngBase - 0.015, size: 25000, creatorName: '系统预设' },
-      { id: 'u2', name: '先锋突击骑兵', side: 'allied' as const, lat: latBase - 0.005, lng: lngBase - 0.005, size: 10000, creatorName: '系统预设' },
-      { id: 'u3', name: '敌中军主帅营', side: 'hostile' as const, lat: latBase + 0.015, lng: lngBase + 0.015, size: 45000, creatorName: '系统预设' },
-      { id: 'u4', name: '敌侧翼伏兵弓弩手', side: 'hostile' as const, lat: latBase + 0.005, lng: lngBase + 0.012, size: 15000, creatorName: '系统预设' },
+      { id: 'u1', name: '大本营军帐', side: 'allied' as const, lat: latBase - 0.015, lng: lngBase - 0.015, size: 25000, provisions: 100, creatorName: '系统预设' },
+      { id: 'u2', name: '先锋突击骑兵', side: 'allied' as const, lat: latBase - 0.005, lng: lngBase - 0.005, size: 10000, provisions: 100, creatorName: '系统预设' },
+      { id: 'u3', name: '敌中军主帅营', side: 'hostile' as const, lat: latBase + 0.015, lng: lngBase + 0.015, size: 45000, provisions: 100, creatorName: '系统预设' },
+      { id: 'u4', name: '敌侧翼伏兵弓弩手', side: 'hostile' as const, lat: latBase + 0.005, lng: lngBase + 0.012, size: 15000, provisions: 100, creatorName: '系统预设' },
     ];
 
     if (multiplayerMode && remoteRoomId) {
@@ -1437,6 +1695,105 @@ export default function RealWorldMapBattle() {
       setSimLog([msg]);
       setPlacedUnits(defaultUnits);
     }
+    // Reset 4D Time-series states
+    setTimelineTick(0);
+    setShichenIndex(6); // Noon
+    setTimeTravelIndex(-1);
+    setHistoryStack([]);
+    // Reset Phase 3 Stratagem states
+    setActiveStratagem(null);
+    setStratagemTimer(0);
+    setStratagemCooldowns({});
+    // Reset Phase 4 Fire Attack & Pathfinder states
+    setFireFlares([]);
+    setSelectedFireTactic(null);
+  };
+
+  const handleTriggerStratagem = async (strat: Stratagem) => {
+    if (stratagemCooldowns[strat.id] && stratagemCooldowns[strat.id] > 0) {
+      addRoomLog(`⏳ 战法【${strat.name.split(' (')[0]}】尚在调息，需等其冷却：${stratagemCooldowns[strat.id]} 刻。`);
+      return;
+    }
+    
+    // Check general or terrain conditions
+    const isGeneralMatch = strat.general === 'any' || generalChoice === strat.general;
+    const isTerrainMatch = strat.terrain === 'any' || activeAnalysis.id === strat.terrain;
+    
+    if (!isGeneralMatch && !isTerrainMatch) {
+      addRoomLog(`⚠️ 【天机未就】施展战法【${strat.name.split(' (')[0]}】未遂！主帅契合或当天地利不足。`);
+      return;
+    }
+    
+    // Set Active!
+    setActiveStratagem(strat.id);
+    setStratagemTimer(5); // active for 5 ticks
+    setStratagemCooldowns(prev => ({ ...prev, [strat.id]: strat.cooldown }));
+    
+    let updatedUnits = [...placedUnits];
+    
+    if (strat.id === 'ambush') {
+      updatedUnits = updatedUnits.map(u => u.side === 'hostile' ? { ...u, size: Math.max(0, Math.floor(u.size * 0.75)) } : u);
+      await addRoomLog(`⚡⭐ 【十面埋伏 · 动】施展「十面埋伏」古策！万弩齐发，合围四合，红方敌寇全员大本营兵勇大损削减 25%！`);
+    } else if (strat.id === 'waterbattle') {
+      updatedUnits = updatedUnits.map(u => {
+        if (u.side === 'allied') {
+          return { ...u, size: Math.min(u.id === 'u1' ? 25000 : 15000, u.size + 8000) };
+        }
+        return u;
+      });
+      await addRoomLog(`🌊🔥 【背水一战 · 发】三军在【${activeAnalysis.name.split(' (')[0]}】绝地搏命！拼死一搏回复 8000 兵力，战场狂暴杀伤力激增 2.5 倍！`);
+    } else if (strat.id === 'feint') {
+      await addRoomLog(`🌀🎭 【声东击西 · 动】主帅高升【佯攻】将纛！敌阵重军误置，敌方安插在沙盘的斥候/奸细眼线被悉数拆穿！`);
+    } else if (strat.id === 'firestorm') {
+      updatedUnits = updatedUnits.map(u => u.side === 'hostile' ? { ...u, size: Math.max(0, u.size - 8000) } : u);
+      await addRoomLog(`🔥🏹 【神火燎原 · 烈】借助此地天风烈火，焚尽焦土，红寇在场所有人马瞬间遭受 8000 致命必杀火焰打击！`);
+    } else if (strat.id === 'fortify') {
+      await addRoomLog(`🛡️🏰 【坚壁清野 · 实】曹氏城防阵起！在未来 5 刻中，我方所有受击防御效果翻倍，几乎免疫所有侵攻伤害！`);
+    } else if (strat.id === 'risestrat') {
+      await addRoomLog(`💀🌋 【死地后生 · 绝】置之亡地而后存！推演进入破釜沉舟死战绝杀状态，双方杀戮折损提升 +300%！`);
+    }
+    
+    // Apply changes
+    if (multiplayerMode && remoteRoomId) {
+      const unitsColRef = collection(db, 'rooms', remoteRoomId, 'mapUnits');
+      updatedUnits.forEach(unit => {
+        setDoc(doc(unitsColRef, unit.id), unit, { merge: true });
+      });
+    } else {
+      setPlacedUnits(updatedUnits);
+    }
+  };
+
+  const handleReprovision = async (unitId: string) => {
+    const targetUnit = placedUnits.find(u => u.id === unitId);
+    if (!targetUnit) return;
+
+    const msg = `🌾 【漕运突击】督战官督调司农，向 [${targetUnit.name}] 飞骑输送粮料！该部曲粮饷当即充沛补给至 100%！`;
+    await addRoomLog(msg);
+    try {
+      soundManager.playCoins();
+    } catch (e) {}
+
+    if (multiplayerMode && remoteRoomId) {
+      try {
+        const docRef = doc(db, 'rooms', remoteRoomId, 'mapUnits', unitId);
+        await updateDoc(docRef, { provisions: 100 });
+        
+        const roomRef = doc(db, 'rooms', remoteRoomId);
+        const roomSnap = await getDoc(roomRef);
+        if (roomSnap.exists()) {
+          const rData = roomSnap.data();
+          const currentCoffers = rData.coffers !== undefined ? rData.coffers : 35000;
+          await updateDoc(roomRef, { coffers: Math.max(0, currentCoffers - 1500) });
+        }
+      } catch (err) {
+        console.error("Firestore reprovision update failed", err);
+      }
+    } else {
+      setPlacedUnits(prev => prev.map(item => item.id === unitId ? { ...item, provisions: 100 } : item));
+    }
+    
+    setSelectedUnit((prev: any) => prev && prev.id === unitId ? { ...prev, provisions: 100 } : prev);
   };
 
   const executeTick = () => {
@@ -1589,8 +1946,31 @@ export default function RealWorldMapBattle() {
     }
 
     // Battle and Tactics Phase
-    const attackBonus = activeAnalysis.id === 'DEATH' ? 1.5 : (activeAnalysis.id === 'CONTENTIOUS' ? 1.3 : 1.0);
-    const defenseBonus = activeAnalysis.id === 'SCATTERED' ? 1.4 : 1.0;
+    const baseAttackBonus = activeAnalysis.id === 'DEATH' ? 1.5 : (activeAnalysis.id === 'CONTENTIOUS' ? 1.3 : 1.0);
+    const baseDefenseBonus = activeAnalysis.id === 'SCATTERED' ? 1.4 : 1.0;
+
+    // Phase 3: Dynamic Stratagem attack and defense modifiers
+    let stratagemAttackBonus = 1.0;
+    let stratagemDefenseBonus = 1.0;
+    
+    if (activeStratagem === 'risestrat') {
+      stratagemAttackBonus = 4.0;
+    } else if (activeStratagem === 'waterbattle') {
+      stratagemAttackBonus = 2.5;
+    } else if (activeStratagem === 'ambush') {
+      stratagemAttackBonus = 1.5;
+    }
+
+    if (activeStratagem === 'fortify') {
+      stratagemDefenseBonus = 0.15; // 85% reduction!
+    } else if (activeStratagem === 'feint') {
+      stratagemDefenseBonus = 0.20; // 80% reduction!
+    } else if (activeStratagem === 'risestrat') {
+      stratagemDefenseBonus = 4.0; // high casualties for both sides!
+    }
+
+    const attackBonus = baseAttackBonus * stratagemAttackBonus;
+    const defenseBonus = baseDefenseBonus / stratagemDefenseBonus; // dividing here so higher defenseBonus reduces incoming dmg
     
     // Choose randomly which team attacks or makes a move
     const rand = Math.random();
@@ -1603,7 +1983,11 @@ export default function RealWorldMapBattle() {
         const u = updatedUnits[targetIdx];
         const newSize = Math.max(0, u.size - dmg);
         updatedUnits[targetIdx] = { ...u, size: newSize };
-        if (alliedStance === 'offensive') {
+        
+        if (activeStratagem) {
+          const sObj = STRATAGEMS.find(s => s.id === activeStratagem);
+          addRoomLog(`⚡ 【奇计发威 · 攻】我军乘【${sObj?.name.split(' (')[0]}】之大势，对敌寇 [${u.name}] 造成重创，歼灭其 ${dmg} 兵力！`);
+        } else if (alliedStance === 'offensive') {
           addRoomLog(`💥 【我军 · 狂飙突刺】锋矢猛刺！我部极速冲击，重创敌寇 [${u.name}] 并斩杀 ${dmg} 人！`);
         } else {
           addRoomLog(`⚔️ 【我军 · 稳健扫击】主力立盾合击，对敌残寇 [${u.name}] 斩获 ${dmg} 人。`);
@@ -1612,13 +1996,20 @@ export default function RealWorldMapBattle() {
     } else if (rand < 0.7) {
       // Hostile attacks Allied
       const stanceDefenseMultiplier = alliedStance === 'defensive' ? 1.6 : 0.8;
-      const dmg = Math.floor((1200 + Math.random() * 1800) / (defenseBonus * stanceDefenseMultiplier));
+      // Invert defenseBonus back to a direct division multiplier so that small values reduce dmg
+      const finalDefenseDmgMultiplier = stanceDefenseMultiplier / stratagemDefenseBonus;
+      const dmg = Math.floor((1200 + Math.random() * 1800) / (baseDefenseBonus * finalDefenseDmgMultiplier));
       const targetIdx = updatedUnits.findIndex(u => u.side === 'allied' && u.size > 0);
       if (targetIdx !== -1) {
         const u = updatedUnits[targetIdx];
         const newSize = Math.max(0, u.size - dmg);
         updatedUnits[targetIdx] = { ...u, size: newSize };
-        if (alliedStance === 'defensive') {
+        
+        if (activeStratagem === 'fortify') {
+          addRoomLog(`🛡️ 【坚壁威阵】敌寇咆哮合击我部 [${u.name}]，但我军凭【坚壁清野】固如金汤！敌强梁未能伤我分毫，仅折退 ${dmg} 编制！`);
+        } else if (activeStratagem === 'feint') {
+          addRoomLog(`🌀 【虚实惑敌】敌寇受我军【声东击西】佯动误导，其合围攻击溃不成军，仅微擦伤我部 [${u.name}] 约 ${dmg} 人。`);
+        } else if (alliedStance === 'defensive') {
           addRoomLog(`🛡️ 【防务告捷】敌寇合击我军 [${u.name}]，我部严执「方圆法阵」岿然不动，得功力减震仅退避 ${dmg} 编制。`);
         } else {
           addRoomLog(`🔥 【强袭遇挫】敌寇策应侧后，猛击我部锋矢大阵软肋，我军 [${u.name}] 折损 ${dmg} 兵勇（攻势防备薄弱）。`);
@@ -1637,6 +2028,150 @@ export default function RealWorldMapBattle() {
       }
     }
 
+    // Phase 4: Fire Attack (火攻篇) Simulation Tick Integration
+    let updatedFires = [...fireFlares];
+    const resolvedFires: typeof fireFlares = [];
+
+    updatedFires.forEach(fire => {
+      // Weather impact on fire duration
+      let timerDecrement = 1;
+      if (weather === 'rain') {
+        timerDecrement = 2; // rain douses fire faster
+        addRoomLog(`🌧️ 暴雨浇洒！【${FIRE_TACTICS.find(t=>t.id===fire.tactic)?.name}】火场势头受抑，正在迅速熄灭。`);
+      } else if (weather === 'wind') {
+        addRoomLog(`💨 烈风呼卷！【${FIRE_TACTICS.find(t=>t.id===fire.tactic)?.name}】火借风烈，向周围战场猛烈蔓延！`);
+      }
+
+      const nextTimer = fire.timer - timerDecrement;
+
+      if (nextTimer > 0) {
+        // Calculate fire damage to units near this fire
+        updatedUnits = updatedUnits.map(unit => {
+          if (unit.size <= 0) return unit;
+          const dist = Math.sqrt(Math.pow(unit.lat - fire.lat, 2) + Math.pow(unit.lng - fire.lng, 2));
+          // roughly within 2.5km (0.025 degrees)
+          if (dist < 0.025) {
+            let baseFireDmg = 0;
+            let dmgLabel = "";
+
+            if (fire.tactic === 'fire_men') {
+              baseFireDmg = 2500 + Math.floor(Math.random() * 2000);
+              dmgLabel = "一曰火人：熊熊大火肆虐其军人马";
+            } else if (fire.tactic === 'fire_goods') {
+              baseFireDmg = 1500 + Math.floor(Math.random() * 1000);
+              dmgLabel = "二曰火积：火漫其屯粮积蓄物资";
+            } else if (fire.tactic === 'fire_carts') {
+              baseFireDmg = 1000 + Math.floor(Math.random() * 800);
+              dmgLabel = "三曰火辎：大火燃尽马匹行车后勤";
+            } else if (fire.tactic === 'fire_arm') {
+              baseFireDmg = 4000 + Math.floor(Math.random() * 2000);
+              dmgLabel = "四曰火库：引燃军械油库惊天爆裂";
+            } else if (fire.tactic === 'fire_camp') {
+              baseFireDmg = 800 + Math.floor(Math.random() * 850);
+              dmgLabel = "五曰火队：奇袭攻营哨所";
+            }
+
+            // Wind doubles fire damage!
+            if (weather === 'wind') {
+              baseFireDmg *= 1.8;
+            } else if (weather === 'rain') {
+              baseFireDmg *= 0.4;
+            }
+
+            const finalFireDmg = Math.floor(baseFireDmg);
+            const sideLabel = unit.side === 'allied' ? '我军' : '敌寇';
+            addRoomLog(`🔥 【火攻肆虐】火场【${dmgLabel}】在 ${unit.name} 阵地吞噬扩散，该【${sideLabel}】部曲瞬间损耗 ${finalFireDmg} 人！`);
+            return { ...unit, size: Math.max(0, unit.size - finalFireDmg) };
+          }
+          return unit;
+        });
+
+        resolvedFires.push({
+          ...fire,
+          timer: nextTimer,
+          intensity: weather === 'wind' ? Math.min(5, fire.intensity + 1) : fire.intensity,
+          tactic: fire.tactic,
+          id: fire.id,
+          lat: fire.lat,
+          lng: fire.lng
+        });
+      } else {
+        addRoomLog(`🪵 【战火熄灭】此处的【${FIRE_TACTICS.find(t=>t.id===fire.tactic)?.zhName}】火势余烬燃尽，黑烟逐渐散去。`);
+      }
+    });
+
+    setFireFlares(resolvedFires);
+
+    // Provisions System (粮草值、大本营补给半径与绝粮编制折损)
+    const alliedBase = updatedUnits.find(u => u.side === 'allied' && (u.id === 'u1' || u.name.includes('大本营') || u.name.includes('军帐')));
+    const hostileBase = updatedUnits.find(u => u.side === 'hostile' && (u.id === 'u3' || u.name.includes('主帅营') || u.name.includes('大本营')));
+    
+    const SUPPLY_RADIUS = 0.015;
+
+    updatedUnits = updatedUnits.map(unit => {
+      if (unit.size <= 0) return unit;
+
+      // Base camp itself is always full provisions
+      const isBaseCamp = unit.id === 'u1' || unit.id === 'u3' || unit.name.includes('大本营') || unit.name.includes('军帐') || unit.name.includes('主帅营');
+      if (isBaseCamp) {
+        return { ...unit, provisions: 100 };
+      }
+
+      const baseCamp = unit.side === 'allied' ? alliedBase : hostileBase;
+      if (!baseCamp) {
+        // Fallback: stay full if no base exists
+        return { ...unit, provisions: 100 };
+      }
+
+      const dist = Math.sqrt(Math.pow(unit.lat - baseCamp.lat, 2) + Math.pow(unit.lng - baseCamp.lng, 2));
+      const currentProv = unit.provisions !== undefined ? unit.provisions : 100;
+
+      if (dist <= SUPPLY_RADIUS) {
+        const nextProv = Math.min(100, currentProv + 20);
+        if (currentProv < 55 && nextProv >= 55) {
+          addRoomLog(`🌾 【重获补给】我部 [${unit.name}] 靠拢大本营/补给圈（距离 ${(dist * 100).toFixed(1)} 里），粮秣接通，粮饷已恢复至 ${nextProv}%！`);
+        }
+        return { ...unit, provisions: nextProv };
+      } else {
+        const nextProv = Math.max(0, currentProv - 15);
+        if (nextProv === 0) {
+          const hungerLoss = Math.floor(unit.size * 0.08 + 400);
+          const nextSize = Math.max(0, unit.size - hungerLoss);
+          const sideText = unit.side === 'allied' ? '我军' : '敌寇';
+          addRoomLog(`❌🌾 【绝粮饥馑】${sideText} [${unit.name}] 远离大本营（离本营 ${(dist * 100).toFixed(1)} 里，安全限径 ${SUPPLY_RADIUS * 100} 里），粮草断尽！引发饥荒逃逸，被迫削减编制 ${hungerLoss} 员！`);
+          return { ...unit, provisions: 0, size: nextSize };
+        } else {
+          if (nextProv <= 45 && currentProv > 45) {
+            const sideText = unit.side === 'allied' ? '我军' : '敌寇';
+            addRoomLog(`⚠️ 【粮饷告警】${sideText} [${unit.name}] 突入外线深入（离本营 ${(dist * 100).toFixed(1)} 里），漕运受累，粮草余 ${nextProv}%！速归防区或调度漕运辎重！`);
+          }
+          return { ...unit, provisions: nextProv };
+        }
+      }
+    });
+
+    // Phase 3: Decrement stratagem active timers & cooldowns
+    setStratagemTimer(prev => {
+      if (prev === 1 && activeStratagem) {
+        setTimeout(() => {
+          addRoomLog(`⏳ 【妙算效尽】我军施展的古代奇计战法【${STRATAGEMS.find(s=>s.id===activeStratagem)?.name.split(' (')[0]}】时效已尽，大阵气运徐徐退去。`);
+          setActiveStratagem(null);
+        }, 100);
+        return 0;
+      }
+      return Math.max(0, prev - 1);
+    });
+
+    setStratagemCooldowns(prev => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach(k => {
+        if (updated[k] > 0) {
+          updated[k] -= 1;
+        }
+      });
+      return updated;
+    });
+
     // Apply the updated units state back to local state (offline) or to Firestore (multiplayer)
     if (multiplayerMode && remoteRoomId) {
       const unitsColRef = collection(db, 'rooms', remoteRoomId, 'mapUnits');
@@ -1646,6 +2181,35 @@ export default function RealWorldMapBattle() {
     } else {
       setPlacedUnits(updatedUnits);
     }
+
+    // Phase 2: Advance timeline tick and record snapshot for 4D playback
+    setTimelineTick(prev => {
+      const nextTick = prev + 1;
+      
+      setShichenIndex(prevIdx => {
+        const nextIdx = (nextTick % 3 === 0) ? (prevIdx + 1) % 12 : prevIdx;
+        
+        // Aggregate forces metric
+        const alliedStrength = updatedUnits.filter(u => u.side === 'allied').reduce((sum, u) => sum + u.size, 0);
+        const hostileStrength = updatedUnits.filter(u => u.side === 'hostile').reduce((sum, u) => sum + u.size, 0);
+        
+        const snapshot = {
+          tick: nextTick,
+          shichen: SHICHENS[nextIdx].name,
+          shichenIndex: nextIdx,
+          units: JSON.parse(JSON.stringify(updatedUnits)),
+          simLogs: [`第 [${nextTick}] 步推演胜负对攻 | 天演时辰: ${SHICHENS[nextIdx].name}`, ...simLog],
+          weather: weather as any,
+          alliedStrength,
+          hostileStrength
+        };
+        
+        setHistoryStack(currStack => [...currStack, snapshot].slice(-50));
+        return nextIdx;
+      });
+      
+      return nextTick;
+    });
 
     // Check end condition
     const alliedLive = updatedUnits.filter(u => u.side === 'allied').reduce((sum, u) => sum + u.size, 0);
@@ -1732,11 +2296,11 @@ export default function RealWorldMapBattle() {
       if (!multiplayerMode || isHostingSim) {
         timer = setInterval(() => {
           executeTick();
-        }, 2000);
+        }, 2000 / timeSpeed);
       }
     }
     return () => clearInterval(timer);
-  }, [isSimulating, placedUnits, activeAnalysis, generalChoice, simLog, alliedStance, multiplayerMode, isHostingSim]);
+  }, [isSimulating, placedUnits, activeAnalysis, generalChoice, simLog, alliedStance, multiplayerMode, isHostingSim, timeSpeed, weather, timelineTick, shichenIndex]);
 
   // Option 3 / Step 3: Execute Action of Deployed Spy on Map
   const handleSpyAction = async (spy: any, actionType: 'EXPOSE' | 'SABOTAGE' | 'FORGE' | 'PLUNDER') => {
@@ -1853,6 +2417,47 @@ export default function RealWorldMapBattle() {
     }
   };
 
+  const handleIgniteFire = async (lat: number, lng: number, tactic: 'fire_men' | 'fire_goods' | 'fire_carts' | 'fire_arm' | 'fire_camp') => {
+    const tObj = FIRE_TACTICS.find(t => t.id === tactic);
+    const newFire = {
+      id: 'fire-' + Date.now(),
+      lat,
+      lng,
+      intensity: weather === 'wind' ? 4 : 2,
+      tactic,
+      timer: 6, // 6 simulation ticks
+    };
+    
+    setFireFlares(prev => [...prev, newFire]);
+    setSelectedFireTactic(null); // auto deselect after ignition!
+
+    await addRoomLog(`🔥🔫 【火攻大作】我军在坐标（纬: ${lat.toFixed(4)}，经: ${lng.toFixed(4)}）猛烈施展【${tObj?.zhName} · ${tObj?.name.split(' (')[0]}】！火舌瞬起焚毁一切营盘！`);
+    
+    // If it's the arsenal blast (fire_arm), immediately apply -6000 damage to any enemy units in range
+    if (tactic === 'fire_arm') {
+      let isApplied = false;
+      const rangeLimit = 0.025;
+      const updatedUnitsList = placedUnits.map(u => {
+        if (u.side === 'hostile' && u.size > 0) {
+          const dist = Math.sqrt(Math.pow(u.lat - lat, 2) + Math.pow(u.lng - lng, 2));
+          if (dist < rangeLimit) {
+            isApplied = true;
+            return { ...u, size: Math.max(0, u.size - 6000) };
+          }
+        }
+        return u;
+      });
+      setPlacedUnits(updatedUnitsList);
+      if (isApplied) {
+        await addRoomLog(`💥 【爆裂轰鸣】军械库大爆裂！在火场范围内的敌寇由于轰然烈火发生连环自燃爆破，瞬间折粮折兵 6000 人！`);
+      }
+    } else if (tactic === 'fire_camp') {
+      // Infiltrator clears fog
+      setFogOfWarEnabled(false);
+      await addRoomLog(`👁️ 【行军揭破】火队奇兵焚门起烟！由于敌军廊关被火光照透，敌寇大军所设伪装和斥候眼目尽在眼前，战场迷雾（Fog of War）被连带攻散彻见！`);
+    }
+  };
+
   const handleMapClick = async (e: any) => {
     let latVal = 0;
     let lngVal = 0;
@@ -1863,6 +2468,12 @@ export default function RealWorldMapBattle() {
       latVal = e.latLng.lat();
       lngVal = e.latLng.lng();
     } else {
+      return;
+    }
+
+    // Phase 4: Handle active fire ignition
+    if (selectedFireTactic) {
+      await handleIgniteFire(latVal, lngVal, selectedFireTactic);
       return;
     }
 
@@ -1913,6 +2524,7 @@ export default function RealWorldMapBattle() {
       lat: lat,
       lng: lng,
       size: newUnitSize,
+      provisions: 100,
       creatorUid: currentUser?.uid || 'offline',
       creatorName: warlordName
     };
@@ -1937,14 +2549,35 @@ export default function RealWorldMapBattle() {
   return (
     <div className="bg-[#F5F2ED] border-2 border-[#1A1A1A] rounded p-4 md:p-6 space-y-6 flex flex-col h-full" id="realworld-map-battle-container">
       {/* Title & Introduction HUD */}
+      {activeCardId && (
+        <div className="bg-[#8C2F39]/5 border-2 border-[#8C2F39]/30 p-3 rounded-lg flex items-center justify-between text-xs animate-pulse text-[#8C2F39] font-serif shrink-0">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[#8C2F39] animate-spin" />
+            <div>
+              <span className="font-bold">【极速兵法鸣震 · {
+                activeCardId === 'qizheng' ? '《奇正相生》首级御宝' :
+                activeCardId === 'huogong' ? '《火攻奇袭》烈炎秘卷' :
+                activeCardId === 'wujian' ? '《五间妙连》通幽罗网' :
+                '《商战大垄》国课税书'
+              }】</span>
+              <span className="text-stone-700 ml-1.5 font-sans">
+                {activeCardId === 'qizheng' 
+                  ? '谷歌地图多九地兵要节点获得战术共振，我方白刃行军主力防御力与突袭机动速律 +35%！' 
+                  : '本阵地图受此大战略兵法偏厢协翼，大军斥候探查效率获得暂时增升。'}
+              </span>
+            </div>
+          </div>
+          <span className="font-mono text-[9px] bg-[#8C2F39] text-[#FAF8F5] px-2 py-0.5 rounded font-black uppercase tracking-wider">星相加成大运</span>
+        </div>
+      )}
       <div className="border-b-2 border-[#1A1A1A]/95 pb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <span className="text-[10px] sm:text-xs font-mono font-bold text-[#8C2F39] tracking-wider uppercase flex items-center gap-1">
             <Sparkles className="w-3 h-3 text-[#8C2F39] animate-pulse" />
-            Google Maps Platform x 《孙子兵法》
+            堪舆万象实境 x 《孙子兵法》
           </span>
           <h2 className="text-xl sm:text-2xl font-serif font-black text-[#1A1A1A] flex items-center gap-2 mt-1">
-            真实地图作战沙盘 (Heavenly Ground Warfare Engine)
+            真实地图作战沙盘
           </h2>
           <p className="text-xs text-stone-600 font-serif leading-relaxed mt-1">
             本系统由谷歌高级地图模块强力自适应驱动。玩家可在真实的现代地球坐标轴上进行行军伏击、探察地形对特质将领加成，在真实的经纬度节点下定天命、筑法坛！
@@ -2071,9 +2704,9 @@ export default function RealWorldMapBattle() {
                   onChange={(e) => setWarlordRole(e.target.value)}
                   className="px-1.5 py-0.5 text-xs bg-white border border-stone-300 rounded font-serif text-[11px] outline-none"
                 >
-                  <option value="GENERAL">🛡️ 镇守大将军 (General)</option>
-                  <option value="CHANCELLOR">📜 咸阳相国 / 军师 (Chancellor)</option>
-                  <option value="REBEL">🏹 楚地起义军首脑 (Rebel)</option>
+                  <option value="GENERAL">🛡️ 镇守大将军</option>
+                  <option value="CHANCELLOR">📜 咸阳相国 / 军师</option>
+                  <option value="REBEL">🏹 楚地起义军首脑</option>
                 </select>
               </div>
 
@@ -2119,7 +2752,7 @@ export default function RealWorldMapBattle() {
         <div className="lg:col-span-4 space-y-4 flex flex-col h-full">
           <div className="bg-stone-100/50 border border-black/10 rounded-lg p-3 flex flex-col">
             <span className="text-[10px] font-mono text-stone-500 font-black mb-2 uppercase tracking-wide block">
-              🏺 华夏名家经典战役地理 (Historical Scenarios)
+              🏺 华夏名家经典战役地理
             </span>
             <div className="space-y-2 max-h-[280px] lg:max-h-[380px] overflow-y-auto pr-1" id="battlegrounds-list">
               {HISTORICAL_BATTLEFIELDS.map((bf) => {
@@ -2164,7 +2797,7 @@ export default function RealWorldMapBattle() {
               <div className="flex items-center gap-1.5">
                 <Compass className="w-4 h-4 text-[#8C2F39] animate-spin-slow" />
                 <h3 className="font-serif font-black text-sm text-[#1A1A1A]">
-                  九地神机天眼 (Terrain Intelligence)
+                  九地神机天眼
                 </h3>
               </div>
               <span className={`text-[10px] font-mono font-bold px-1.5 py-0.5 border rounded uppercase ${activeAnalysis.badgeColor}`}>
@@ -2194,13 +2827,302 @@ export default function RealWorldMapBattle() {
               </div>
             </div>
           </div>
+
+          {/* Phase 3: Nine Lands Stratagem Sandtable Deck UI Component */}
+          <div className="bg-[#FAF8F5] border border-stone-300 rounded-lg p-3.5 space-y-3 shadow-sm" id="stratagem-deck-card">
+            <div className="flex items-center justify-between border-b pb-1.5 border-stone-200">
+              <div className="flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+                <h3 className="font-serif font-black text-xs text-[#1A1A1A]">
+                  九地奇谋神兵
+                </h3>
+              </div>
+              <span className="text-[7.5px] font-mono bg-[#8C2F39] text-stone-100 font-bold px-1 py-0.5 rounded shadow-sm leading-none whitespace-nowrap">
+                加持中
+              </span>
+            </div>
+
+            <p className="text-[9.5px] text-stone-500 font-sans leading-relaxed">
+              根据当前选择的<b>主帅契合</b>或<b>战圈地利</b>触发古军阵法秘策，实时干预战场对弈走向：
+            </p>
+
+            <div className="grid grid-cols-1 gap-2 max-h-[305px] overflow-y-auto pr-1" id="stratagems-grid">
+              {STRATAGEMS.map((strat) => {
+                const isGeneralMatch = strat.general === 'any' || generalChoice === strat.general;
+                const isTerrainMatch = strat.terrain === 'any' || activeAnalysis.id === strat.terrain;
+                const isUnlocked = isGeneralMatch || isTerrainMatch;
+                const cooldownCount = stratagemCooldowns[strat.id] || 0;
+                const isCooldown = cooldownCount > 0;
+                const isActive = activeStratagem === strat.id;
+
+                let stateBadgeColor = "bg-stone-100 border-stone-300 text-stone-500";
+                let stateLabel = "条件未合";
+                if (isActive) {
+                  stateBadgeColor = "bg-[#8C2F39] text-[#FAF8F5] border-red-500 animate-pulse font-bold";
+                  stateLabel = "正在施展中";
+                } else if (isCooldown) {
+                  stateBadgeColor = "bg-amber-100 border-amber-300 text-amber-800 font-mono font-bold";
+                  stateLabel = `冷却 ${cooldownCount} 刻`;
+                } else if (isUnlocked) {
+                  stateBadgeColor = "bg-emerald-100 border-emerald-300 text-emerald-800 font-black cursor-pointer hover:bg-emerald-200";
+                  stateLabel = "天数已至·可施展";
+                }
+
+                return (
+                  <button
+                    key={strat.id}
+                    type="button"
+                    disabled={!isUnlocked || isCooldown || isActive}
+                    className={`w-full text-left p-2 rounded border transition-all duration-200 relative outline-none block ${
+                      isActive 
+                        ? 'bg-[#8C2F39]/5 border-[#8C2F39] ring-1 ring-[#8C2F39]' 
+                        : isUnlocked && !isCooldown
+                          ? 'bg-amber-50/25 hover:bg-amber-50/55 border-stone-300 cursor-pointer shadow-3xs' 
+                          : 'bg-stone-50/70 opacity-60 border-stone-200 cursor-not-allowed'
+                    }`}
+                    onClick={() => handleTriggerStratagem(strat)}
+                  >
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-serif font-black text-[11px] text-stone-900 flex items-center gap-1">
+                        🏮 {strat.name}
+                      </span>
+                      <span className={`text-[7.5px] font-bold px-1 rounded border leading-none py-0.5 ${stateBadgeColor}`}>
+                        {stateLabel}
+                      </span>
+                    </div>
+
+                    <p className="text-[9.5px] text-stone-600 font-sans leading-normal">
+                      {strat.desc}
+                    </p>
+
+                    <div className="mt-1.5 pt-1 border-t border-dotted border-stone-200 flex flex-wrap justify-between items-center text-[8px] text-stone-500">
+                      <div className="font-medium text-amber-900 py-0.5 max-w-[210px] truncate leading-none">
+                        🎯 效用：<span className="font-bold">{strat.effectDesc}</span>
+                      </div>
+                      <div className="flex items-center gap-1 font-mono text-[7px] leading-none mt-1 sm:mt-0">
+                        {strat.general !== 'any' && (
+                          <span className={`px-1 rounded py-[1px] ${isGeneralMatch ? 'bg-[#8C2F39]/15 text-[#8C2F39] border border-[#8C2F39]/20 font-bold' : 'bg-stone-200 text-stone-400'}`}>
+                            帅:{strat.general === 'hanxin' ? '韩信' : strat.general === 'caocao' ? '曹操' : strat.general === 'caoren' ? '曹仁' : '白起'}
+                          </span>
+                        )}
+                        {strat.terrain !== 'any' && (
+                          <span className={`px-1 rounded py-[1px] ${isTerrainMatch ? 'bg-amber-950/15 text-amber-950 border border-amber-900/10 font-bold' : 'bg-stone-200 text-stone-400'}`}>
+                            地:{strat.terrain}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Phase 4: Fire Attack (火攻篇) & Pathfinder (五路行军推荐) UI Deck Component */}
+          <div className="bg-[#FAF8F5] border border-stone-300 rounded-lg p-3.5 space-y-3 shadow-sm" id="phase4-tactics-deck">
+            <div className="flex items-center justify-between border-b pb-1.5 border-stone-200">
+              <div className="flex items-center gap-1.5">
+                <Flame className="w-4 h-4 text-orange-600 animate-pulse" />
+                <h3 className="font-serif font-black text-xs text-stone-900">
+                  军争寻路与火攻秘策
+                </h3>
+              </div>
+              <span className="text-[7.5px] font-mono bg-orange-700 text-stone-50 font-bold px-1 py-0.5 rounded shadow-sm leading-none whitespace-nowrap">
+                🔥 PHASE 4 LOADED
+              </span>
+            </div>
+
+            {/* Sub-tab 1: Sun Tzu Chapter 12 Fire Attack (五五火攻战法) */}
+            <div className="space-y-2 border-b pb-3 border-stone-200/60">
+              <h4 className="text-[10px] uppercase font-bold tracking-wider text-[#8C2F39] flex items-center gap-1">
+                <span>🔥</span> <b>古之五火攻法</b>
+              </h4>
+              <p className="text-[9px] text-stone-500 font-sans leading-relaxed">
+                引据《孙子兵法·火攻篇》，选择火攻战法，并<b>在大舆图上左键点击</b>投掷引燃。火势会根据暴风、暴雨而变化，造成大范围毁灭：
+              </p>
+
+              <div className="grid grid-cols-2 sm:grid-cols-1 gap-1.5 max-h-[160px] overflow-y-auto pr-1">
+                {FIRE_TACTICS.map((t) => {
+                  const isSelected = selectedFireTactic === t.id;
+                  const activeCounts = fireFlares.filter(f => f.tactic === t.id).length;
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedFireTactic(isSelected ? null : t.id);
+                        if (!isSelected) {
+                          addRoomLog(`🎯 【部署引燃】已谋定古方火法【${t.zhName}】！请在大舆图上点击，选设起火位置！`);
+                        }
+                      }}
+                      className={`text-left p-2 rounded border transition-all text-xs flex flex-col justify-between relative cursor-pointer ${
+                        isSelected
+                          ? 'border-orange-500 bg-orange-500/10 ring-2 ring-orange-500/30'
+                          : 'border-stone-200 bg-amber-50/10 hover:bg-stone-100/50'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center w-full">
+                        <span className="font-serif font-bold text-stone-900 text-[10.5px]">
+                          {t.zhName}
+                        </span>
+                        {activeCounts > 0 && (
+                          <span className="bg-orange-600 text-stone-150 text-[7px] font-bold font-mono px-1 rounded-full animate-pulse">
+                            {activeCounts} 处起火
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[8.5px] text-stone-500 mt-0.5 leading-snug">{t.desc}</p>
+                      <div className="text-[8px] mt-1 pt-1 border-t border-dotted border-stone-200 text-amber-900 font-bold">
+                        ⚡ 摧敌分量: {t.effect}
+                      </div>
+
+                      {isSelected && (
+                        <div className="absolute inset-0 bg-orange-600/5 rounded pointer-events-none flex items-center justify-center">
+                          <span className="text-[8px] bg-orange-600 text-[#FAF8F5] px-1 rounded absolute bottom-1 right-1 font-sans animate-pulse font-bold scale-[0.95]">
+                            已选定 · 请点击大舆图
+                          </span>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {selectedFireTactic && (
+                <motion.div
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-orange-50 border border-orange-200 text-orange-900 p-2 rounded text-[10px] leading-relaxed flex items-center gap-1.5"
+                >
+                  <span className="text-sm animate-bounce">🔥</span>
+                  <div>
+                    <span className="font-bold text-[#8C2F39]">战术瞄准中:</span> 请在右侧<b>水墨沙盘</b>或<b>谷歌现代卫星大图</b>任意位置点击，立即爆燃纵放！
+                  </div>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Sub-tab 2: Pathfinder / Expedition Paths (军争寻路两翼) */}
+            <div className="space-y-2 pt-1">
+              <div className="flex items-center justify-between">
+                <h4 className="text-[10px] uppercase font-bold tracking-wider text-cyan-800 flex items-center gap-1">
+                  <span>🧭</span> <b>行军军争两翼推荐</b>
+                </h4>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[8.5px] text-stone-500 font-medium">显示兵道</span>
+                  <input
+                    type="checkbox"
+                    checked={showPathfinders}
+                    onChange={(e) => setShowPathfinders(e.target.checked)}
+                    className="w-3.5 h-3.5 accent-[#8C2F39] rounded cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              <p className="text-[9px] text-stone-500 font-sans leading-relaxed">
+                引据《孙子兵法·军争篇》：“避其锐气，击其惰归”，参谋系统根据当下地利实时测控标定两类推荐行军轨迹：
+              </p>
+
+              {showPathfinders && (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPathfinderType('direct');
+                        addRoomLog(`🧭 【军争行军】我军更改推荐路线为「直离要冲之锋」，大部曲严整阵形，蓄势待发！`);
+                      }}
+                      className={`py-1.5 px-2 rounded border text-center transition-all text-[9.5px] cursor-pointer font-serif font-black ${
+                        pathfinderType === 'direct'
+                          ? 'bg-rose-50 border-red-600 text-red-700 ring-2 ring-red-100'
+                          : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'
+                      }`}
+                    >
+                      <span>直趋要冲</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPathfinderType('detour');
+                        addRoomLog(`🧭 【军争行军】我军切换行军谋划为「奇袭迂回险关」，派遣精骁在西北大障谷壑间秘密穿插！`);
+                      }}
+                      className={`py-1.5 px-2 rounded border text-center transition-all text-[9.5px] cursor-pointer font-serif font-black ${
+                        pathfinderType === 'detour'
+                          ? 'bg-cyan-50 border-cyan-600 text-cyan-800 ring-2 ring-cyan-100'
+                          : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100'
+                      }`}
+                    >
+                      <span>迂回险途</span>
+                    </button>
+                  </div>
+
+                  {/* Route Details Overlay Panels based on route */}
+                  {pathfinderType === 'direct' ? (
+                    <div className="p-2.5 bg-rose-50/50 border border-red-100 rounded text-[9.5px] text-stone-700 space-y-1 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-8 h-8 opacity-10 font-bold font-serif text-3xl select-none">
+                        尖
+                      </div>
+                      <div className="font-bold text-red-800 flex items-center gap-1">
+                        <span>⚔️</span> <span>直趋突击线 · 兵贵神速</span>
+                      </div>
+                      <p className="leading-relaxed">
+                        • 核心走廊: <b>直入前哨隘口 ➔ 击溃敌拦截部 ➔ 突袭敌军大帐</b>
+                      </p>
+                      <div className="grid grid-cols-2 gap-1 pt-1 border-t border-red-100/60 font-mono text-[8.5px] text-red-900 font-bold">
+                        <div>⌛ 耗时：3 刻间</div>
+                        <div>⚠️ 伏兵：85% (极高)</div>
+                        <div className="col-span-2 text-rose-700">👊 兵争效果: 锋矢大阵突击伤害额外加成 +40%</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-2.5 bg-cyan-50/50 border border-cyan-100 rounded text-[9.5px] text-stone-700 space-y-1 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-8 h-8 opacity-10 font-bold font-serif text-3xl select-none">
+                        迂
+                      </div>
+                      <div className="font-bold text-cyan-800 flex items-center gap-1">
+                        <span>🛡️</span> <span>迂回包抄线 · 击其惰归</span>
+                      </div>
+                      <p className="leading-relaxed">
+                        • 核心走廊: <b>西北连绵大障 ➔ 密隐深谷底 ➔ 袭斩敌帅侧翼</b>
+                      </p>
+                      <div className="grid grid-cols-2 gap-1 pt-1 border-t border-cyan-100/60 font-mono text-[8.5px] text-cyan-900 font-bold">
+                        <div>⌛ 耗时：6 刻间</div>
+                        <div>⚠️ 伏兵：15% (极低)</div>
+                        <div className="col-span-2 text-cyan-700">👊 兵争效果: 我军全体方圆御敌硬度大增 +50%</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Right column: The Map Canvas (SVGFallback or Live Google Map) */}
         <div className="lg:col-span-8 flex flex-col space-y-4">
           
           {/* Main Map Frame */}
-          <div ref={stageRef} className="bg-stone-900 border-2 border-black rounded-lg aspect-video w-full h-[450px] relative overflow-hidden shadow-md flex flex-col" id="battle-map-stage">
+          <div 
+            ref={stageRef} 
+            className={`bg-stone-900 border-2 border-black rounded-lg w-full relative overflow-hidden shadow-md flex flex-col ${isFullscreen ? 'fixed inset-0 z-[100] h-screen !border-0 !rounded-none' : 'aspect-video h-[450px]'}`}
+            id="battle-map-stage"
+          >
+
+            {/* HUD Visbility Toggle */}
+            <div className="absolute top-2 left-2 z-50 flex gap-2">
+              <button 
+                onClick={() => setShowHudOverlays(prev => !prev)}
+                className="bg-stone-100/95 hover:bg-white text-stone-800 border-2 border-stone-800 rounded px-2.5 py-1 text-[10px] font-mono shadow-md flex items-center gap-1.5 transition-all cursor-pointer font-bold"
+              >
+                {showHudOverlays ? '👁️ 战区面板 (ON)' : '👁️ 战区面板 (OFF)'}
+              </button>
+              <button 
+                onClick={() => setIsFullscreen(prev => !prev)}
+                className="bg-stone-100/95 hover:bg-white text-stone-800 border-2 border-stone-800 rounded px-2.5 py-1 text-[10px] font-mono shadow-md flex items-center gap-1.5 transition-all cursor-pointer font-bold"
+              >
+                {isFullscreen ? '🗗 退出全屏' : '🖵 全屏模式'}
+              </button>
+            </div>
             
             {/* Animated Loading Overlay Status Indicator (Astronomical Radar Style) */}
             <AnimatePresence>
@@ -2243,6 +3165,40 @@ export default function RealWorldMapBattle() {
                 </motion.div>
               )}
             </AnimatePresence>
+
+            {/* Phase 3: Active Stratagem Visual Calligraphy Banner Overlay */}
+            <AnimatePresence>
+              {activeStratagem && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 1.15 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="absolute inset-0 z-35 flex items-center justify-center pointer-events-none select-none bg-stone-950/40 backdrop-blur-[0.5px]"
+                >
+                  <div className="bg-[#FAF8F5]/95 border-2 border-[#8C2F39] text-[#8C2F39] px-6 py-4 rounded-md shadow-2xl relative max-w-sm text-center font-serif border-double">
+                    {/* Corner decorative borders */}
+                    <div className="absolute top-1 left-1 border-t-2 border-l-2 border-[#8C2F39] w-3 h-3" />
+                    <div className="absolute top-1 right-1 border-t-2 border-r-2 border-[#8C2F39] w-3 h-3" />
+                    <div className="absolute bottom-1 left-1 border-b-2 border-l-2 border-[#8C2F39] w-3 h-3" />
+                    <div className="absolute bottom-1 right-1 border-b-2 border-r-2 border-[#8C2F39] w-3 h-3" />
+                    
+                    <div className="text-[10px] uppercase tracking-widest font-mono text-stone-500 mb-1">
+                      🏮 Active Stratagem / 役用军道锦囊
+                    </div>
+                    <div className="text-xl font-black tracking-wider font-serif animate-pulse flex items-center justify-center gap-1.5">
+                      🔥 {STRATAGEMS.find(s => s.id === activeStratagem)?.name}
+                    </div>
+                    <p className="text-[10.5px] text-stone-700 font-sans leading-relaxed mt-2 italic px-2">
+                      “ {STRATAGEMS.find(s => s.id === activeStratagem)?.effectDesc} ”
+                    </p>
+                    <div className="mt-2.5 flex items-center justify-center gap-1.5 text-[8.5px] font-mono text-amber-800 font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#8C2F39] animate-ping" />
+                      <span>阵战演武正在契受大将军阵法加成中... ({stratagemTimer} 刻)</span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
             
             {mapMode === 'ink' ? (
               /* High Polished Interactive SVG-Vector Watercolor Fallback Map */
@@ -2253,11 +3209,19 @@ export default function RealWorldMapBattle() {
                   地利
                 </div>
 
+                {/* Phase 2: Chrono Backtrack Watermark alert badge inside ink sandtable */}
+                {timeTravelIndex >= 0 && (
+                  <div className="absolute top-16 right-4 bg-[#8C2F39] text-stone-100 border border-amber-600 px-2.5 py-1 text-[8.5px] font-mono tracking-wider rounded uppercase animate-pulse z-30 shadow-lg flex items-center gap-1.5 pointer-events-none">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping" />
+                    <span>CHRONO PLAYBACK / 时空推演回溯 (Tick #{timeTravelIndex + 1})</span>
+                  </div>
+                )}
+
                 {/* Grid HUD overhead coordinates */}
                 <div className="flex justify-between items-center bg-[#FAF8F5]/90 border border-stone-200 rounded p-1.5 shadow-sm text-[10px] font-mono z-10">
                   <div className="flex items-center gap-1.5 text-[#8C2F39]">
                     <MapIcon className="w-3.5 h-3.5" />
-                    <span><b>模拟水墨意象沙盘 (Vector Fallback)</b></span>
+                    <span><b>模拟水墨意象沙盘</b></span>
                   </div>
                   <div>
                     经纬坐标: <span className="font-bold text-amber-900">{activeAnalysis.lat}° N, {activeAnalysis.lng}° E</span>
@@ -2273,6 +3237,12 @@ export default function RealWorldMapBattle() {
                   // Map X/Y click value back to simulated nearby coordinates 
                   const simulatedLat = activeAnalysis.lat + (clickY - rect.height / 2) * 0.0003;
                   const simulatedLng = activeAnalysis.lng + (clickX - rect.width / 2) * 0.0003;
+
+                  // Phase 4: Handle active fire ignition
+                  if (selectedFireTactic) {
+                    handleIgniteFire(simulatedLat, simulatedLng, selectedFireTactic);
+                    return;
+                  }
                   
                   // 1. Check if we are currently ordering a unit to march (isTargetingMoveId is active)
                   if (isTargetingMoveId) {
@@ -2309,8 +3279,61 @@ export default function RealWorldMapBattle() {
                   setPendingDeployCoords({ lat: simulatedLat, lng: simulatedLng });
                 }}>
                   
-                  {/* Visual battlefield mountains background */}
-                  <MemoizedBackgroundSVG />
+                  {/* 3D Sandtable Perspective Transform Wrapper (Phase 1) */}
+                  <div
+                    className="absolute inset-0 transition-all duration-350 ease-out pointer-events-none"
+                    style={{
+                      transform: `perspective(1000px) rotateX(${mapTilt}deg) rotateZ(${-mapHeading}deg) scale(${1 + mapTilt * 0.00065})`,
+                      transformStyle: 'preserve-3d',
+                      backfaceVisibility: 'hidden',
+                    }}
+                  >
+                    <div className="relative w-full h-full pointer-events-auto" style={{ transformStyle: 'preserve-3d' }}>
+                      {/* Visual battlefield mountains background */}
+                      <MemoizedBackgroundSVG />
+
+                      {/* Phase 2: Dynamic Earthly Celestial Atmosphere Shade (Day/Sunset/Night) */}
+                      <div 
+                        className="absolute inset-0 pointer-events-none transition-all duration-1000 mix-blend-multiply" 
+                        style={{ 
+                          backgroundColor: SHICHENS[displayedShichenIndex].style,
+                          transformStyle: 'preserve-3d',
+                          zIndex: 1
+                        }} 
+                      />
+
+                      {/* Interactive 3D Altitude elevation scanning mesh wireframe (Phase 1) */}
+                      {gisAltitudeMesh && (
+                        <div className="absolute inset-0 w-full h-full pointer-events-none z-2" style={{ transformStyle: 'preserve-3d' }}>
+                          <svg className="absolute inset-0 w-full h-full opacity-35 mix-blend-multiply dark:mix-blend-screen" style={{ transformStyle: 'preserve-3d' }}>
+                            {/* Grid scanning mesh lines */}
+                            <g stroke="#8C2F39" strokeWidth="0.45" strokeOpacity="0.8">
+                              {/* Horizontal grid scans */}
+                              {Array.from({ length: 9 }).map((_, idx) => {
+                                const y = 10 + idx * 10;
+                                return <line key={`h-mesh-${idx}`} x1="0" y1={`${y}%`} x2="100%" y2={`${y}%`} strokeDasharray={idx % 2 === 0 ? "4 6" : "1 4"} />;
+                              })}
+                              {/* Vertical grid scans */}
+                              {Array.from({ length: 9 }).map((_, idx) => {
+                                const x = 10 + idx * 10;
+                                return <line key={`v-mesh-${idx}`} x1={`${x}%`} y1="0" x2={`${x}%`} y2="100%" strokeDasharray={idx % 2 === 0 ? "4 6" : "1 4"} />;
+                              })}
+                            </g>
+                            {/* Topographic elevation scanning concentric rings around the central tactical focus node */}
+                            <g fill="none" stroke="#D97706" strokeWidth="0.55" strokeOpacity="0.75">
+                              <circle cx="50%" cy="50%" r="8%" strokeDasharray="2 3" />
+                              <circle cx="50%" cy="50%" r="18%" />
+                              <circle cx="50%" cy="50%" r="28%" strokeDasharray="4 2" />
+                              <circle cx="50%" cy="50%" r="38%" />
+                            </g>
+                            
+                            {/* Simulated GIS Altitude elevation axis numbers on margins */}
+                            <text x="3%" y="50%" fill="#8C2F39" fontSize="6.5" fontFamily="monospace" opacity="0.6">ALT: 3200m</text>
+                            <text x="92%" y="54%" fill="#8C2F39" fontSize="6.5" fontFamily="monospace" opacity="0.6">LAT: 34.3°</text>
+                            <text x="44%" y="97%" fill="#8C2F39" fontSize="6.5" fontFamily="monospace" opacity="0.6">奇门高程罗盘定位仪</text>
+                          </svg>
+                        </div>
+                      )}
 
                   {/* Dynamic marching trails for the watercolor fallback sandtable map */}
                   <svg className="absolute inset-0 w-full h-full pointer-events-none z-5">
@@ -2360,6 +3383,73 @@ export default function RealWorldMapBattle() {
                       }
                       return linesList;
                     })}
+
+                    {/* Phase 4: Dynamic Scout Pathfinder Line Segments on the Ink Fallback Map */}
+                    {showPathfinders && (() => {
+                      const centerLat = selectedBattlefield ? selectedBattlefield.lat : 34.3415;
+                      const centerLng = selectedBattlefield ? selectedBattlefield.lng : 108.9404;
+
+                      const project = (lat: number, lng: number) => {
+                        const dLat = lat - centerLat;
+                        const dLng = lng - centerLng;
+                        return {
+                          x: 50 + dLng * 5000,
+                          y: 50 - dLat * 5000
+                        };
+                      };
+
+                      const dCoords = [
+                        { lat: centerLat - 0.015, lng: centerLng - 0.015 },
+                        { lat: centerLat, lng: centerLng },
+                        { lat: centerLat + 0.015, lng: centerLng + 0.015 }
+                      ];
+
+                      const dtCoords = [
+                        { lat: centerLat - 0.015, lng: centerLng - 0.015 },
+                        { lat: centerLat - 0.005, lng: centerLng - 0.022 },
+                        { lat: centerLat + 0.010, lng: centerLng - 0.018 },
+                        { lat: centerLat + 0.015, lng: centerLng + 0.015 }
+                      ];
+
+                      const list = [];
+                      if (pathfinderType === 'direct') {
+                        for (let i = 0; i < dCoords.length - 1; i++) {
+                          const p1 = project(dCoords[i].lat, dCoords[i].lng);
+                          const p2 = project(dCoords[i+1].lat, dCoords[i+1].lng);
+                          list.push(
+                            <line
+                              key={`direct-path-seg-${i}`}
+                              x1={`${p1.x}%`} y1={`${p1.y}%`}
+                              x2={`${p2.x}%`} y2={`${p2.y}%`}
+                              stroke="#DC2626"
+                              strokeWidth="45"
+                              strokeWidthAttribute="4"
+                              strokeDasharray="6 4"
+                              strokeOpacity="0.75"
+                              style={{ strokeWidth: 4 }}
+                            />
+                          );
+                        }
+                      } else {
+                        for (let i = 0; i < dtCoords.length - 1; i++) {
+                          const p1 = project(dtCoords[i].lat, dtCoords[i].lng);
+                          const p2 = project(dtCoords[i+1].lat, dtCoords[i+1].lng);
+                          list.push(
+                            <line
+                              key={`detour-path-seg-${i}`}
+                              x1={`${p1.x}%`} y1={`${p1.y}%`}
+                              x2={`${p2.x}%`} y2={`${p2.y}%`}
+                              stroke="#06B6D4"
+                              strokeWidth="4"
+                              strokeDasharray="8 4"
+                              strokeOpacity="0.85"
+                              style={{ strokeWidth: 4 }}
+                            />
+                          );
+                        }
+                      }
+                      return list;
+                    })()}
                   </svg>
 
                   {/* Active Anchor Center Flag */}
@@ -2378,7 +3468,11 @@ export default function RealWorldMapBattle() {
                       opacity: { duration: 0.35 },
                       y: { type: 'spring', stiffness: 260, damping: 15 }
                     }}
-                    className="absolute transform -translate-x-1/2 -translate-y-1/2 z-10 flex flex-col items-center pointer-events-none"
+                    className="absolute z-10 flex flex-col items-center pointer-events-none transition-transform duration-350 ease-out"
+                    style={{
+                      transform: `translate(-50%, -50%) rotateX(${-mapTilt}deg) rotateY(0deg) rotateZ(${mapHeading}deg)`,
+                      transformStyle: 'preserve-3d'
+                    }}
                   >
                     <div className="relative">
                       {isSimulating && (
@@ -2406,6 +3500,8 @@ export default function RealWorldMapBattle() {
                   <MemoizedMountainObstacles 
                     centerLat={selectedBattlefield ? selectedBattlefield.lat : 34.3415} 
                     centerLng={selectedBattlefield ? selectedBattlefield.lng : 108.9404} 
+                    mapTilt={mapTilt}
+                    mapHeading={mapHeading}
                   />
 
                   {/* Rendering Deployed Active Spies on the fallback vector ink map (Step 3) */}
@@ -2423,7 +3519,7 @@ export default function RealWorldMapBattle() {
                         <motion.div
                           key={`spy-ink-${spy.id}`}
                           className="absolute cursor-pointer z-20 group"
-                          style={{ x: "-50%", y: "-50%" }}
+                          style={{ x: "-50%", y: "-50%", transformStyle: 'preserve-3d' }}
                           animate={{ left: `${posX}%`, top: `${posY}%` }}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -2431,7 +3527,13 @@ export default function RealWorldMapBattle() {
                             setSelectedUnit(null);
                           }}
                         >
-                          <div className="flex flex-col items-center">
+                          <div 
+                            className="flex flex-col items-center transition-transform duration-350 ease-out"
+                            style={{ 
+                              transform: `rotateX(${-mapTilt}deg) rotateY(0deg) rotateZ(${mapHeading}deg)`, 
+                              transformStyle: 'preserve-3d' 
+                            }}
+                          >
                             <div className="h-6 w-6 rounded-full bg-amber-950/95 border-2 border-amber-400 flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all text-amber-300">
                               <span className="text-[10px]">👁️</span>
                             </div>
@@ -2444,7 +3546,7 @@ export default function RealWorldMapBattle() {
                     })}
 
                   {/* Rendering Placed Units on the falling back vector stage */}
-                  {placedUnits
+                  {displayedUnits
                     .filter(u => u.side === 'allied' || isUnitRevealed(u))
                     .map((u) => {
                       const isDamaged = Boolean(damagedUnits[u.id] && (Date.now() - damagedUnits[u.id] < 800));
@@ -2460,9 +3562,82 @@ export default function RealWorldMapBattle() {
                             setSelectedUnit(u);
                           }}
                           setSelectedUnit={setSelectedUnit}
+                          mapTilt={mapTilt}
+                          mapHeading={mapHeading}
                         />
                       );
                     })}
+
+                   {/* Phase 4: Active Tactical Fire Flares on the Watercolor Fallback Map */}
+                   {fireFlares.map((fire) => {
+                     const deltaLat = fire.lat - (selectedBattlefield ? selectedBattlefield.lat : 34.3415);
+                     const deltaLng = fire.lng - (selectedBattlefield ? selectedBattlefield.lng : 108.9404);
+                     const posX = 50 + deltaLng * 5000;
+                     const posY = 50 - deltaLat * 5000;
+                     
+                     if (posX < 0 || posX > 100 || posY < 0 || posY > 100) return null;
+
+                     return (
+                       <motion.div
+                         key={fire.id}
+                         className="absolute z-25 pointer-events-none"
+                         style={{ left: `${posX}%`, top: `${posY}%`, x: "-50%", y: "-50%", transformStyle: 'preserve-3d' }}
+                       >
+                         <div 
+                           className="flex flex-col items-center transition-transform duration-350 ease-out"
+                           style={{ 
+                             transform: `rotateX(${-mapTilt}deg) rotateY(0deg) rotateZ(${mapHeading}deg)`, 
+                             transformStyle: 'preserve-3d' 
+                           }}
+                         >
+                           <motion.div 
+                             className="text-2xl drop-shadow-[0_0_8px_rgba(239,68,68,0.85)] relative"
+                             animate={{ 
+                               scale: [1, 1.25, 0.95, 1.15, 1],
+                               y: [0, -3, 0, -1, 0]
+                             }}
+                             transition={{ 
+                               repeat: Infinity, 
+                               duration: 0.9 + Math.random() * 0.3,
+                               ease: "easeInOut"
+                             }}
+                           >
+                             🔥
+                             <motion.div 
+                               className="absolute inset-0 rounded-full bg-orange-500/25 blur-md"
+                               animate={{ scale: [1, 1.6, 1] }}
+                               transition={{ repeat: Infinity, duration: 1.2 }}
+                             />
+                           </motion.div>
+                           <span className="text-[7px] font-mono bg-stone-900 text-orange-400 border border-orange-500 rounded px-1.2 py-0.2 mt-0.5 whitespace-nowrap shadow-xs font-bold leading-none">
+                             {FIRE_TACTICS.find(t=>t.id===fire.tactic)?.zhName || "纵火"} ({fire.timer} 刻)
+                           </span>
+                         </div>
+                       </motion.div>
+                     );
+                   })}
+                   
+                   {mapVisualFx.map(fx => {
+                       const deltaLat = fx.lat - (selectedBattlefield ? selectedBattlefield.lat : 34.3415);
+                       const deltaLng = fx.lng - (selectedBattlefield ? selectedBattlefield.lng : 108.9404);
+                       const px = 50 + deltaLng * 5000;
+                       const py = 50 - deltaLat * 5000;
+                       if (px < 0 || px > 100 || py < 0 || py > 100) return null;
+                       return (
+                         <motion.div
+                           key={fx.id}
+                           className="absolute z-[100] text-4xl drop-shadow-[0_0_15px_rgba(255,0,0,0.8)] pointer-events-none"
+                           style={{ left: `${px}%`, top: `${py}%`, x: "-50%", y: "-50%" }}
+                           initial={{ scale: 0.2, opacity: 0, rotate: fx.type === 'clash' ? -45 : 0 }}
+                           animate={{ scale: [2.5, 1.3, 0.8, 0], opacity: [1, 1, 0.8, 0], rotate: fx.type === 'clash' ? [-45, 0, 15, -15] : 0 }}
+                           transition={{ duration: 1.2, ease: "easeOut" }}
+                         >
+                           {fx.type === 'clash' ? '⚔️' : '💥'}
+                         </motion.div>
+                       );
+                   })}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Footer Callout how to activate satellite map view */}
@@ -2472,7 +3647,7 @@ export default function RealWorldMapBattle() {
                     <span>想要查看高拟真现代卫星谷歌地图与实景？</span>
                   </div>
                   <p>
-                    <b>一键激活谷歌地图步骤：</b> 在右上角 <b>Settings (⚙️齿轮)</b> → <b>Secrets</b> 中添加密匙名称为 <code>GOOGLE_MAPS_PLATFORM_KEY</code>，并将你的真实 Google Maps API 密钥保存进去，即可开启高清地形卫星图、路径天演与街景连携推演！
+                    <b>唤醒卫星实景步骤：</b> 在右上角 <b>设置 (⚙️齿轮)</b> 中添加密匙名称为 <code>GOOGLE_MAPS_PLATFORM_KEY</code>，并将密钥保存进去，即可开启高清地形卫星图、路径天演与街景连携推演！
                   </p>
                 </div>
               </div>
@@ -2500,7 +3675,7 @@ export default function RealWorldMapBattle() {
 
                       {/* Descriptive Intro text */}
                       <p className="text-[11px] text-stone-600 font-serif leading-relaxed">
-                        本沙盘已支持将现代 <b>Google Maps API</b> 卫星实景联动于《孙子兵法》九地阵术中，能够实时解析全球经纬之势。仅需三步，即可唤醒地利：
+                        本沙盘已支持将现代 <b>卫星舆图实景</b> 联动于《孙子兵法》九地阵术中，能够实时解析全球经纬之势。仅需三步，即可唤醒地利：
                       </p>
 
                       {/* Gorgeous styled 3-step process cards */}
@@ -2523,13 +3698,13 @@ export default function RealWorldMapBattle() {
                         <div className="flex gap-2.5 items-start bg-stone-50/80 p-2.5 rounded-lg border border-stone-100 transition hover:bg-stone-55">
                           <span className="flex-shrink-0 w-4.5 h-4.5 rounded-full bg-amber-800 text-amber-50 font-mono text-[9px] font-bold flex items-center justify-center">2</span>
                           <div className="text-[11px] space-y-0.5">
-                            <h4 className="font-bold text-[#1A1A1A]">安置入阁门 (Secrets Panel)</h4>
+                            <h4 className="font-bold text-[#1A1A1A]">安置入阁门</h4>
                             <p className="text-[9.5px] text-stone-500">
                               在大天演仪右上角 <b>Settings (⚙️齿轮)</b> → <b>Secrets (密令)</b> 里输入：
                             </p>
                             <div className="font-mono text-[9px] bg-[#FAF8F5] border px-2 py-1.5 rounded mt-1 select-all hover:bg-stone-100">
-                              Secret Key: <strong className="text-stone-900 border-r pr-1 border-stone-300">GOOGLE_MAPS_PLATFORM_KEY</strong> <br/>
-                              Secret Value: <span className="text-amber-800 font-semibold">AIzaSyYourGoogleApiKeySecretString...</span>
+                              密匙名称: <strong className="text-stone-900 border-r pr-1 border-stone-300">GOOGLE_MAPS_PLATFORM_KEY</strong> <br/>
+                              密匙内容: <span className="text-amber-800 font-semibold">填写你的实物通关令牌...</span>
                             </div>
                           </div>
                         </div>
@@ -2564,7 +3739,24 @@ export default function RealWorldMapBattle() {
                   </div>
                 ) : (
                   <APIProvider apiKey={API_KEY} version="weekly">
-                    <div className="w-full h-full relative" id="live-google-map-container">
+                    <div className="w-full h-full relative font-sans" id="live-google-map-container">
+                      
+                      {/* Phase 2: Dynamic Ambient Shade (Day/Sunset/Night) over Satellite Tiles */}
+                      <div 
+                        className="absolute inset-0 pointer-events-none transition-all duration-1000 mix-blend-multiply z-1" 
+                        style={{ 
+                          backgroundColor: SHICHENS[displayedShichenIndex].style,
+                        }} 
+                      />
+
+                      {/* Phase 2: Chrono Backtrack Watermark alert badge */}
+                      {timeTravelIndex >= 0 && (
+                        <div className="absolute top-3 right-3 bg-[#8C2F39] text-stone-100 border border-amber-600 px-3 py-1 text-[9px] font-mono tracking-widest rounded-md uppercase animate-pulse z-40 shadow-xl flex items-center gap-1.5 pointer-events-none">
+                          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                          <span>CHRONO PLAYBACK / 时空推演回溯 (Tick #{timeTravelIndex + 1})</span>
+                        </div>
+                      )}
+
                       {/* Overlay Map Help Panel */}
                       <div className="absolute left-3 top-3 bg-[#FAF8F5]/95 border border-stone-300 rounded p-2 z-10 shadow-md text-[10px] space-y-1">
                         <div className="font-serif font-bold text-[#8C2F39] flex items-center gap-1">
@@ -2583,7 +3775,17 @@ export default function RealWorldMapBattle() {
                         center={{ lat: activeAnalysis.lat, lng: activeAnalysis.lng }}
                         defaultZoom={11}
                         zoom={mapZoom}
-                        onCameraChanged={(ev) => setMapZoom(ev.detail.zoom)}
+                        tilt={mapTilt}
+                        heading={mapHeading}
+                        onCameraChanged={(ev) => {
+                          setMapZoom(ev.detail.zoom);
+                          if (ev.detail.tilt !== undefined) {
+                            setMapTilt(ev.detail.tilt);
+                          }
+                          if (ev.detail.heading !== undefined) {
+                            setMapHeading(ev.detail.heading);
+                          }
+                        }}
                         gestureHandling={'greedy'}
                         mapId="DEMO_MAP_ID"
                         mapTypeId={'satellite'} // terrain / satellite / roadmap
@@ -2665,7 +3867,7 @@ export default function RealWorldMapBattle() {
                         })}
 
                         {/* Custom visual troop checkpoints mapped directly on satellite tiles */}
-                        {placedUnits
+                        {displayedUnits
                           .filter(u => u.side === 'allied' || isUnitRevealed(u))
                           .map((u) => {
                             const isDamaged = Boolean(damagedUnits[u.id] && (Date.now() - damagedUnits[u.id] < 800));
@@ -2684,7 +3886,7 @@ export default function RealWorldMapBattle() {
                         {Object.entries(unitTrails).map(([unitId, val]) => {
                           const trail = val as Array<{lat: number; lng: number}>;
                           if (trail.length < 2) return null;
-                          const unit = placedUnits.find(u => u.id === unitId);
+                          const unit = displayedUnits.find(u => u.id === unitId);
                           if (!unit) return null;
                           const color = unit.side === 'allied' ? '#10B981' : '#EF4444';
                           return (
@@ -2695,6 +3897,20 @@ export default function RealWorldMapBattle() {
                             />
                           );
                         })}
+
+                        {/* Visual Battle Overlays on Google Map */}
+                        {mapVisualFx.map(fx => (
+                          <AdvancedMarker key={fx.id} position={{ lat: fx.lat, lng: fx.lng }} zIndex={999}>
+                             <motion.div
+                               className="text-4xl drop-shadow-[0_0_15px_rgba(255,0,0,0.8)] pointer-events-none"
+                               initial={{ scale: 0.2, opacity: 0, rotate: fx.type === 'clash' ? -45 : 0 }}
+                               animate={{ scale: [2.5, 1.3, 0.8, 0], opacity: [1, 1, 0.8, 0], rotate: fx.type === 'clash' ? [-45, 0, 15, -15] : 0 }}
+                               transition={{ duration: 1.2, ease: "easeOut" }}
+                             >
+                               {fx.type === 'clash' ? '⚔️' : '💥'}
+                             </motion.div>
+                          </AdvancedMarker>
+                        ))}
 
                         {/* Custom visual spies mapped directly on satellite tiles (Step 3) */}
                         {multiplayerMode && spiesList
@@ -2719,6 +3935,76 @@ export default function RealWorldMapBattle() {
                             </AdvancedMarker>
                           ))}
 
+                        {/* Phase 4: Active Tactical Fire Flares mapped directly on Google Map (satellite tiles) */}
+                        {fireFlares.map((fire) => (
+                          <AdvancedMarker
+                            key={`fire-g-${fire.id}`}
+                            position={{ lat: fire.lat, lng: fire.lng }}
+                          >
+                            <div className="flex flex-col items-center pointer-events-none">
+                              <motion.div
+                                className="text-2xl drop-shadow-[0_0_12px_rgba(239,68,68,0.9)] relative"
+                                animate={{
+                                  scale: [1.1, 1.35, 1.05, 1.25, 1.1],
+                                  y: [0, -4, 0, -2, 0]
+                                }}
+                                transition={{
+                                  repeat: Infinity,
+                                  duration: 0.85 + Math.random() * 0.25,
+                                  ease: "easeInOut"
+                                }}
+                              >
+                                🔥
+                                <motion.div
+                                  className="absolute inset-0 rounded-full bg-orange-600/30 blur-md"
+                                  animate={{ scale: [1, 1.8, 1] }}
+                                  transition={{ repeat: Infinity, duration: 1.0 }}
+                                />
+                              </motion.div>
+                              <span className="bg-stone-950/95 text-orange-400 border border-orange-500 font-mono text-[7px] font-bold px-1 py-0.2 rounded shadow mt-0.5 whitespace-nowrap leading-none">
+                                {FIRE_TACTICS.find(t=>t.id===fire.tactic)?.zhName || "放火"} ({fire.timer} 刻)
+                              </span>
+                            </div>
+                          </AdvancedMarker>
+                        ))}
+
+                        {/* Phase 4: Dynamic Scout Pathfinder Paths on Google Map */}
+                        {showPathfinders && (() => {
+                          const centerLat = selectedBattlefield ? selectedBattlefield.lat : 34.3415;
+                          const centerLng = selectedBattlefield ? selectedBattlefield.lng : 108.9404;
+
+                          const dCoords = [
+                            { lat: centerLat - 0.015, lng: centerLng - 0.015 },
+                            { lat: centerLat, lng: centerLng },
+                            { lat: centerLat + 0.015, lng: centerLng + 0.015 }
+                          ];
+
+                          const dtCoords = [
+                            { lat: centerLat - 0.015, lng: centerLng - 0.015 },
+                            { lat: centerLat - 0.005, lng: centerLng - 0.022 },
+                            { lat: centerLat + 0.010, lng: centerLng - 0.018 },
+                            { lat: centerLat + 0.015, lng: centerLng + 0.015 }
+                          ];
+
+                          if (pathfinderType === 'direct') {
+                            return (
+                              <MapPolyline
+                                key="pathfinder-direct"
+                                path={dCoords}
+                                color="#DC2626"
+                              />
+                            );
+                          } else {
+                            return (
+                              <MapPolyline
+                                key="pathfinder-detour"
+                                path={dtCoords}
+                                color="#06B6D4"
+                              />
+                            );
+                          }
+                        })()}
+
                         {/* Interactive popup detailed info window */}
                         {selectedUnit && (
                           <InfoWindow
@@ -2737,8 +4023,48 @@ export default function RealWorldMapBattle() {
                                 经纬: {selectedUnit.lat.toFixed(4)}°, {selectedUnit.lng.toFixed(4)}°
                               </p>
                               <div className="bg-stone-50 border rounded p-1 text-[10px] font-bold text-[#8C2F39]">
-                                曲部兵力 (Soldiers): {selectedUnit.size} 员
+                                曲部兵力: {selectedUnit.size} 员
                               </div>
+
+                              {/* Grain/Provisions Detailed Status */}
+                              <div className="bg-amber-50/60 border border-amber-200 rounded p-1.5 text-[9.5px] space-y-1">
+                                <div className="flex justify-between items-center">
+                                  <span className="font-serif font-black text-amber-900 flex items-center gap-1">
+                                    🌾 粮饷储蓄
+                                  </span>
+                                  <span className="font-bold font-mono text-amber-950">
+                                    {(selectedUnit.provisions !== undefined ? selectedUnit.provisions : 100)}%
+                                  </span>
+                                </div>
+                                <div className="w-full h-1.5 bg-stone-200 rounded overflow-hidden border border-amber-900/15">
+                                  <div 
+                                    className={`h-full ${
+                                      (selectedUnit.provisions !== undefined ? selectedUnit.provisions : 100) > 40 ? 'bg-amber-500' : 'bg-rose-650'
+                                    }`}
+                                    style={{ width: `${(selectedUnit.provisions !== undefined ? selectedUnit.provisions : 100)}%` }}
+                                  />
+                                </div>
+                                <span className="text-[7.5px] text-stone-500 block leading-tight font-sans">
+                                  {selectedUnit.id === 'u1' || selectedUnit.name.includes('大本营') 
+                                    ? '🏬 总营枢纽：自主粮秣。'
+                                    : (selectedUnit.provisions !== undefined ? selectedUnit.provisions : 100) > 0
+                                      ? '⛺ 外出前线：若离开大营，每回合将消耗粮草！'
+                                      : '⚠️ 绝粮大荒！每回合强制折损部属编制！'
+                                  }
+                                </span>
+                              </div>
+
+                              {selectedUnit.side === 'allied' && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    await handleReprovision(selectedUnit.id);
+                                  }}
+                                  className="w-full py-1 text-center bg-amber-600 hover:bg-amber-700 text-[#FAF8F5] text-[9.5px] font-serif font-black rounded cursor-pointer transition shadow flex items-center justify-center gap-1 border-none"
+                                >
+                                  🌾 漕运输粮粮秣 (-1500金)
+                                </button>
+                              )}
                               
                               <div className="grid grid-cols-2 gap-1.5 pt-1">
                                 <button
@@ -2762,7 +4088,7 @@ export default function RealWorldMapBattle() {
                                   }}
                                   className="py-1 text-center bg-amber-900 text-white hover:bg-amber-950 text-[9px] font-serif font-black rounded cursor-pointer transition shadow"
                                 >
-                                  🚩 增兵 (Recruit)
+                                  🚩 增兵
                                 </button>
 
                                 <button
@@ -2773,7 +4099,7 @@ export default function RealWorldMapBattle() {
                                   }}
                                   className="py-1 text-center bg-emerald-800 text-white hover:bg-emerald-950 text-[9px] font-serif font-black rounded cursor-pointer transition shadow animate-pulse"
                                 >
-                                  📋 行军 (March)
+                                  📋 行军
                                 </button>
                               </div>
 
@@ -2797,7 +4123,7 @@ export default function RealWorldMapBattle() {
                                 }}
                                 className="w-full py-1 text-center bg-rose-950 hover:bg-rose-900 text-rose-200 text-[8.5px] font-serif font-bold rounded cursor-pointer transition shadow"
                               >
-                                ❌ 鸣金归田 (Disband Forces)
+                                ❌ 鸣金归田
                               </button>
                             </div>
                           </InfoWindow>
@@ -2993,7 +4319,7 @@ export default function RealWorldMapBattle() {
                     
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <label className="text-[9.5px] text-stone-600 font-bold font-serif block mb-1">营盘/部曲称号 (Name)</label>
+                        <label className="text-[9.5px] text-stone-600 font-bold font-serif block mb-1">营盘/部曲称号</label>
                         <input
                           type="text"
                           value={newUnitName}
@@ -3002,7 +4328,7 @@ export default function RealWorldMapBattle() {
                         />
                       </div>
                       <div>
-                        <label className="text-[9.5px] text-stone-600 font-bold font-serif block mb-1">编制精兵数 (Soldiers)</label>
+                        <label className="text-[9.5px] text-stone-600 font-bold font-serif block mb-1">编制精兵数</label>
                         <input
                           type="number"
                           step={100}
@@ -3017,7 +4343,7 @@ export default function RealWorldMapBattle() {
 
                     <div className="flex items-center justify-between text-xs pt-1">
                       <div className="flex items-center gap-3">
-                        <span className="text-[10px] text-stone-600 font-serif font-bold">阵营 (Faction):</span>
+                        <span className="text-[10px] text-stone-600 font-serif font-bold">阵营:</span>
                         <div className="flex items-center gap-2">
                           <label className="flex items-center gap-1 cursor-pointer">
                             <input
@@ -3055,7 +4381,7 @@ export default function RealWorldMapBattle() {
                           onClick={finalizeDeployment}
                           className="px-3 py-1 rounded bg-[#8C2F39] text-[#FAF8F5] text-[10px] font-black hover:bg-red-950 cursor-pointer shadow-sm transition"
                         >
-                          金鼓成军 (Deploy)
+                          金鼓成军
                         </button>
                       </div>
                     </div>
@@ -3096,11 +4422,49 @@ export default function RealWorldMapBattle() {
                     坐标: ({selectedUnit.lat.toFixed(3)}, {selectedUnit.lng.toFixed(3)})
                   </p>
                   
-                  <div className="bg-stone-100 p-1.5 rounded text-[10px] font-mono font-bold text-center text-[#8C2F39] mb-3">
-                    曲部编制数 (Soldiers): {selectedUnit.size} 员
+                  <div className="bg-stone-100 p-1.5 rounded text-[10px] font-mono font-bold text-center text-[#8C2F39] mb-2">
+                    曲部编制数: {selectedUnit.size} 员
+                  </div>
+
+                  {/* Ink Mode / watercolor provisions display block */}
+                  <div className="bg-amber-50 border border-amber-900/25 rounded p-1.5 text-[9.5px] space-y-1 mb-3">
+                    <div className="flex justify-between items-center">
+                      <span className="font-serif font-bold text-amber-900 flex items-center gap-1">
+                        🌾 粮草储备
+                      </span>
+                      <span className="font-bold text-[#1A1A1A] font-mono">
+                        {(selectedUnit.provisions !== undefined ? selectedUnit.provisions : 100)}%
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-stone-200 rounded overflow-hidden">
+                      <div 
+                        className={`h-full ${
+                          (selectedUnit.provisions !== undefined ? selectedUnit.provisions : 100) > 40 ? 'bg-amber-600' : 'bg-red-650 animate-pulse'
+                        }`}
+                        style={{ width: `${(selectedUnit.provisions !== undefined ? selectedUnit.provisions : 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-[7.5px] text-stone-500 font-sans leading-none block">
+                      {selectedUnit.id === 'u1' || selectedUnit.name.includes('大本营') 
+                        ? '🏬 留守总营：自主供给。'
+                        : '⛺ 外出前线：若远离大营将消耗粮。'
+                      }
+                    </span>
                   </div>
 
                   <div className="space-y-1.5">
+                    {selectedUnit.side === 'allied' && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await handleReprovision(selectedUnit.id);
+                        }}
+                        className="w-full py-1 text-center bg-amber-600 hover:bg-amber-700 text-white text-[9.5px] font-serif font-black rounded cursor-pointer transition shadow flex items-center justify-center gap-1 border-none"
+                      >
+                        🌾 漕运辎重输粮 (-1500金)
+                      </button>
+                    )}
+
                     <div className="grid grid-cols-2 gap-1.5">
                       <button
                         type="button"
@@ -3158,7 +4522,7 @@ export default function RealWorldMapBattle() {
                       }}
                       className="w-full py-1 text-center bg-rose-950 hover:bg-rose-900 text-rose-200 text-[8.5px] font-serif font-bold rounded cursor-pointer transition shadow border border-rose-950"
                     >
-                      ❌ 鸣金归田 (Disband Forces)
+                      ❌ 鸣金归田
                     </button>
                   </div>
                 </motion.div>
@@ -3261,7 +4625,7 @@ export default function RealWorldMapBattle() {
                         <span className={`text-[8.5px] font-sans font-bold tracking-widest uppercase flex items-center gap-1 ${
                           isAlliedAttack ? 'text-emerald-700' : 'text-[#8C2F39]'
                         }`}>
-                          {isAlliedAttack ? '⚔️ 攻势告捷 (ALLIED ENGAGE)' : '🛡️ 坚防遇袭 (HOSTILE STRUCK)'}
+                          {isAlliedAttack ? '⚔️ 攻势告捷' : '🛡️ 坚防遇袭'}
                         </span>
                         <div className="flex items-center gap-1.5 pointer-events-auto">
                           <span className="text-[7.5px] font-mono text-stone-400">{toast.timestamp}</span>
@@ -3315,6 +4679,7 @@ export default function RealWorldMapBattle() {
             </div>
 
             {/* Meteorological Controls and Status Indicators (Nine Lands Strategy) */}
+            {showHudOverlays && (
             <div className="absolute top-[68px] right-3 z-40 bg-[#FAF8F5]/90 hover:bg-[#FAF8F5]/96 border-2 border-stone-800 p-2.5 rounded shadow-lg text-[10px] font-serif w-44 tracking-tight leading-normal" id="weather-controller-badge">
               
               {/* Interactive Tooltip Popover (Sun Tzu's Weather Logic) */}
@@ -3353,7 +4718,7 @@ export default function RealWorldMapBattle() {
                       {/* Clear */}
                       <div className="pt-1.5 border-none">
                         <div className="flex justify-between font-bold text-stone-900">
-                          <span>☀️ 晴空万里 (Clear)</span>
+                          <span>☀️ 晴空万里</span>
                           <span className="text-emerald-700">常规状态</span>
                         </div>
                         <div className="flex justify-between text-[9px] font-sans text-stone-600 mt-0.5">
@@ -3365,7 +4730,7 @@ export default function RealWorldMapBattle() {
                       {/* Fog */}
                       <div className="pt-1.5">
                         <div className="flex justify-between font-bold text-[#8C2F39]">
-                          <span>🌫️ 十里云雾 (Fog)</span>
+                          <span>🌫️ 十里云雾</span>
                           <span>[衢地失瞻]</span>
                         </div>
                         <div className="flex justify-between text-[9px] font-sans text-stone-600 mt-0.5">
@@ -3380,7 +4745,7 @@ export default function RealWorldMapBattle() {
                       {/* Rain */}
                       <div className="pt-1.5">
                         <div className="flex justify-between font-bold text-blue-900">
-                          <span>🌧️ 骤雨泥泞 (Rain)</span>
+                          <span>🌧️ 骤雨泥泞</span>
                           <span>[圮地沦涂]</span>
                         </div>
                         <div className="flex justify-between text-[9px] font-sans text-stone-600 mt-0.5">
@@ -3395,7 +4760,7 @@ export default function RealWorldMapBattle() {
                       {/* Wind */}
                       <div className="pt-1.5">
                         <div className="flex justify-between font-bold text-amber-700">
-                          <span>💨 狂风沙暴 (Wind)</span>
+                          <span>💨 狂风沙暴</span>
                           <span>[死地借势]</span>
                         </div>
                         <div className="flex justify-between text-[9px] font-sans text-stone-600 mt-0.5">
@@ -3461,7 +4826,7 @@ export default function RealWorldMapBattle() {
               <div className="grid grid-cols-4 gap-1 mb-1.5" id="weather-modes-grid">
                 <button
                   type="button"
-                  title="晴空万里 (Clear)"
+                  title="晴空万里"
                   onClick={() => {
                     setWeather('none');
                     addRoomLog("🌤️ 【执掌乾坤】推演官拨云见日，战场万象晴空万里，恢复常态侦视与机速。");
@@ -3472,7 +4837,7 @@ export default function RealWorldMapBattle() {
                 </button>
                 <button
                   type="button"
-                  title="大雾弥漫 (Fog)"
+                  title="大雾弥漫"
                   onClick={() => {
                     setWeather('fog');
                     addRoomLog("🌫️ 【执掌乾坤】推演官呼换十里大雾遮蔽，重山锁江，敌我军士视野受挫！");
@@ -3483,7 +4848,7 @@ export default function RealWorldMapBattle() {
                 </button>
                 <button
                   type="button"
-                  title="骤雨滂沱 (Rain)"
+                  title="骤雨滂沱"
                   onClick={() => {
                     setWeather('rain');
                     addRoomLog("🌧️ 【执掌乾坤】推演官召集暴雨浸透泥途，行同圮地，车马步军迟滞难行！");
@@ -3494,7 +4859,7 @@ export default function RealWorldMapBattle() {
                 </button>
                 <button
                   type="button"
-                  title="狂风沙暴 (Wind)"
+                  title="狂风沙暴"
                   onClick={() => {
                     setWeather('wind');
                     addRoomLog("💨 【执掌乾坤】推演官借死地烈风，飞沙卷云，部曲执旗借风快行！");
@@ -3518,22 +4883,23 @@ export default function RealWorldMapBattle() {
                   let zhName = '晴空万里';
                   let tip = '天候平稳，侦察与机动恢复常态。';
                   if (nextW === 'fog') {
-                    zhName = '大雾弥漫 (Fog)';
+                    zhName = '大雾弥漫';
                     tip = '🌫️ 「衢地失瞻」：浓雾锁山，敌我视界重挫 -50%，行军迟滞 -25%。';
                   } else if (nextW === 'rain') {
-                    zhName = '雨雪泥泞 (Rain)';
+                    zhName = '雨雪泥泞';
                     tip = '🌧️ 「暴雨圮地」：连天骤雨浸湿旷野，泥泞没膝。行军速度折半 -50%，视界重创 -20%。';
                   } else if (nextW === 'wind') {
-                    zhName = '沙尘狂风 (Wind)';
+                    zhName = '沙尘狂风';
                     tip = '💨 「死地狂风」：暴风呼啸，风助火势与军威。行军速增 +40%，微阻视界 -10%。';
                   }
                   addRoomLog(`🎲 【天命随机】气机乱涌，天演沙盘阵转「${zhName}」。${tip}`);
                 }}
                 className="w-full py-1 text-center bg-stone-800 hover:bg-black text-[8.5px] font-sans font-bold text-[#faf8f5] rounded cursor-pointer transition shadow border border-black hover:shadow-inner"
               >
-                🎲 随机天候更迭 (Trigger Random)
+                🎲 随机天候更迭
               </button>
             </div>
+            )}
 
             {/* Weather Overlay Style keyframes */}
             <style>{`
@@ -3618,6 +4984,255 @@ export default function RealWorldMapBattle() {
                 />
               </div>
             )}
+
+            {/* Advanced 3D/4D GIS Sandtable HUD Tactical Control Panel Overlay (Phase 1) */}
+            {showHudOverlays && (
+            <div 
+              className="absolute bottom-3 left-3 z-40 bg-stone-950/85 backdrop-blur-md border border-stone-700/50 p-2.5 rounded-lg shadow-2xl text-stone-100 w-[275px] pointer-events-auto select-none"
+              id="3d-gis-hud-panel"
+            >
+              <div className="flex items-center justify-between border-b border-stone-800 pb-1.5 mb-2">
+                <div className="flex items-center gap-1.5">
+                  <Compass className={`w-3.5 h-3.5 text-amber-500 ${autoOrbit ? 'animate-spin-slow' : ''}`} />
+                  <span className="font-serif font-black text-[10.5px] tracking-wide text-amber-500">3D/4D 战区天演控制台</span>
+                </div>
+                <span className="font-mono text-[8.5px] bg-[#8C2F39] text-stone-100 rounded px-1 text-center font-bold">天演版 v1.2</span>
+              </div>
+
+              {/* Angle status sliders & displays */}
+              <div className="space-y-2">
+                {/* 1. Map Tilt Slider */}
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center text-[9px] font-mono text-stone-400">
+                    <span>📐 仰角偏斜</span>
+                    <span className="text-amber-500 font-bold">{mapTilt}°</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="75"
+                    step="5"
+                    value={mapTilt}
+                    onChange={(e) => {
+                      setMapTilt(Number(e.target.value));
+                      if (autoOrbit && Number(e.target.value) === 0) setAutoOrbit(false);
+                    }}
+                    className="w-full h-1 bg-stone-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                  />
+                  {/* Tilt Presets */}
+                  <div className="flex justify-between gap-1 text-[8px] font-medium pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setMapTilt(0)}
+                      className={`flex-1 py-0.5 rounded cursor-pointer transition-colors ${mapTilt === 0 ? 'bg-amber-500 text-stone-950 font-black' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'}`}
+                    >
+                      2D 平面
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMapTilt(30)}
+                      className={`flex-1 py-0.5 rounded cursor-pointer transition-colors ${mapTilt === 30 ? 'bg-amber-500 text-stone-950 font-black' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'}`}
+                    >
+                      30° 斜俯
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMapTilt(50)}
+                      className={`flex-1 py-0.5 rounded cursor-pointer transition-colors ${mapTilt === 50 ? 'bg-amber-500 text-stone-950 font-black' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'}`}
+                    >
+                      50° 鸟瞰
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMapTilt(70)}
+                      className={`flex-1 py-0.5 rounded cursor-pointer transition-colors ${mapTilt === 70 ? 'bg-amber-500 text-stone-950 font-black' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'}`}
+                    >
+                      70° 极限
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Map Heading/Orientation Slider */}
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center text-[9px] font-mono text-stone-400">
+                    <span>🧭 战局向角</span>
+                    <span className="text-amber-500 font-bold">{mapHeading}°</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="-180"
+                    max="180"
+                    step="5"
+                    value={mapHeading}
+                    onChange={(e) => setMapHeading(Number(e.target.value))}
+                    disabled={autoOrbit}
+                    className="w-full h-1 bg-stone-800 rounded-lg appearance-none cursor-pointer accent-amber-500 disabled:opacity-40"
+                  />
+                  {/* Heading presets */}
+                  <div className="flex justify-between gap-1 text-[8px] font-medium pt-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setMapHeading(0)}
+                      className={`flex-1 py-0.5 rounded cursor-pointer transition-colors ${mapHeading === 0 ? 'bg-amber-500 text-stone-950 font-black' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'}`}
+                    >
+                      北 (0°)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMapHeading(90)}
+                      className={`flex-1 py-0.5 rounded cursor-pointer transition-colors ${mapHeading === 90 ? 'bg-amber-500 text-stone-950 font-black' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'}`}
+                    >
+                      东 (90°)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMapHeading(180)}
+                      className={`flex-1 py-0.5 rounded cursor-pointer transition-colors ${mapHeading === 180 ? 'bg-amber-500 text-stone-950 font-black' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'}`}
+                    >
+                      南 (180°)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMapHeading(-90)}
+                      className={`flex-1 py-0.5 rounded cursor-pointer transition-colors ${mapHeading === -90 ? 'bg-amber-500 text-stone-300 hover:bg-stone-700' : 'bg-stone-800 text-stone-300 hover:bg-stone-700'}`}
+                    >
+                      西 (270°)
+                    </button>
+                  </div>
+                </div>
+
+                {/* 3. Automatic Rotation Satellite Panning & Topological Mesh Controls */}
+                <div className="grid grid-cols-2 gap-1.5 pt-1 border-t border-stone-800 text-[8.5px] font-medium">
+                  {/* Auto-Orbit Rotation */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !autoOrbit;
+                      setAutoOrbit(next);
+                      if (next && mapTilt === 0) setMapTilt(45); // Give a default tilt for orbit view
+                      addRoomLog(`🛰️ 已经${next ? '【开启】' : '【关闭】'}全自动卫星轨道自转环伺勘测功能！`);
+                    }}
+                    className={`py-1 rounded px-1.5 flex items-center justify-center gap-1 cursor-pointer transition-all ${
+                      autoOrbit
+                        ? 'bg-amber-500 text-stone-950 font-black shadow-lg shadow-amber-500/25 animate-pulse'
+                        : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
+                    }`}
+                  >
+                    <span>🛰️ 轨道自转</span>
+                    <span className="font-mono text-[7px]">[{autoOrbit ? "运行" : "停止"}]</span>
+                  </button>
+
+                  {/* Elevation Line Toggle */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const next = !gisAltitudeMesh;
+                      setGisAltitudeMesh(next);
+                      addRoomLog(`🗺️ 已经${next ? '【启用了】' : '【关闭了'}沙盘数字高程等高探测格网线。`);
+                    }}
+                    className={`py-1 rounded px-1.5 flex items-center justify-center gap-1 cursor-pointer transition-all ${
+                      gisAltitudeMesh
+                        ? 'bg-emerald-600 text-stone-100 font-extrabold shadow-lg shadow-emerald-600/25'
+                        : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
+                    }`}
+                  >
+                    <span>📈 等高格网</span>
+                    <span className="font-mono text-[7px]">[{gisAltitudeMesh ? "开启" : "关闭"}]</span>
+                  </button>
+                </div>
+
+                {/* Phase 2: 4D Temporal Sandtable Controls */}
+                <div className="border-t border-stone-800 pt-2.5 mt-2.5 space-y-2">
+                  <div className="flex items-center justify-between text-[9px] font-mono text-stone-400">
+                    <span>⏳ 4D 时空流速</span>
+                    <span className="text-amber-500 font-bold">{timeSpeed} 倍速</span>
+                  </div>
+                  <div className="flex gap-1 text-[8px] font-bold">
+                    {[1, 2, 5].map((speed) => (
+                      <button
+                        key={speed}
+                        type="button"
+                        onClick={() => {
+                          setTimeSpeed(speed);
+                          addRoomLog(`⏳ 调整 4D 战局推演流速为 【${speed}】 倍频。`);
+                        }}
+                        className={`flex-1 py-1 rounded cursor-pointer transition-all ${
+                          timeSpeed === speed
+                            ? 'bg-amber-500 text-stone-950 font-extrabold shadow-sm'
+                            : 'bg-stone-800 hover:bg-stone-700 text-stone-300'
+                        }`}
+                      >
+                        {speed === 1 ? '一' : speed === 2 ? '贰' : speed === 5 ? '伍' : speed}速
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Active Shichen indicator */}
+                  <div className="bg-stone-900 border border-stone-800/80 rounded p-1.5 flex items-center justify-between text-[9.5px]">
+                    <div className="space-y-0.5">
+                      <span className="text-stone-500 block text-[7.5px] font-mono uppercase tracking-tighter">天演纪时 / 太阳光射</span>
+                      <span className="font-serif font-black text-amber-500 flex items-center gap-1">
+                        🪐 {SHICHENS[displayedShichenIndex].name}
+                      </span>
+                    </div>
+                    <div className="text-right text-[8px] font-mono text-stone-400">
+                      <div>{SHICHENS[displayedShichenIndex].period}</div>
+                      <div className="font-bold uppercase tracking-widest text-[7px] mt-0.5" style={{ color: SHICHENS[displayedShichenIndex].color }}>
+                        {displayedShichenIndex >= 9 || displayedShichenIndex <= 2 ? "🌙 幽夜" : "☀️ 白昼"}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Chronological State Travel Slider */}
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-center text-[9px] font-mono text-stone-400">
+                      <span>🕰️ 战局时空回溯</span>
+                      <span className={`${timeTravelIndex >= 0 ? 'text-cyan-400 font-extrabold animate-pulse' : 'text-[#8C2F39]'} font-bold`}>
+                        {timeTravelIndex >= 0 ? `轴线 #${timeTravelIndex + 1}` : '🔴 实时'}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="-1"
+                      max={historyStack.length - 1}
+                      step={1}
+                      value={timeTravelIndex}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setTimeTravelIndex(val);
+                        if (val >= 0) {
+                          setIsSimulating(false); // pause real-time simulation on touch-back!
+                        }
+                      }}
+                      disabled={historyStack.length === 0}
+                      className="w-full h-1.5 bg-stone-800 rounded-lg appearance-none cursor-pointer accent-cyan-500 disabled:opacity-45"
+                    />
+                    <div className="flex justify-between text-[7.5px] font-mono text-stone-500 pt-0.5 tracking-tighter">
+                      <span>初始 (0 刻)</span>
+                      <span className="italic text-[7px]" style={{ color: historyStack.length > 0 ? '#aaa' : '#555' }}>
+                        {historyStack.length > 0 ? (timeTravelIndex >= 0 ? '⏮ 已锁定历史状态' : '滑动刻度回溯记录') : '暂无演兵历史'}
+                      </span>
+                      <span>当前 (共 {historyStack.length} 局)</span>
+                    </div>
+                  </div>
+
+                  {/* Dynamic travel control actions */}
+                  {timeTravelIndex >= 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTimeTravelIndex(-1);
+                        addRoomLog(`🔴 已经恢复到战局最新实时时空节点。`);
+                      }}
+                      className="w-full text-center py-1 mt-1 bg-cyan-500 hover:bg-cyan-400 text-stone-950 font-serif font-black text-[9px] rounded shadow-md transition-all active:scale-[0.98] cursor-pointer"
+                    >
+                      🔄 归位并恢复实时推演 (Reset to Live)
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+            )}
           </div>
 
           {/* Interactive Battle Simulator Panel (Tactics Arena Controller) */}
@@ -3626,7 +5241,7 @@ export default function RealWorldMapBattle() {
               <div>
                 <h4 className="font-serif font-black text-sm text-[#1A1A1A] flex items-center gap-1.5">
                   <Swords className="w-4 h-4 text-[#8C2F39]" />
-                  天演冲突推演盘 (Battle Clash Simulator)
+                  天演冲突推演盘
                 </h4>
                 <p className="text-[10px] text-stone-500 font-serif leading-relaxed mt-0.5">
                   在当前选定地形天命下，指派特质主帅进行多兵团全地形仿真冲突推演。
@@ -3648,7 +5263,7 @@ export default function RealWorldMapBattle() {
                   id="fow-toggle-btn"
                 >
                   <ShieldAlert className="w-3.5 h-3.5 text-[#8C2F39]" />
-                  <span>{fogOfWarEnabled ? '🛡️ 迷雾开启 (Fog ON)' : '👁️ 迷雾彻见 (Fog OFF)'}</span>
+                  <span>{fogOfWarEnabled ? '🛡️ 迷雾开启' : '👁️ 迷雾彻见'}</span>
                 </button>
 
                 <button
@@ -3681,7 +5296,7 @@ export default function RealWorldMapBattle() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4" id="clash-config-grid">
               <div className="space-y-1">
                 <label className="text-[10px] font-mono font-bold text-stone-500 uppercase block">
-                  👤 主帅任用 (Commanding General):
+                  👤 主帅任用:
                 </label>
                 <select
                   value={generalChoice}
@@ -3699,7 +5314,7 @@ export default function RealWorldMapBattle() {
               {/* Stance Option Controller Column */}
               <div className="space-y-1">
                 <label className="text-[10px] font-mono font-bold text-stone-500 uppercase block">
-                  🛡️ 我军阵型 (Allied Formation):
+                  🛡️ 我军阵型:
                 </label>
                 <div className="grid grid-cols-2 gap-1" id="formation-switch">
                   <button
@@ -3715,7 +5330,7 @@ export default function RealWorldMapBattle() {
                     }`}
                     title="Defensive Stance (Low Speed, High Defense)"
                   >
-                    🛡️ 坚防 (Def)
+                    🛡️ 坚防
                   </button>
                   <button
                     type="button"
@@ -3730,7 +5345,7 @@ export default function RealWorldMapBattle() {
                     }`}
                     title="Offensive Stance (High Speed, High Attack)"
                   >
-                    ⚔️ 强袭 (Off)
+                    ⚔️ 强袭
                   </button>
                 </div>
               </div>
@@ -3767,7 +5382,7 @@ export default function RealWorldMapBattle() {
             <div className="space-y-2">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-stone-800 pb-1.5">
                 <span className="text-[10px] font-mono text-stone-500 font-black block uppercase tracking-wide">
-                  📑 战场大本营推演塘流 (Real-time Battle Log)
+                  📑 战场大本营推演塘流
                 </span>
                 
                 {/* Log Classifiers Filter Tabs */}
@@ -3781,7 +5396,7 @@ export default function RealWorldMapBattle() {
                         : 'text-stone-400 hover:text-stone-200'
                     }`}
                   >
-                    全部 (All)
+                    全部
                   </button>
                   <button
                     type="button"
@@ -3793,7 +5408,7 @@ export default function RealWorldMapBattle() {
                     }`}
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
-                    我方 (Allied)
+                    我方
                   </button>
                   <button
                     type="button"
@@ -3805,7 +5420,7 @@ export default function RealWorldMapBattle() {
                     }`}
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span>
-                    敌营 (Hostile)
+                    敌营
                   </button>
                   <button
                     type="button"
@@ -3817,22 +5432,22 @@ export default function RealWorldMapBattle() {
                     }`}
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block"></span>
-                    战讯 (Alerts)
+                    战讯
                   </button>
                 </div>
               </div>
 
               <div className="w-full h-[120px] bg-stone-900 border border-black text-[#5AF] rounded p-2.5 font-mono text-[10px] overflow-y-auto space-y-1.5 scrollbar-thin scrollbar-thumb-stone-800 select-text" id="clash-logs-terminal">
-                {simLog.length === 0 ? (
+                {displayedSimLog.length === 0 ? (
                   <p className="text-stone-500 italic">⏳ 擂鼓静待，兵书下令即可开演冲突。</p>
                 ) : (
-                  simLog.filter(log => {
+                  displayedSimLog.filter(log => {
                     if (logFilter === 'all') return true;
                     return getLogType(log) === logFilter;
                   }).length === 0 ? (
                     <p className="text-stone-500 italic">⏳ 此类别暂无推演讯息。</p>
                   ) : (
-                    simLog
+                    displayedSimLog
                       .filter(log => {
                         if (logFilter === 'all') return true;
                         return getLogType(log) === logFilter;

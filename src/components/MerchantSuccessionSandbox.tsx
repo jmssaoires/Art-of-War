@@ -245,7 +245,7 @@ export default function MerchantSuccessionSandbox() {
                 <div className="text-xs font-serif font-black text-[#1A1A1A]">{currentLeader.name}</div>
                 <div className="grid grid-cols-2 gap-2 text-[9px] text-[#1A1A1A]/60 font-mono font-bold">
                   <div>名节声望: <strong className="text-[#8C2F39] font-bold">{currentLeader.attributes.prestige}</strong></div>
-                  <div>特权等级: <strong className="text-[#5A5A40] font-bold">{currentLeader.identity}</strong></div>
+                  <div>特权等级: <strong className="text-[#5A5A40] font-bold">{currentLeader.identity === 'MERCHANT' ? '商贾' : currentLeader.identity === 'SCHOLAR' ? '士大夫' : currentLeader.identity}</strong></div>
                 </div>
               </div>
 
@@ -266,7 +266,7 @@ export default function MerchantSuccessionSandbox() {
               {lineage.map((member, index) => (
                 <div key={index} className="text-[#1A1A1A]/90 flex justify-between items-center bg-white/80 p-1.5 rounded border border-[#1A1A1A]/10 shadow-xs">
                   <span className="font-serif">世代 {member.generation} 门人: <strong>{member.name}</strong></span>
-                  <span className="text-[9px] text-[#1A1A1A]/50 font-bold">{member.identity}</span>
+                  <span className="text-[9px] text-[#1A1A1A]/50 font-bold">{member.identity === 'MERCHANT' ? '商贾' : member.identity === 'SCHOLAR' ? '士大夫' : member.identity}</span>
                 </div>
               ))}
             </div>
