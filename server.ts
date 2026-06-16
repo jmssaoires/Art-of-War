@@ -720,6 +720,1021 @@ function executePriceStabilize(eco: ImperialEconomy, sellRate: number) {
     res.json(chosenEvent);
   });
 
+  app.post("/api/sandbox/logistics", async (req, res) => {
+    const { intentInput, generalName, generalTraits, targetNodeName, activeEdgesInfo } = req.body;
+    
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({ 
+        narrative: "【本地演算模式】轻骑夜渡，劫营成功，断其粮道。",
+        edgesToCut: ["e4"],
+        isFallback: true
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `
+你是一个硬核策略游戏的AI裁判。
+玩家当前的输入指令为：“${intentInput}”
+执行将领：${generalName}（性格标签：${generalTraits}）
+目标地点：${targetNodeName}
+
+请你根据玩家的意图和将领性格，判断这个行动是否会导致任何补给线（粮道）被切断或恢复。
+当前连通的粮道有：${activeEdgesInfo}
+
+请返回一个严格的 JSON，格式如下：
+{
+  "narrative": "一段20字左右的战报文本，描述将领执行指令的结果（考虑其性格偏差）。",
+  "edgesToCut": ["e1", "e2", ...] // 如果指令导致某条边断裂，列出边的ID；否则为空。 e1(大本营-洛阳), e2(洛阳-虎牢关), e3(大本营-许昌), e4(许昌-虎牢关)。
+}
+`;
+
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini logistics eval failure: ", error);
+      res.status(500).json({ error: "系统AI演算受到天外陨石干扰，请重试。" });
+    }
+  });
+
+  app.post("/api/sandbox/deception", async (req, res) => {
+    const { trueStateDesc, deceptionInput } = req.body;
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({
+        estimated_troops: "似有伏兵十万",
+        scout_report: "【本地沙盘探营】满城营火如星，战马轻嘶不绝，恐有重大埋伏！",
+        confidence: 45,
+        ai_analysis: "（无API Key备用推演）防守方依靠虚设营火，导致斥候探知数据被严重扭曲放大。",
+        isFallback: true
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `
+你是一个硬核策略游戏的AI裁判（环境引擎与斥候视界）。
+
+【上帝视角-真实军情】：${trueStateDesc}
+【守将（玩家）实施的诡道/伪装指令】：${deceptionInput}
+
+请你根据真实军情和玩家的伪装手段，演算出敌方斥候（探子）前来侦查时，最终“看”到并汇报的情报。
+注意：信息战是核心。高明的伪装会让敌方得出完全错误的兵力估算和战局判断；拙劣或不合常理的伪装可能会露出破绽被识破。
+
+请返回严格的 JSON 字符串，格式如下：
+{
+  "estimated_troops": "预估兵力数值（如'约十万众'或'似不足三千'）",
+  "scout_report": "探子的勘察汇报（带有观察细节碎片和主观猜测，偏复古军争语气）",
+  "confidence": 85, // 探子对该情报的自信度 (0-100数值)
+  "ai_analysis": "AI裁判的底层结算判定：玩家的伪装动作如何影响了斥候的感知，成功或失败的判定理由。"
+}
+`;
+
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini deception eval failure: ", error);
+      res.status(500).json({ error: "系统AI演算受到天外陨石干扰，请重试。" });
+    }
+  });
+
+  app.post("/api/sandbox/aristocrat", async (req, res) => {
+    const { families, actionInput } = req.body;
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({
+        narrative: "【本地沙盘演练】门阀对您的政令阳奉阴违，暗中兼并土地。",
+        familyUpdates: [
+           { id: 'wang', influenceDelta: 5, loyaltyDelta: -10 },
+           { id: 'cui', influenceDelta: 0, loyaltyDelta: 5 }
+        ],
+        ai_analysis: "（无API Key备用推演）缺乏铁腕手段，世家势力反而坐大。",
+        isFallback: true
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `
+你是一个硬核策略游戏的AI裁判。现在进行【世家门阀权力生态】演算。
+
+当前各大门阀的状态：
+${families.map((f: any) => `- ${f.name}: 影响力 ${f.influence}, 忠诚度 ${f.loyalty}, 核心诉求: ${f.trait}`).join('\n')}
+
+皇帝（玩家）下达的政治宏观指令或阴谋：“${actionInput}”
+
+请你根据皇权与世家的博弈逻辑（如九品中正制、土地兼并、政治联姻、党锢之祸等历史规律）和各家族的性格，推演这一指令的后果。
+
+请返回严格的 JSON 字符串，格式如下：
+{
+  "narrative": "一段30字左右的朝堂风云描述，说明指令造成的直接后果。",
+  "familyUpdates": [
+    { "id": "门阀的id(wang / cui / yuan)", "influenceDelta": 影响力的变化值(整数，如 -10 或 15), "loyaltyDelta": 忠诚度的变化值(整数) }
+  ],
+  "ai_analysis": "AI裁判底层的政治逻辑分析：为什么这些家族会有这样的反应？皇帝的权力基础是否被动摇？"
+}
+`;
+
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini aristocrat eval failure: ", error);
+      res.status(500).json({ error: "系统AI演算受到干扰，请重试。" });
+    }
+  });
+
+  app.post("/api/sandbox/reform", async (req, res) => {
+    const { strata, stateCapacity, actionInput } = req.body;
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({
+        narrative: "【本地沙盘演练】变法诏书遭到群臣强烈抵制，政令未出中书省。",
+        stateCapacityDelta: -5,
+        strataUpdates: [],
+        ai_analysis: "（无API Key备用推演）保守派阻力过大，变法被搁置。",
+        isFallback: true
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `
+你是一个硬核策略游戏的AI裁判。现在进行【方向二：变法改革与新政反噬】演算。
+
+当前国家综合国力：${stateCapacity}/100
+当前社会各阶层状态：
+${strata.map((s: any) => `- ${s.name}: 支持度 ${s.support}/100, 财富/经济实力 ${s.wealth}/100, 痛点: ${s.description}`).join('\n')}
+
+君长（玩家）下达的新政改革指令：“${actionInput}”
+
+请你根据政治经济学及中国古代变法规律（如王安石、商鞅变法等），推演这次改革对各阶层的核心利益冲击，以及变法成功或失败后对国力的影响。
+
+请返回严格的 JSON 字符串，格式如下：
+{
+  "narrative": "一段30字左右的新政战报，描述变法在民间的受众反应或遭遇的阻碍。",
+  "stateCapacityDelta": 国力变化值(整数，-20 到 30之间),
+  "strataUpdates": [
+    { "id": "阶层的id", "supportDelta": 支持度的变化值(整数), "wealthDelta": 财富实力的变化值(整数) }
+  ],
+  "ai_analysis": "AI裁判的底层经济与政治分析：哪一个阶层遭到了剥夺？社会财富和国家能力的重分配规律是什么？"
+}
+`;
+
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini reform eval failure: ", error);
+      res.status(500).json({ error: "系统AI演算受到干扰，请重试。" });
+    }
+  });
+
+  app.post("/api/sandbox/succession", async (req, res) => {
+    const { princes, actionInput } = req.body;
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({
+        narrative: "【本地沙盘演练】密旨被司礼监掌印太监暗中截留。",
+        princeUpdates: [],
+        ai_analysis: "（无API Key备用推演）后宫暗流涌动，夺嫡风波未决。",
+        isFallback: true
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `
+你是一个硬核策略游戏的AI裁判。现在进行【方向三：后宫干政与夺嫡之局】演算。
+
+当前九子夺嫡的皇子状态：
+${princes.map((p: any) => `- ${p.name} (${p.title}): 存活状态 ${p.status}, 夺嫡势力 ${p.power}/100, 忠诚畏惧心 ${p.loyalty}/100, 派系背景: ${p.faction}, 性格: ${p.character}`).join('\n')}
+
+老皇帝（玩家）的幕后制衡动作/遗诏：“${actionInput}”
+
+请你借鉴“九子夺嫡”等历史规律，生成结果。你要裁定皇子们是恐惧臣服，还是趁机发动“玄武门之变”、“沙丘之变”等。如果某个皇子被逼到绝路，他可能会造反覆灭或被杀害。
+
+请返回严格的 JSON 字符串，格式如下：
+{
+  "narrative": "一段30多字的《起居注》风格战报，描绘最惊险的一幕宫变或暗杀。",
+  "princeUpdates": [
+    { "id": "皇子id", "powerDelta": 势力变化值, "loyaltyDelta": 忠诚变化值, "statusChange": "ALIVE", "IMPRISONED" 或 "DEAD" (若不改变状态可省略该字段) }
+  ],
+  "ai_analysis": "AI裁判的权力博弈分析：借刀杀人是否成功？皇权制衡的残酷逻辑是什么？"
+}
+`;
+
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini succession eval failure: ", error);
+      res.status(500).json({ error: "系统AI演算受到干扰，请重试。" });
+    }
+  });
+
+  app.post("/api/sandbox/tributary", async (req, res) => {
+    const { vassals, nationalPrestige, actionInput } = req.body;
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({
+        narrative: "【本地沙盘演练】使臣队伍在边境遭遇沙尘暴，未能传达国书。",
+        nationalPrestigeDelta: -2,
+        vassalUpdates: [],
+        ai_analysis: "（无API Key备用推演）外交受阻，藩国不为所动。",
+        isFallback: true
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `
+你是一个硬核策略游戏的AI裁判。现在进行【方向四：羁縻朝贡与天下体系】演算。
+
+当前天朝大国威望（霸权值）：${nationalPrestige}/100
+边疆藩国状态：
+${vassals.map((v: any) => `- ${v.name}: 文化 ${v.culture}, 状态 ${v.status}, 向化忠诚度 ${v.loyalty}/100, 常备军力 ${v.militaryPower}/100, 财富 ${v.wealth}/100`).join('\n')}
+
+中原王朝（玩家）下达的外交/军事国策：“${actionInput}”
+
+请你借鉴中原王朝与周边番邦（和亲、互市、朝贡、战争）的历史规律（如汉匈百年战争），推演这次国策的后果。
+- 若用兵频繁，虽能建立威慑降伏敌军，但可能激起更深敌意。
+- 若一味妥协，可能被视为软弱，导致叛乱。
+
+请返回严格的 JSON 字符串，格式如下：
+{
+  "narrative": "一段30字左右的《理藩院出巡报告》或者《边关军书》，描述该番邦对天朝决策的最终反应及边疆局势。",
+  "nationalPrestigeDelta": 天朝国威的变化值(整数，-20 到 30之间),
+  "vassalUpdates": [
+    { "id": "番邦id", "loyaltyDelta": 忠诚变化值(整数), "militaryPowerDelta": 军力变化值, "wealthDelta": 财富变化值, "statusChange": "OBEDIENT", "REBELLIOUS", "INDEPENDENT", 或 "HOSTILE" }
+  ],
+  "ai_analysis": "AI裁判的天下霸权分析：和亲、互市或武力震慑起了什么作用？藩部为何顺从或为什么背叛？"
+}
+`;
+
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini tributary eval failure: ", error);
+      res.status(500).json({ error: "系统AI演算受到干扰，请重试。" });
+    }
+  });
+
+  app.post("/api/sandbox/ideology", async (req, res) => {
+    const { schools, nationalStability, actionInput } = req.body;
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({
+        narrative: "【本地沙盘演练】思想禁锢令未能下达，民间私学依旧昌盛。",
+        stabilityDelta: -5,
+        schoolUpdates: [],
+        ai_analysis: "（无API Key备用推演）文网疏漏，百家暗流涌动。",
+        isFallback: true
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `
+你是一个硬核策略游戏的AI裁判。现在进行【方向五：诸子百家与教派控制】演算。
+
+当前国家凝结力（社会安定）：${nationalStability}/100
+帝国底层社会思想状态：
+${schools.map((s: any) => `- ${s.name}: 影响力 ${s.influence}/100, 极端与排他性（极化率） ${s.radicalness}/100, 受众: ${s.followers}`).join('\n')}
+
+皇帝（玩家）颁布的文化教敕/密旨：“${actionInput}”
+
+请你根据中国古代大一统思想控制的思想史规律（如罢黜百家、三武灭佛、文字狱等）推演：
+- 被扶植的思想会获得巨大影响力，但也可能变得排他、极端。
+- 被血腥镇压的思想可能会转入地下，变得更加极端并煽动造反（如弥勒教、白莲教），或者被彻底毁灭。
+- 过度思想高压会导致国家凝结力（安定）短期上升，但极化思想碰撞时安定会崩塌。
+
+请返回严格的 JSON 字符串，格式如下：
+{
+  "narrative": "一段30字左右的《礼部奏疏》或《锦衣卫密报》，描述对思想界或民间的冲击。",
+  "stabilityDelta": 国家凝结力变化值(整数，-25 到 25之间),
+  "schoolUpdates": [
+    { "id": "学派id", "influenceDelta": 影响力变化(整数), "radicalnessDelta": 极化率变化(整数) }
+  ],
+  "ai_analysis": "AI裁判的思想史分析：扶植或打压激起了什么样的社会潜流？极化率为何改变？"
+}
+`;
+
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini ideology eval failure: ", error);
+      res.status(500).json({ error: "系统AI演算受到干扰，请重试。" });
+    }
+  });
+
+  app.post("/api/sandbox/landmerge", async (req, res) => {
+    const { owners, refugees, actionInput } = req.body;
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({
+        narrative: "【本地沙盘演练】丈量土地的御史被地方豪强暗杀，政令不出京城。",
+        refugeeDelta: 5,
+        ownerUpdates: [],
+        ai_analysis: "（无API Key备用推演）地方豪绅暴力抗法，兼并继续加剧，流民增加。",
+        isFallback: true
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `
+你是一个硬核历史策略游戏的AI裁判。现在进行【方向六：土地兼并与流民大潮】演算。
+
+当前国家流民比例：${refugees}/100 
+（越接近100越容易爆发倾覆帝国的农民起义）
+当前帝国土地分配状况：
+${owners.map((o: any) => `- ${o.name}: 占有天下 ${o.landPercentage}% 的土地, 财富值 ${o.wealth}/100`).join('\n')}
+
+皇帝或首辅（玩家）推行的户籍与田亩政令：“${actionInput}”
+
+请你根据古代王朝土地兼并的经济学死结（如鱼鳞图册、摊丁入亩、均田制、井田制复古）推演：
+- 强硬清查世家大族的土地会激起豪强反叛或刺杀，但能夺回土地；若失败，反被隐匿更多。
+- 自耕农土地越少，破产沦为流民（refugees）的速度就越快。
+- 流民超过一定数值（如60）将形成饥民大军。
+
+请返回严格的 JSON 字符串，格式如下：
+{
+  "narrative": "一段30字左右的《户部黄册报告》或《各道御史急递》，描述政令推行后的土地与流民现状。",
+  "refugeeDelta": 流民比例变化值(整数，-30 到 30之间。若抑兼并成功，流民减少；若放任，流民增多),
+  "ownerUpdates": [
+    { "id": "阶层id", "landDelta": 土地比例变化值(整数), "wealthDelta": 财富变化值(整数) }
+  ],
+  "ai_analysis": "AI裁判的宏观经济学分析：政令是否成功打破了土地兼并的王朝周期率死结？流民为何增加/减少？"
+}
+`;
+
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini landmerge eval failure: ", error);
+      res.status(500).json({ error: "系统AI演算受到干扰，请重试。" });
+    }
+  });
+
+  app.post("/api/sandbox/secretpolice", async (req, res) => {
+    const { units, emperorPower, terrorLevel, actionInput } = req.body;
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({
+        narrative: "【本地沙盘演练】缇骑奉旨出京，却遭到法司集体阻挠，无功而返。",
+        emperorPowerDelta: -5,
+        terrorLevelDelta: +2,
+        unitUpdates: [],
+        ai_analysis: "（无API Key备用推演）未能建立有效的白色恐怖，皇权被文官集团压制。",
+        isFallback: true
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `
+你是一个硬核历史策略游戏的AI裁判。现在进行【方向七：酷吏缇骑与特务政治】演算。
+
+当前皇权集中度：${emperorPower}/100 （越高说明皇帝大权独揽）
+当前朝野恐怖指数：${terrorLevel}/100 （越高说明百官越不敢任事、明哲保身，国家机器效率怠速）
+
+帝国核心班底状态：
+${units.map((u: any) => `- ${u.name}: 忠诚度/畏惧度 ${u.loyalty}/100, 行政执行力 ${u.efficiency}/100`).join('\n')}
+
+皇帝（玩家）颁布的特务统治/整风诏令：“${actionInput}”
+
+请你根据中国古代特务统治、宦官专权及相权皇权之争（如武则天酷吏、明朝厂卫、雍正密折）推演：
+- 兴大狱和设立特务机关可以迅速提高皇权集中度（emperorPowerDelta为正），因为文官和武将不敢反抗（loyaltyDelta为正）。
+- 但恐怖指数（terrorLevelDelta）会飙升，导致文官“多做多错，宁可躺平”，从而降低执行力（efficiencyDelta为负）。
+- 牵连过广甚至可能逼反军方勋贵（loyalty大幅下降）。
+- 撤销特务、平反冤狱则能恢复执行力（efficiencyDelta为正），但皇权集中度可能下降。
+
+请返回严格的 JSON 字符串，格式如下：
+{
+  "narrative": "一段30字左右的《镇抚司密折》或《内阁奏报》，用阴暗残酷或如释重负的语气描述文武百官的反应。",
+  "emperorPowerDelta": 皇权集中度变化值(整数，-30 到 30之间),
+  "terrorLevelDelta": 恐怖指数变化值(整数，-30 到 30之间),
+  "unitUpdates": [
+    { "id": "单位id", "loyaltyDelta": 忠诚/畏惧变化值(整数), "efficiencyDelta": 执行力变化值(整数) }
+  ],
+  "ai_analysis": "AI裁判的帝王心术分析：皇帝的举措是否在效率与恐惧之间找到了平衡？是否遭遇了软抵抗（怠政）？"
+}
+`;
+
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini secretpolice eval failure: ", error);
+      res.status(500).json({ error: "系统AI演算受到干扰，请重试。" });
+    }
+  });
+
+  app.post("/api/sandbox/factionalism", async (req, res) => {
+    const { parties, courtEfficiency, emperorControl, actionInput } = req.body;
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({
+        narrative: "【本地沙盘演练】皇帝的调和被朝臣无视，两党在朝堂上大打出手，朝政几乎停摆。",
+        courtEfficiencyDelta: -10,
+        emperorControlDelta: -5,
+        partyUpdates: [],
+        ai_analysis: "（无API Key备用推演）党争失控，互喷口水使得国家机器空转。",
+        isFallback: true
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `
+你是一个硬核历史策略游戏的AI裁判。现在进行【方向八：科举取士与朋党之争】演算。
+
+当前朝廷行政效率：${courtEfficiency}/100 （越低说明党争越激烈，都在扯皮不做事）
+当前帝王制衡掌控力（权柄）：${emperorControl}/100 （越高说明皇帝成功挑拨拉一派打一派）
+
+当前朝堂朋党势力：
+${parties.map((p: any) => `- ${p.name}: 话语权 ${p.influence}/100, 贪腐结营 ${p.corruption}/100`).join('\n')}
+
+皇帝（玩家）的制衡或用人决策：“${actionInput}”
+
+请你根据古代王朝中后期的朋党之争（如牛李党争、明末东林党与阉党、清朝满汉之争）推演：
+- 如果皇帝拉一派打一派（偏袒或制造对立），可以提高帝王掌控度（emperorControlDelta为正），但会降低行政效率（courtEfficiencyDelta为负），因为失败一派会疯狂罢工和使绊子。
+- 如果一党独大（influence过高），皇权会受威胁（emperorControlDelta为负），该党贪腐度（corruption）会暴增。
+- 如果爆发残酷清洗（大兴党狱），话语权急剧改变，双方死伤惨重。
+
+请返回严格的 JSON 字符串，格式如下：
+{
+  "narrative": "一段30字左右的《内阁起居注》或《科道言官弹劾折》，用激烈的党争语言描述朝堂喷战或杀戮。",
+  "courtEfficiencyDelta": 朝局效率变化值(整数，-30 到 30之间),
+  "emperorControlDelta": 皇权制衡度变化值(整数，-30 到 30之间),
+  "partyUpdates": [
+    { "id": "党派id", "influenceDelta": 话语权变化值(整数), "corruptionDelta": 结营度变化值(整数) }
+  ],
+  "ai_analysis": "AI裁判的党争学分析：帝王的决策是否陷入了党争只问立场不问对错的死局？导致了什么政治后果？"
+}
+`;
+
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini factionalism eval failure: ", error);
+      res.status(500).json({ error: "系统AI演算受到干扰，请重试。" });
+    }
+  });
+
+  app.post("/api/sandbox/faminerelief", async (req, res) => {
+    const { regions, treasury, rebelRisk, actionInput } = req.body;
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({
+        narrative: "【本地沙盘演练】赈灾粮队在途中遭遇灾民哄抢，地方官员中饱私囊，赈济失败。",
+        treasuryDelta: -10,
+        rebelRiskDelta: +15,
+        regionUpdates: [],
+        ai_analysis: "（无API Key备用推演）未能建立有效的监察机制，贪腐导致赈灾变灾难。",
+        isFallback: true
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `
+你是一个硬核历史策略游戏的AI裁判。现在进行【方向九：漕运赈灾与常平仓】演算。
+
+当前户部存银：${treasury}/100 
+当前饥民暴动风险：${rebelRisk}/100
+
+受灾地区及官仓状态：
+${regions.map((r: any) => `- ${r.name}: 灾荒程度 ${r.disasterLevel}/100, 粮食储备 ${r.grainReserve}/100, 贪腐漂没率 ${r.corruption}%`).join('\n')}
+
+皇帝（玩家）颁布的赈灾与反贪手段：“${actionInput}”
+
+请你根据中国古代赈灾逻辑（如和珅赈灾掺沙子去伪存真、海瑞严刑峻法反贪、流民就食江南等）推演：
+- 拨款赈灾会消耗户部存银（treasuryDelta为负）。若用非常手段让大户捐粮，则可能不消耗。
+- 只有成功将粮食（grainReserve）运到灾区并且抑制贪腐（corruption），才能压制饥民造反风险（rebelRiskDelta为负）。
+- 赈济手段如果幼稚，赈灾粮会被地方豪强和贪官全部吞掉（corruption急剧上升，粮食被消耗但起义风险不减）。
+
+请返回严格的 JSON 字符串，格式如下：
+{
+  "narrative": "一段30字左右的《赈灾御史奏报》或《急递兵简报》，描述灾区流民的现状和贪官的应对。",
+  "treasuryDelta": 户部存银变化值(整数，-30 到 30之间),
+  "rebelRiskDelta": 饥民造反风险变化值(整数，-30 到 30之间),
+  "regionUpdates": [
+    { "id": "地区id", "grainDelta": 仓储粮食变化量(整数), "corruptionDelta": 贪腐率变化量(整数) }
+  ],
+  "ai_analysis": "AI裁判的古代赈灾学分析：玩家的赈灾手段是否有效地绕过了官僚系统的贪墨机制？救活了多少人？"
+}
+`;
+
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini faminerelief eval failure: ", error);
+      res.status(500).json({ error: "系统AI演算受到干扰，请重试。" });
+    }
+  });
+
+  app.post("/api/sandbox/vassal", async (req, res) => {
+    const { vassals, centralPower, civilWarRisk, actionInput } = req.body;
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({
+        narrative: "【本地沙盘演练】削藩诏书刚刚抵达，藩王便直接起兵“奉天靖难”，天下大乱。",
+        centralPowerDelta: -10,
+        civilWarRiskDelta: +30,
+        vassalUpdates: [],
+        ai_analysis: "（无API Key备用推演）暴力的削藩导致诸王恐惧，引起全面反叛内战。",
+        isFallback: true
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `
+你是一个硬核历史策略游戏的AI裁判。现在进行【方向十：宗室分封与削藩靖难】演算。
+
+当前中央禁军兵力：${centralPower}/100 
+当前藩镇/宗室造反风险（内战）：${civilWarRisk}/100
+
+天下诸侯实力盘点：
+${vassals.map((v: any) => `- ${v.name}: 拥兵自重 ${v.militaryPower}/100, 忠诚度 ${v.loyalty}/100, 封地规模 ${v.domainSize}/100`).join('\n')}
+
+皇帝（玩家）颁布的削藩或宗室调度决策：“${actionInput}”
+
+请你根据古代诸侯藩镇博弈（如汉武帝推恩令、建文帝削藩、康熙平三藩等）推演：
+- 温水煮青蛙或阳谋（如推恩令）可以在不激起巨大反叛的前提下缓慢降低藩王的封地（domainSize）和兵权（militaryPower）。
+- 急躁粗暴的强行削夺会立刻逼反手握重兵的诸侯（loyalty归零，civilWarRisk激增），演变成靖难之役。
+- 若中央兵力（centralPower）本就弱于强藩，强行叫板无异于找死。
+- 圈养虽然丧失兵权，但耗掉大量中央财政和耐心。
+
+请返回严格的 JSON 字符串，格式如下：
+{
+  "narrative": "一段30字左右的《宗人府秘折》或《兵部急报》，描述藩王接旨后的反应（奉旨谢恩或起兵造反）。",
+  "centralPowerDelta": 中央兵力变化值(整数，-30 到 30之间),
+  "civilWarRiskDelta": 内战造反风险变化值(整数，-30 到 30之间),
+  "vassalUpdates": [
+    { "id": "诸侯id", "loyaltyDelta": 忠诚变化量(整数), "militaryDelta": 兵权变化量(整数), "domainDelta": 封土规模变化量(整数) }
+  ],
+  "ai_analysis": "AI裁判的集权博弈分析：皇帝的手段是高明的阳谋，还是逼反诸侯的昏招？"
+}
+`;
+
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini vassal eval failure: ", error);
+      res.status(500).json({ error: "系统AI演算受到干扰，请重试。" });
+    }
+  });
+
+  app.post("/api/sandbox/characternetwork", async (req, res) => {
+    const { characters, actionInput } = req.body;
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({
+        narrative: "【本地沙盘演练】群臣对你的旨意惊疑不定，暗流涌动。李丞相称病不上朝。",
+        emperorStressDelta: 10,
+        characterUpdates: [],
+        ai_analysis: "（无API Key备用推演）由于缺乏深入的心理博弈模型，君臣网络进入静态博弈。",
+        isFallback: true
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `你是一个硬核历史策略游戏(类似Crusader Kings 3)的AI裁判。现在进行【方向十一：权力图谱与君臣羁绊】演算。
+
+皇帝（玩家）目前的施政手段与宫廷指令：“${actionInput}”
+
+当前宫廷中的关键人物心理状态与特质：
+${characters.map((c: any) => `- ${c.name} (${c.role}): 特质[${c.traits.join(',')}], 压力${c.stress}/100, 权势${c.power}/100, 对皇帝好感${c.relationWithEmperor}`).join('\n')}
+
+请你根据人物的性格特质进行心理博弈和压力计算演绎：
+- 强迫一个人做违背他特质的事（如让【莽撞】的人绣花，让【贪婪】的人裸捐）会大幅增加其压力（stress）。
+- 压力超过80的人可能濒临崩溃，产生新特质（如【发疯】、【忧郁】）或直接暴毙（isDead: true）。
+- 皇帝的强制高压手段会急剧降低受冲击者的好感度（relationDelta为负），当好感极低且权势（power）极高时，可能发生政变罢免皇帝。
+- 如果皇帝操作让群里大乱，皇帝自身的压力也会增加（emperorStressDelta）。
+
+请返回严格的 JSON 字符串，格式如下：
+{
+  "narrative": "一段30字左右的《起居注》或锦衣卫密报，描述该指令后宫廷内部的人物反应与戏剧冲突。",
+  "emperorStressDelta": 皇帝压力变化值(整数，-30 到 30之间),
+  "characterUpdates": [
+    { "id": "人物id", "stressDelta": 压力变化量, "relationDelta": 对皇帝好感变化量, "powerDelta": 权势变化量, "newTrait": "可选，因刺激产生的新特质，通常压力极大时才产生", "isDead": false }
+  ],
+  "ai_analysis": "AI裁判的CK3心理模型分析：玩家的统治术是否引发了人物特质的强烈排斥或迎合？"
+}
+`;
+
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini characternetwork eval failure: ", error);
+      res.status(500).json({ error: "系统AI演算受到干扰，请重试。" });
+    }
+  });
+
+  app.post("/api/sandbox/macroeconomy", async (req, res) => {
+    const { economy, actionInput } = req.body;
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({
+        narrative: "【本地沙盘演练】国家机器运转失灵，盐铁专卖变成了官商勾结的狂欢，物价飞涨。",
+        economyUpdates: { treasuryDelta: -5, inflationDelta: 15, taxRateDelta: 0, peasantWealthDelta: -10, merchantWealthDelta: 10, corruptionDelta: 10 },
+        ai_analysis: "（无API Key备用推演）缺乏大模型驱动的供需计算，经济系统执行默认崩坏逻辑。",
+        isFallback: true
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `你是一个硬核历史大战略游戏(类似Victoria 3 维多利亚3)的AI裁判。现在进行【方向十二：王朝经济与宏观调控】演算。
+
+当前国家宏观经济指标（0-100）：
+- 国库充裕度：${economy.treasury}
+- 通货膨胀：${economy.inflation}
+- 实际税赋重负：${economy.taxRate}
+- 农民余粮财富：${economy.peasantWealth}
+- 商贾资本累积：${economy.merchantWealth}
+- 官僚阶层寻租贪腐：${economy.corruption}
+
+皇帝（玩家）颁布的经济新政与宏观干预：“${actionInput}”
+
+请根据维多利亚3的宏观经济学逻辑（供需、阶层转移、分配效率与政府失灵）进行推演：
+- 滥发纸币（宝钞）会短暂洗劫民间财富充实国库，但必定导致【通货膨胀】飙升和贫富分化。
+- 盐铁专卖、官方垄断（等国家资本主义）会增加【国库】和【官僚贪腐】，极度打压【商贾资本】并可能把最终成本转移到【农民财富】身上。
+- 官方放贷（如青苗法）在缺乏底层监督时，必然变成地方官强行摊派的高利贷，导致【贪腐】飙升，【农民破产】。
+
+请返回严格的 JSON 字符串，格式如下：
+{
+  "narrative": "一段30字左右的《户部经济奏折》或市井歌谣，描述老百姓和商人在新政下的真实生存图景。",
+  "economyUpdates": {
+    "treasuryDelta": 国库变化量(-30 到 30),
+    "inflationDelta": 通胀变化量(-30 到 30),
+    "taxRateDelta": 税负变化量(-30 到 30),
+    "peasantWealthDelta": 农民财富变化量(-30 到 30),
+    "merchantWealthDelta": 商贾资本变化量(-30 到 30),
+    "corruptionDelta": 贪腐变化量(-30 到 30)
+  },
+  "ai_analysis": "AI裁判的V3宏观经济分析：新政是否违背了经济学常识？财富实际上流向了哪个阶级？"
+}
+`;
+
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini macroeconomy eval failure: ", error);
+      res.status(500).json({ error: "系统AI演算受到干扰，请重试。" });
+    }
+  });
+
+  app.post("/api/sandbox/parliament", async (req, res) => {
+    const { factions, actionInput } = req.body;
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({
+        narrative: "【本地沙盘演练】朝堂之上，各方势力互相推诿，新政难以推行。",
+        newPowers: {
+          scholars: 45,
+          military: 25,
+          royals: 20,
+          eunuchs: 10
+        },
+        approvalDeltas: {
+          scholars: -10,
+          military: -5,
+          royals: 0,
+          eunuchs: 5
+        },
+        ai_analysis: "（无API Key备用推演）由于缺乏深入的派系博弈模型，利益集团席位保持静态僵持。",
+        isFallback: true
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `你是一个硬核历史大战略游戏(类似Victoria 3)的AI裁判。现在进行【可视化朝堂：利益集团(IG)博弈】演算。
+
+当前朝堂各派系势力分布（总席位100）：
+${factions.map((f: any) => `- ${f.name} (${f.id}): 权力 ${f.power}/100, 对皇帝好感度 ${f.approval}/100`).join('\n')}
+
+皇帝（玩家）颁布的政令/行动：“${actionInput}”
+
+请根据维多利亚3的派系博弈逻辑进行推演：
+- 政策必定会得罪一部分人、讨好另一部分人（改变好感度 approvalDeltas，范围 -30 到 +30）。
+- 政策也会改变派系的绝对权势（如：提拔寒门必定增加文官集团的权力，剥夺军权必定削弱武勋集团）。
+- ★ 权力（Power）代表在议政殿中的席位数，总和绝对严格等于 100！请你直接输出各个派系操作后的最新绝对权力值（newPowers），必须保证这几个数字之和等于 100。
+
+请返回严格的 JSON 字符串，格式如下：
+{
+  "narrative": "一段30字左右的《起居注》记载或朝堂上的真实反应，描述各派系的阻力或奉承。",
+  "newPowers": {
+    "scholars": 整数(0-100),
+    "military": 整数(0-100),
+    "royals": 整数(0-100),
+    "eunuchs": 整数(0-100)
+  },
+  "approvalDeltas": {
+    "scholars": 整数(-30到30),
+    "military": 整数(-30到30),
+    "royals": 整数(-30到30),
+    "eunuchs": 整数(-30到30)
+  },
+  "ai_analysis": "AI裁判的V3博弈分析：这项政令从根本上触动了谁的蛋糕？权力天平发生了怎样的倾斜？"
+}
+`;
+
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini parliament eval failure: ", error);
+      res.status(500).json({ error: "系统AI演算受到干扰，请重试。" });
+    }
+  });
+
+  app.post("/api/sandbox/reigns", async (req, res) => {
+    const { stats, previousContext } = req.body;
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({
+        character: "李廷机",
+        role: "户部尚书",
+        dilemma: "陛下，九边军饷告罄，国库空虚。老臣恳请下令在江南加派新税（加派）。",
+        choiceA: { text: "准奏。苦一苦百姓。", impacts: { peasants: -15, army: 15, treasury: 20, scholars: -5 } },
+        choiceB: { text: "驳回。从内帑拨银。", impacts: { peasants: 5, army: 10, treasury: -25, scholars: 5 } },
+        isFallback: true
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `你是一个类似《Reigns (王权)》游戏的AI发牌官。
+当前皇帝的四项维稳指标分别是：民众(${stats.peasants})、军队(${stats.army})、国库(${stats.treasury})、士绅(${stats.scholars})。(0-100之间)
+前情提要 / 皇帝刚做的决定：${previousContext || '皇帝刚刚登基。'}
+
+请根据这四项指标和前情提要，生成【下一张命运卡牌】的危机或决断事件：
+你需要创造一个活生生的人物（如：灾民代表、野心兵将、贪婪太监或腐儒），向皇帝提出一个尖锐的两难问题。
+
+请返回严格的 JSON 字符串，格式如下：
+{
+  "character": "人物姓名(比如：赵千总, 李巡抚)",
+  "role": "人物身份",
+  "dilemma": "他向你提出的进言、请求或威胁（30字以内，要有戏剧张力）",
+  "choiceA": {
+    "text": "同意/激进选项 (10字以内)",
+    "impacts": { "peasants": -20到20的整数, "army": 整数, "treasury": 整数, "scholars": 整数 }
+  },
+  "choiceB": {
+    "text": "拒绝/保守选项 (10字以内)",
+    "impacts": { "peasants": 整数, "army": 整数, "treasury": 整数, "scholars": 整数 }
+  }
+}
+`;
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: { responseMimeType: "application/json", temperature: 0.8 },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini reigns eval failure: ", error);
+      res.status(500).json({ error: "系统AI发牌官受到干扰，请重试。" });
+    }
+  });
+
+  app.post("/api/sandbox/eu4diplomacy", async (req, res) => {
+    const { nations, actionInput } = req.body;
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(200).json({
+        narrative: "【本地演算】使臣的回报令人堪忧，四方蛮夷窥伺中原。",
+        nationUpdates: [
+          { id: 'mongol', relationDelta: -10, aeDelta: 5, isCoalition: false },
+          { id: 'japan', relationDelta: -5, aeDelta: 5, isCoalition: false }
+        ],
+        ai_analysis: "（无API Key备用推演）缺乏大模型驱动的复杂地缘推演。",
+        isFallback: true
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `你是一个类似《欧陆风云4 (EU4)》的主控AI。现在进行【地缘外交与侵略扩张AE】演算。
+
+周边国家当前对大明（玩家）的态度与侵略扩张(AE)负面值积累：
+${nations.map((n: any) => `- ${n.name} (${n.type}): 好感度 ${n.relation}/100, 对明AE值 ${n.ae}`).join('\n')}
+
+皇帝（玩家）刚刚实施的外交/军事行动：“${actionInput}”
+
+逻辑规则：
+- 无故吞并、屠杀、撕毁条约会大幅增加周边各国的 侵略扩张(AE值) (范围 1 到 50)。
+- 联姻、结盟、送钱、朝贡贸易会增加好感度 (relationDelta 为正)。
+- 如果一个国家的好感度 < 30，且对明AE值 > 50，则它将极可能加入 【反明包围网 (isCoalition: true)】。
+- 宿敌(rival)会自动增加AE，藩属(vassal)受大明行动的负面AE影响较小。
+
+请返回严格的 JSON 字符串，格式如下：
+{
+  "narrative": "一句话战报或外交使节带回来的消息（30字内）。",
+  "nationUpdates": [
+    { "id": "对应国家的id", "relationDelta": 好感度变化量(-30到30的整数), "aeDelta": 对大明增加的AE值(整数), "isCoalition": 布尔值(是否正式加入反明军事包围网) }
+  ],
+  "ai_analysis": "你对地缘局势和玩家外交操作的毒辣点评。"
+}
+`;
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: { responseMimeType: "application/json", temperature: 0.7 },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini eu4diplomacy eval failure: ", error);
+      res.status(500).json({ error: "系统AI演算受到干扰，请重试。" });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

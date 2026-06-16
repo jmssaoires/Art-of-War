@@ -109,5 +109,27 @@ service cloud.firestore {
 
       allow delete: if isSignedIn() && isValidId(roomId) && isValidId(unitId);
     }
+
+    // Rules for Room Timeline Branches
+    match /rooms/{roomId}/timelineBranches/{eventId} {
+      allow list, read: if isSignedIn() && isValidId(roomId);
+      
+      allow create: if isSignedIn()
+        && isValidId(roomId)
+        && isValidId(eventId)
+        && (incoming().year is number || incoming().year is int)
+        && incoming().mandate is int
+        && incoming().stability is int
+        && incoming().coffers is int
+        && incoming().title is string && incoming().title.size() <= 200
+        && incoming().desc is string && incoming().desc.size() <= 1000
+        && (incoming().type == 'historical' || incoming().type == 'player_decision')
+        && incoming().impact is string && incoming().impact.size() <= 250
+        && incoming().branch is string && incoming().branch.size() <= 50;
+
+      allow update: if false; // Assume immutable event timeline points
+
+      allow delete: if false;
+    }
   }
 }

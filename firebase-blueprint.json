@@ -56,6 +56,23 @@
         "creatorName": { "type": "string", "description": "Creator display name" }
       },
       "required": ["id", "name", "side", "lat", "lng", "size"]
+    },
+    "TimelineBranch": {
+      "title": "TimelineBranch",
+      "description": "Timeline events for the ancient dynasty simulator",
+      "type": "object",
+      "properties": {
+        "year": { "type": "number", "description": "Year of the event" },
+        "mandate": { "type": "number", "description": "Mandate of Heaven value" },
+        "stability": { "type": "number", "description": "National stability" },
+        "coffers": { "type": "number", "description": "Treasury value" },
+        "title": { "type": "string", "description": "Event title" },
+        "desc": { "type": "string", "description": "Event description" },
+        "type": { "type": "string", "enum": ["historical", "player_decision"], "description": "Event type" },
+        "impact": { "type": "string", "description": "Event impact" },
+        "branch": { "type": "string", "description": "Timeline branch string ID" }
+      },
+      "required": ["year", "mandate", "stability", "coffers", "title", "desc", "type", "impact", "branch"]
     }
   },
   "firestore": {
@@ -74,6 +91,10 @@
     "/rooms/{roomId}/mapUnits/{unitId}": {
       "schema": "MapUnit",
       "description": "Tactical units stationed on the terrain in the room"
+    },
+    "/rooms/{roomId}/timelineBranches/{eventId}": {
+      "schema": "TimelineBranch",
+      "description": "Events happening in the multiplayer room"
     }
   }
 }

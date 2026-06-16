@@ -3422,8 +3422,7 @@ export default function RealWorldMapBattle({ activeCardId = null }: RealWorldMap
                               x1={`${p1.x}%`} y1={`${p1.y}%`}
                               x2={`${p2.x}%`} y2={`${p2.y}%`}
                               stroke="#DC2626"
-                              strokeWidth="45"
-                              strokeWidthAttribute="4"
+                              strokeWidth="4"
                               strokeDasharray="6 4"
                               strokeOpacity="0.75"
                               style={{ strokeWidth: 4 }}

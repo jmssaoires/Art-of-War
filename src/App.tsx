@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BookOpen, Landmark, Swords, KeyRound, Coins, Compass, FileText, ChevronRight, Layers, Award, Heart, Shield, Sparkles, Flame, Users, Map as MapIcon, Volume2, VolumeX, Trophy, Activity, Crown, Clock, Target, Wifi, Sparkle, LogIn, LogOut, ShieldCheck, UserCheck, HelpCircle } from 'lucide-react';
+import { BookOpen, Landmark, Swords, KeyRound, Coins, Compass, FileText, ChevronRight, Layers, Award, Heart, Shield, Sparkles, Flame, Users, Map as MapIcon, Volume2, VolumeX, Trophy, Activity, Crown, Clock, Target, Wifi, Sparkle, LogIn, LogOut, ShieldCheck, UserCheck, HelpCircle, EyeOff, Scale, Globe, Sprout, Fingerprint, ScrollText, Wheat, Castle, Network, Factory, Waypoints } from 'lucide-react';
 import { soundManager } from './utils/soundManager';
-import CourtSandbox from './components/CourtSandbox';
+import LogisticsNetworkSandbox from './components/LogisticsNetworkSandbox';
+import DeceptionSandbox from './components/DeceptionSandbox';
+import AristocratEcosystemSandbox from './components/AristocratEcosystemSandbox';
 import MilitarySandbox from './components/MilitarySandbox';
-import SpySandbox from './components/SpySandbox';
 import MerchantSuccessionSandbox from './components/MerchantSuccessionSandbox';
-import DiplomacySandbox from './components/DiplomacySandbox';
 import GddBuilder from './components/GddBuilder';
 import UprisingCultureSandbox from './components/UprisingCultureSandbox';
 import MultiplayerSandbox from './components/MultiplayerSandbox';
@@ -15,12 +15,28 @@ import DynastyTimeline from './components/DynastyTimeline';
 import RealWorldMapBattle from './components/RealWorldMapBattle';
 import LoginTutorial from './components/LoginTutorial';
 import LoginModuleIndex from './components/LoginModuleIndex';
+import ReformSandbox from './components/ReformSandbox';
+import RoyalSuccessionSandbox from './components/RoyalSuccessionSandbox';
+import TributarySandbox from './components/TributarySandbox';
+import IdeologySandbox from './components/IdeologySandbox';
+import LandMergeSandbox from './components/LandMergeSandbox';
+import SecretPoliceSandbox from './components/SecretPoliceSandbox';
+import FactionalismSandbox from './components/FactionalismSandbox';
+import FamineReliefSandbox from './components/FamineReliefSandbox';
+import VassalRebellionSandbox from './components/VassalRebellionSandbox';
+
+import CharacterNetworkSandbox from './components/CharacterNetworkSandbox';
+import MacroEconomySandbox from './components/MacroEconomySandbox';
+import PolicyTreeSandbox from './components/PolicyTreeSandbox';
+import FactionParliamentSandbox from './components/FactionParliamentSandbox';
+import ReignsSwipeSandbox from './components/ReignsSwipeSandbox';
+import EU4DiplomaticSandbox from './components/EU4DiplomaticSandbox';
 
 import { auth, loginAnonymously, onAuthStateChanged, signOut, updateProfile, loginWithEmailAndPassword, registerWithEmailAndPassword } from './firebase';
 import OnboardingTutorial from './components/OnboardingTutorial';
 type User = any;
 
-type ActiveTab = 'gdd' | 'court' | 'combat' | 'spy' | 'trade' | 'diplomacy' | 'uprising_culture' | 'multiplayer' | 'war_philosophy' | 'timeline' | 'map_battle';
+type ActiveTab = 'gdd' | 'aristocrat' | 'reform' | 'succession' | 'tributary' | 'ideology' | 'landmerge' | 'secretpolice' | 'factionalism' | 'famine' | 'vassal' | 'characternetwork' | 'macroeconomy' | 'policy_tree' | 'faction_parliament' | 'reigns_swipe' | 'eu4_diplomacy' | 'logistics' | 'deception' | 'combat' | 'trade' | 'uprising_culture' | 'multiplayer' | 'war_philosophy' | 'timeline' | 'map_battle';
 
 const TACTIC_CARDS = [
   {
@@ -384,7 +400,7 @@ export default function App() {
   // Simulated Online Lobby Stragegists
   const [onlineWarlords, setOnlineWarlords] = useState([
     { name: "白起后裔·杀神", level: "四十二阶", faction: "秦军中营", ping: "二分迟滞", active: "map_battle" },
-    { name: "连环反间·张仪", level: "三十五阶", faction: "游侠说客", ping: "四分迟滞", active: "spy" },
+    { name: "连环反间·张仪", level: "三十五阶", faction: "游侠说客", ping: "四分迟滞", active: "combat" },
     { name: "项王羽翼·虞公", level: "十九阶", faction: "楚地义军", ping: "一分迟滞", active: "uprising_culture" },
     { name: "咸阳大司农·章", level: "五十阶", faction: "朝廷命官", ping: "三分迟滞", active: "timeline" },
     { name: "江左商盟·陈生", level: "二十八阶", faction: "世家盐商", ping: "六分迟滞", active: "trade" }
@@ -407,7 +423,7 @@ export default function App() {
       // Randomly update online strategist properties to make the layout feel incredibly alive
       setOnlineWarlords(prev => prev.map(w => {
         if (Math.random() > 0.6) {
-          const actives: ActiveTab[] = ['map_battle', 'combat', 'spy', 'trade', 'diplomacy', 'uprising_culture'];
+          const actives: ActiveTab[] = ['map_battle', 'combat', 'trade', 'uprising_culture'];
           return {
             ...w,
             ping: `${Math.floor(1 + Math.random() * 8)}分迟滞`,
@@ -432,17 +448,31 @@ export default function App() {
   const tabs = [
     { id: 'map_battle', name: '真实地图作战 🌍', desc: '神州实境战例与九地天演', icon: MapIcon, category: 'tactical', accent: 'text-orange-400 hover:text-orange-300' },
     { id: 'timeline', name: '天命天演 📊', desc: '朝代兴衰大纪事与皇家施政断案', icon: Landmark, category: 'tactical', accent: 'text-amber-400 hover:text-amber-300' },
+    { id: 'aristocrat', name: '九品门阀 (方向一)', desc: '动态推演世家与皇权的动态博弈', icon: Scale, category: 'tactical', accent: 'text-yellow-500 hover:text-yellow-400' },
+    { id: 'reform', name: '变法改革 (方向二)', desc: '激进新政与各阶层反噬推演', icon: Landmark, category: 'tactical', accent: 'text-emerald-500 hover:text-emerald-400' },
+    { id: 'succession', name: '宫廷夺嫡 (方向三)', desc: '老皇帝幕后操控九子夺嫡大戏', icon: Crown, category: 'tactical', accent: 'text-purple-500 hover:text-purple-400' },
+    { id: 'tributary', name: '羁縻朝贡 (方向四)', desc: '天朝上国与周边藩国的朝贡体系推演', icon: Globe, category: 'tactical', accent: 'text-blue-500 hover:text-blue-400' },
+    { id: 'ideology', name: '诸子百家 (方向五)', desc: '帝国底层思想控制与排他性演化', icon: BookOpen, category: 'tactical', accent: 'text-teal-500 hover:text-teal-400' },
+    { id: 'landmerge', name: '土地兼并 (方向六)', desc: '经济死结与流民大潮的周期律', icon: Sprout, category: 'tactical', accent: 'text-emerald-600 hover:text-emerald-500' },
+    { id: 'secretpolice', name: '酷吏缇骑 (方向七)', desc: '特务政治与皇帝猜忌的恐怖平衡', icon: Fingerprint, category: 'tactical', accent: 'text-red-500 hover:text-red-400' },
+    { id: 'factionalism', name: '结党营私 (方向八)', desc: '科举取士与朋党之争内耗推演', icon: ScrollText, category: 'tactical', accent: 'text-blue-400 hover:text-blue-300' },
+    { id: 'famine', name: '漕运赈灾 (方向九)', desc: '天灾常平仓与帝国经济生命线', icon: Wheat, category: 'tactical', accent: 'text-yellow-500 hover:text-yellow-400' },
+    { id: 'vassal', name: '宗室削藩 (方向十)', desc: '推恩令与诸侯靖难的内战博弈', icon: Castle, category: 'tactical', accent: 'text-fuchsia-500 hover:text-fuchsia-400' },
+    { id: 'characternetwork', name: '权力图谱 (方向十一)', desc: 'CK3风格君臣羁绊与心理压力场', icon: Network, category: 'tactical', accent: 'text-purple-400 hover:text-purple-300' },
+    { id: 'macroeconomy', name: '王朝经济 (方向十二)', desc: 'V3风格盐铁宏观供需演化', icon: Factory, category: 'tactical', accent: 'text-teal-400 hover:text-teal-300' },
+    { id: 'policy_tree', name: '国策演进树 (方案A)', desc: '视觉化的节点政策树解锁系统', icon: Waypoints, category: 'tactical', accent: 'text-slate-400 hover:text-slate-300' },
+    { id: 'faction_parliament', name: '派系议政殿 (方案B)', desc: 'V3式利益集团可视化席位图', icon: Landmark, category: 'tactical', accent: 'text-blue-400 hover:text-blue-300' },
+    { id: 'reigns_swipe', name: '命运卡牌 (方案C)', desc: 'Reigns四维平衡左右滑动抉择', icon: Layers, category: 'tactical', accent: 'text-amber-400 hover:text-amber-300' },
+    { id: 'eu4_diplomacy', name: '地缘外交网 (方案D)', desc: 'EU4动态侵略扩张与包围网', icon: Globe, category: 'tactical', accent: 'text-red-400 hover:text-red-300' },
+    { id: 'logistics', name: '兵者：局 (地网后勤)', desc: 'AI驱动图论与大军摩擦系统', icon: Shield, category: 'tactical', accent: 'text-emerald-400 hover:text-emerald-300' },
+    { id: 'deception', name: '兵者：局 (诡道迷雾)', desc: 'AI驱动虚假情报与心理战', icon: EyeOff, category: 'tactical', accent: 'text-purple-400 hover:text-purple-300' },
     { id: 'multiplayer', name: '天命总坛 🌟', desc: '多人实时云端朝政对决', icon: Users, category: 'tactical', accent: 'text-cyan-400 hover:text-cyan-300' },
     { id: 'war_philosophy', name: '兵道生存 🔥', desc: '以兵法为生存哲学的模拟推演', icon: Compass, category: 'tactical', accent: 'text-rose-400 hover:text-rose-300' },
     
-    { id: 'court', name: '朝堂夺嫡', desc: '皇帝依赖/猜忌模型', icon: Landmark, category: 'court', accent: 'text-purple-400 hover:text-purple-300' },
-    { id: 'combat', name: '奇正军争', desc: '虚实九地将领五危', icon: Swords, category: 'court', accent: 'text-red-400 hover:text-red-350' },
-    { id: 'diplomacy', name: '多边外交', desc: '远交近攻脱藩博弈', icon: Compass, category: 'court', accent: 'text-teal-400 hover:text-teal-300' },
-    
-    { id: 'spy', name: '王座密室', desc: '异心特务与御前权谋', icon: Crown, category: 'faction', accent: 'text-amber-500 hover:text-amber-400' },
-    { id: 'trade', name: '大商世家', desc: '私盐垄断与阶层天梯', icon: Coins, category: 'faction', accent: 'text-yellow-400 hover:text-yellow-300' },
-    { id: 'uprising_culture', name: '义军信仰', desc: '起义触发与学说博弈', icon: Flame, category: 'faction', accent: 'text-orange-400 hover:text-orange-350' },
-    { id: 'gdd', name: '策划主编', desc: '17个机制模块总成', icon: BookOpen, category: 'faction', accent: 'text-amber-500 hover:text-amber-400' },
+    { id: 'combat', name: '奇正军争 ⚔️', desc: '虚实九地将领五危', icon: Swords, category: 'court', accent: 'text-red-400 hover:text-red-350' },
+    { id: 'trade', name: '大商世家 💰', desc: '私盐垄断与阶层天梯', icon: Coins, category: 'faction', accent: 'text-yellow-400 hover:text-yellow-300' },
+    { id: 'uprising_culture', name: '义军起义 🚩', desc: '流民暴动与平叛镇压', icon: Flame, category: 'faction', accent: 'text-orange-400 hover:text-orange-350' },
+    { id: 'gdd', name: '策划主编 📝', desc: '游戏核心设计与架构', icon: BookOpen, category: 'faction', accent: 'text-amber-500 hover:text-amber-400' },
   ];
 
   const handleTabChange = (tabId: ActiveTab) => {
@@ -721,20 +751,23 @@ export default function App() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-3.5">
             {/* Wax / Ink Seal Stamp Badge */}
-            <div 
+            <motion.div 
+              id="ink-seal-stamp"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.85, rotate: [0, -15, 15, -15, 0], filter: "brightness(1.3)" }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
               onClick={() => {
                 soundManager.playDrum();
                 setServerLogs(prev => ["🥁 【振奋军威】大本营擂槌震天！策士士气如虹！", ...prev.slice(0, 3)]);
               }}
-              className="bg-[#8C2F39] text-[#F5F2ED] font-serif font-black flex flex-col items-center justify-center w-12 h-12 rounded border border-black/20 shadow-[0_0_15px_rgba(239,68,68,0.35)] cursor-pointer active:scale-95 transition-transform select-none relative group overflow-hidden" 
-              id="ink-seal-stamp"
+              className="bg-[#8C2F39] text-[#F5F2ED] font-serif font-black flex flex-col items-center justify-center w-12 h-12 rounded border border-black/20 shadow-[0_0_15px_rgba(239,68,68,0.35)] cursor-pointer select-none relative group overflow-hidden" 
               title="击鼓行令"
             >
               <span className="text-[9px] text-[#C5A059] leading-none tracking-widest font-sans mb-0.5 opacity-90 group-hover:scale-105 duration-100">兵法</span>
               <span className="text-base leading-none">孙子</span>
               <div className="absolute inset-0 bg-gradient-to-tr from-black/35 to-transparent"></div>
               <div className="absolute inset-x-0 bottom-0 h-[2px] bg-amber-400 scale-x-0 group-hover:scale-x-100 transition-transform"></div>
-            </div>
+            </motion.div>
 
             <div>
               <div className="flex items-center gap-2 flex-wrap">
@@ -1432,6 +1465,24 @@ export default function App() {
               className="h-full"
             >
               {activeTab === 'map_battle' && <RealWorldMapBattle activeCardId={activeCardId} />}
+              {activeTab === 'aristocrat' && <AristocratEcosystemSandbox />}
+              {activeTab === 'reform' && <ReformSandbox />}
+              {activeTab === 'succession' && <RoyalSuccessionSandbox />}
+              {activeTab === 'tributary' && <TributarySandbox />}
+              {activeTab === 'ideology' && <IdeologySandbox />}
+              {activeTab === 'landmerge' && <LandMergeSandbox />}
+              {activeTab === 'secretpolice' && <SecretPoliceSandbox />}
+              {activeTab === 'factionalism' && <FactionalismSandbox />}
+              {activeTab === 'famine' && <FamineReliefSandbox />}
+              {activeTab === 'vassal' && <VassalRebellionSandbox />}
+              {activeTab === 'characternetwork' && <CharacterNetworkSandbox />}
+              {activeTab === 'macroeconomy' && <MacroEconomySandbox />}
+              {activeTab === 'policy_tree' && <PolicyTreeSandbox />}
+              {activeTab === 'faction_parliament' && <FactionParliamentSandbox />}
+              {activeTab === 'reigns_swipe' && <ReignsSwipeSandbox />}
+              {activeTab === 'eu4_diplomacy' && <EU4DiplomaticSandbox />}
+              {activeTab === 'logistics' && <LogisticsNetworkSandbox />}
+              {activeTab === 'deception' && <DeceptionSandbox />}
               {activeTab === 'timeline' && <DynastyTimeline dynastyStats={dynastyFate} onSyncState={(stats) => setDynastyFate(prev => ({ ...prev, ...stats }))} />}
               {activeTab === 'multiplayer' && <MultiplayerSandbox onSyncState={(stats) => setDynastyFate(prev => ({ ...prev, ...stats }))} />}
               {activeTab === 'war_philosophy' && (
@@ -1458,11 +1509,8 @@ export default function App() {
                   setServerLogs={setServerLogs}
                 />
               )}
-              {activeTab === 'court' && <CourtSandbox activeCardId={activeCardId} />}
               {activeTab === 'combat' && <MilitarySandbox activeCardId={activeCardId} />}
-              {activeTab === 'spy' && <SpySandbox />}
               {activeTab === 'trade' && <MerchantSuccessionSandbox />}
-              {activeTab === 'diplomacy' && <DiplomacySandbox />}
               {activeTab === 'uprising_culture' && <UprisingCultureSandbox activeCardId={activeCardId} />}
             </motion.div>
           </AnimatePresence>
