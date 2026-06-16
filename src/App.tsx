@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BookOpen, Landmark, Swords, KeyRound, Coins, Compass, FileText, ChevronRight, Layers, Award, Heart, Shield, Sparkles, Flame, Users, Map as MapIcon, Volume2, VolumeX, Trophy, Activity, Crown, Clock, Target, Wifi, Sparkle, LogIn, LogOut, ShieldCheck, UserCheck, HelpCircle, EyeOff, Scale, Globe, Sprout, Fingerprint, ScrollText, Wheat, Castle, Network, Factory, Waypoints } from 'lucide-react';
 import { soundManager } from './utils/soundManager';
+import { GameEngineProvider } from './context/GameEngineContext';
+import WeiJiuZhaoScenario from './components/WeiJiuZhaoScenario';
 import LogisticsNetworkSandbox from './components/LogisticsNetworkSandbox';
 import DeceptionSandbox from './components/DeceptionSandbox';
 import AristocratEcosystemSandbox from './components/AristocratEcosystemSandbox';
@@ -36,7 +38,7 @@ import { auth, loginAnonymously, onAuthStateChanged, signOut, updateProfile, log
 import OnboardingTutorial from './components/OnboardingTutorial';
 type User = any;
 
-type ActiveTab = 'gdd' | 'aristocrat' | 'reform' | 'succession' | 'tributary' | 'ideology' | 'landmerge' | 'secretpolice' | 'factionalism' | 'famine' | 'vassal' | 'characternetwork' | 'macroeconomy' | 'policy_tree' | 'faction_parliament' | 'reigns_swipe' | 'eu4_diplomacy' | 'logistics' | 'deception' | 'combat' | 'trade' | 'uprising_culture' | 'multiplayer' | 'war_philosophy' | 'timeline' | 'map_battle';
+type ActiveTab = 'gdd' | 'aristocrat' | 'reform' | 'succession' | 'tributary' | 'ideology' | 'landmerge' | 'secretpolice' | 'factionalism' | 'famine' | 'vassal' | 'characternetwork' | 'macroeconomy' | 'policy_tree' | 'faction_parliament' | 'reigns_swipe' | 'eu4_diplomacy' | 'logistics' | 'deception' | 'combat' | 'trade' | 'uprising_culture' | 'multiplayer' | 'war_philosophy' | 'timeline' | 'map_battle' | 'weijiu_scenario';
 
 const TACTIC_CARDS = [
   {
@@ -466,6 +468,7 @@ export default function App() {
     { id: 'eu4_diplomacy', name: '地缘外交网 (方案D)', desc: 'EU4动态侵略扩张与包围网', icon: Globe, category: 'tactical', accent: 'text-red-400 hover:text-red-300' },
     { id: 'logistics', name: '兵者：局 (地网后勤)', desc: 'AI驱动图论与大军摩擦系统', icon: Shield, category: 'tactical', accent: 'text-emerald-400 hover:text-emerald-300' },
     { id: 'deception', name: '兵者：局 (诡道迷雾)', desc: 'AI驱动虚假情报与心理战', icon: EyeOff, category: 'tactical', accent: 'text-purple-400 hover:text-purple-300' },
+    { id: 'weijiu_scenario', name: '围魏救赵 ⚔️🔥', desc: '全场景整合：地图+补给+诡道+评分', icon: Swords, category: 'tactical', accent: 'text-red-400 hover:text-red-300 bg-red-950/20 border border-red-500/20' },
     { id: 'multiplayer', name: '天命总坛 🌟', desc: '多人实时云端朝政对决', icon: Users, category: 'tactical', accent: 'text-cyan-400 hover:text-cyan-300' },
     { id: 'war_philosophy', name: '兵道生存 🔥', desc: '以兵法为生存哲学的模拟推演', icon: Compass, category: 'tactical', accent: 'text-rose-400 hover:text-rose-300' },
     
@@ -1455,6 +1458,7 @@ export default function App() {
 
         {/* Content Dynamic Panel inside a polished framer motion stage */}
         <section className="lg:col-span-9 h-full">
+          <GameEngineProvider active={activeTab === 'weijiu_scenario'}>
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -1464,6 +1468,11 @@ export default function App() {
               transition={{ duration: 0.15 }}
               className="h-full"
             >
+              {activeTab === 'weijiu_scenario' && (
+                <WeiJiuZhaoScenario
+                  onDynastyFateUpdate={(stats) => setDynastyFate(prev => ({ ...prev, ...stats }))}
+                />
+              )}
               {activeTab === 'map_battle' && <RealWorldMapBattle activeCardId={activeCardId} />}
               {activeTab === 'aristocrat' && <AristocratEcosystemSandbox />}
               {activeTab === 'reform' && <ReformSandbox />}
@@ -1514,6 +1523,7 @@ export default function App() {
               {activeTab === 'uprising_culture' && <UprisingCultureSandbox activeCardId={activeCardId} />}
             </motion.div>
           </AnimatePresence>
+          </GameEngineProvider>
         </section>
       </main>
 

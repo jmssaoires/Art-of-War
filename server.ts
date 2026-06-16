@@ -1735,6 +1735,86 @@ ${nations.map((n: any) => `- ${n.name} (${n.type}): 好感度 ${n.relation}/100,
     }
   });
 
+  // ──────────────────────────────────────────────────────
+  // WeiJiuZhao Scenario Resolve Endpoint (Phase 4.1)
+  // ──────────────────────────────────────────────────────
+  app.post("/api/sandbox/weijiu-resolve", async (req, res) => {
+    const { turnNumber, phase, units, supplyGraph, actions } = req.body;
+
+    if (!process.env.GEMINI_API_KEY) {
+      // Local deterministic fallback (Phase 4.2)
+      return res.status(200).json({
+        narrative: `【第${turnNumber}回合】天机自行演算。粮道流转，兵锋交错。`,
+        combatResults: [],
+        supplyChanges: [],
+        scoutReports: [],
+        isFallback: true,
+      });
+    }
+
+    try {
+      const client = getAiClient();
+      if (!client) throw new Error("AI client could not be initialized.");
+
+      const prompt = `
+你是一个硬核策略游戏的AI裁判，正在执行「围魏救赵」场景的回合结算。
+
+当前回合: ${turnNumber}
+阶段: ${phase}
+
+战场态势:
+${JSON.stringify(units.map((u: any) => ({
+  名称: u.name,
+  阵营: u.side === 'allied' ? '齐/赵' : '魏',
+  兵力: u.size,
+  粮草: u.provisions,
+  士气: u.morale,
+  是否疑兵: u.isFake,
+  位置: `${u.lat.toFixed(2)}, ${u.lng.toFixed(2)}`,
+  是否溃散: u.isRouted,
+})), null, 2)}
+
+补给网络:
+${JSON.stringify(supplyGraph, null, 2)}
+
+玩家行动:
+${JSON.stringify(actions, null, 2)}
+
+请根据战场态势和玩家行动，给出一个古文风格（仿《资治通鉴》或《左传》笔法）的回合叙事总结（不超过100字），并返回严格JSON：
+
+{
+  "narrative": "古文风格的回合叙事",
+  "combatResults": [{ "unitId": "...", "sizeDelta": -1200, "moraleDelta": -5, "narrative": "..." }],
+  "supplyChanges": [{ "edgeId": "...", "isCut": true }],
+  "scoutReports": [{ "unitId": "...", "reportedSize": 5000, "confidence": 60, "narrative": "..." }]
+}
+`;
+
+      const response = await client.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.7,
+        },
+      });
+
+      let responseText = response.text || "";
+      responseText = responseText.replace(/```json/g, "").replace(/```/g, "").trim();
+      res.json(JSON.parse(responseText));
+    } catch (error: any) {
+      console.error("Gemini weijiu-resolve eval failure: ", error);
+      // Fallback to local deterministic
+      res.status(200).json({
+        narrative: `【第${turnNumber}回合】天机演算小有波折，然AI裁判仍尽力而为。`,
+        combatResults: [],
+        supplyChanges: [],
+        scoutReports: [],
+        isFallback: true,
+      });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

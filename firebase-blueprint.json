@@ -95,6 +95,10 @@
     "/rooms/{roomId}/timelineBranches/{eventId}": {
       "schema": "TimelineBranch",
       "description": "Events happening in the multiplayer room"
+    },
+    "/rooms/{roomId}/weijiuScenario/{scenarioId}": {
+      "schema": "WeiJiuScenarioState",
+      "description": "Persistent state for the 围魏救赵 unified scenario"
     }
   }
 }
