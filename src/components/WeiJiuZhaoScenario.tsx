@@ -54,7 +54,7 @@ import {
   classifyTerrainFromPosition,
 } from '../engine/combatEngine';
 import UnitCard from './UnitCard';
-import { useLocale } from '../i18n/LocaleContext';
+import type { Locale } from '../i18n/LocaleContext';
 
 type MapMode = 'default' | 'supply' | 'morale' | 'territory';
 
@@ -193,6 +193,8 @@ const WEI_JIU_ZHAO_SCENARIO: ScenarioDefinition = {
 // ──────────────────────────────────────────────────────────
 
 interface Props {
+  locale: Locale;
+  t: (key: string, params?: Record<string, string | number>) => string;
   onDynastyFateUpdate?: (stats: {
     mandate?: number;
     stability?: number;
@@ -202,9 +204,8 @@ interface Props {
   onTimelineEntry?: (entry: any) => void;
 }
 
-export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntry }: Props) {
+export default function WeiJiuZhaoScenario({ locale, t, onDynastyFateUpdate, onTimelineEntry }: Props) {
   const { state, dispatch, setOnScenarioComplete } = useGameEngine();
-  const { t } = useLocale();
 
   // Local UI state
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);

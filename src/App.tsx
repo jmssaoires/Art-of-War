@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BookOpen, Landmark, Swords, KeyRound, Coins, Compass, FileText, ChevronRight, Layers, Award, Heart, Shield, Sparkles, Flame, Users, Map as MapIcon, Volume2, VolumeX, Trophy, Activity, Crown, Clock, Target, Wifi, Sparkle, LogIn, LogOut, ShieldCheck, UserCheck, HelpCircle, EyeOff, Scale, Globe, Sprout, Fingerprint, ScrollText, Wheat, Castle, Network, Factory, Waypoints } from 'lucide-react';
 import { soundManager } from './utils/soundManager';
 import { GameEngineProvider } from './context/GameEngineContext';
 import { useLocale } from './i18n/LocaleContext';
+import zh from './i18n/zh';
+import en from './i18n/en';
+import type { Locale } from './i18n/LocaleContext';
 import WeiJiuZhaoScenario from './components/WeiJiuZhaoScenario';
 import LogisticsNetworkSandbox from './components/LogisticsNetworkSandbox';
 import DeceptionSandbox from './components/DeceptionSandbox';
@@ -86,15 +89,14 @@ const TACTIC_CARDS = [
 
 const RANDOM_MONIKERS = ["诸葛孔明", "陆逊", "辛弃疾", "戚继光", "尉缭子", "张仪", "范蠡", "苏秦", "谢安"];
 
-/** Separate component so useLocale works inside LocaleProvider */
-function LocaleToggleButton() {
-  const { locale, setLocale, t } = useLocale();
+/** Locale toggle — receives state directly from App, no Context needed */
+function LocaleToggleButton({ locale, onToggle }: { locale: Locale; onToggle: () => void }) {
   return (
     <button
       type="button"
-      onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}
+      onClick={onToggle}
       className="p-1.5 rounded border border-stone-700 bg-stone-900/40 text-stone-400 hover:text-stone-200 transition-all"
-      title={t('ui.language') + ': ' + (locale === 'zh' ? 'English' : '中文')}
+      title={locale === 'zh' ? 'Switch to English' : '切换到中文'}
     >
       <span className="text-[10px] font-mono font-bold">
         {locale === 'zh' ? 'EN' : '中'}
@@ -114,6 +116,26 @@ export default function App() {
   const [loginError, setLoginError] = useState<string>('');
 
   const [activeTab, setActiveTab] = useState<ActiveTab>('map_battle');
+  const [appLocale, setAppLocale] = useState<Locale>(() => {
+    try {
+      const stored = localStorage.getItem('art-of-war-locale');
+      if (stored === 'en' || stored === 'zh') return stored;
+    } catch (_) {}
+    return 'zh';
+  });
+  const appT = useCallback(
+    (key: string, params?: Record<string, string | number>): string => {
+      const table = appLocale === 'zh' ? zh : en;
+      let text = table[key] ?? zh[key] ?? key;
+      if (params) {
+        for (const [k, v] of Object.entries(params)) {
+          text = text.replace(`{${k}}`, String(v));
+        }
+      }
+      return text;
+    },
+    [appLocale]
+  );
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
   const [isAdminMode, setIsAdminMode] = useState<boolean>(() => {
     try {
@@ -870,7 +892,7 @@ export default function App() {
               >
                 {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 animate-bounce" />}
               </button>
-              <LocaleToggleButton />
+              <LocaleToggleButton locale={appLocale} onToggle={() => setAppLocale(appLocale === 'zh' ? 'en' : 'zh')} />
             </div>
           </div>
         </div>
@@ -1489,6 +1511,8 @@ export default function App() {
             >
               {activeTab === 'weijiu_scenario' && (
                 <WeiJiuZhaoScenario
+                  locale={appLocale}
+                  t={appT}
                   onDynastyFateUpdate={(stats) => setDynastyFate(prev => ({ ...prev, ...stats }))}
                 />
               )}
