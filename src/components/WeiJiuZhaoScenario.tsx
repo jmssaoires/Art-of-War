@@ -54,6 +54,7 @@ import {
   classifyTerrainFromPosition,
 } from '../engine/combatEngine';
 import UnitCard from './UnitCard';
+import { useLocale } from '../i18n/LocaleContext';
 
 type MapMode = 'default' | 'supply' | 'morale' | 'territory';
 
@@ -203,6 +204,7 @@ interface Props {
 
 export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntry }: Props) {
   const { state, dispatch, setOnScenarioComplete } = useGameEngine();
+  const { t } = useLocale();
 
   // Local UI state
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
@@ -558,17 +560,17 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
             </div>
             <div>
               <h2 className="text-lg font-serif font-black text-amber-200 tracking-wider">
-                围魏救赵
+                {t('scenario.title')}
               </h2>
               <p className="text-[10px] text-stone-500 font-mono">
-                公元前354年 · 齐魏争霸
+                {t('scenario.subtitle')}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-4 text-xs font-mono">
             <div className="bg-stone-950 px-3 py-1.5 rounded border border-stone-800">
-              <span className="text-stone-500">回合</span>{' '}
+              <span className="text-stone-500">{t('scenario.turn')}</span>{' '}
               <span className="text-amber-300 font-bold">{state.turnNumber}</span>
               <span className="text-stone-600">/{WEI_JIU_ZHAO_SCENARIO.maxTurns}</span>
             </div>
@@ -585,13 +587,13 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
                 className="px-2 py-1 rounded bg-stone-800 border border-stone-700 text-stone-400 hover:text-stone-200 text-[10px] flex items-center gap-1"
               >
                 {viewerPerspective === 'allied' ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                {viewerPerspective === 'allied' ? '齐/赵视角' : '魏军视角'}
+                {viewerPerspective === 'allied' ? t('map.view.allied') : t('map.view.hostile')}
               </button>
               <button
                 onClick={handleReset}
                 className="px-2 py-1 rounded bg-stone-800 border border-stone-700 text-stone-400 hover:text-red-400 text-[10px] flex items-center gap-1"
               >
-                <RefreshCw className="w-3 h-3" /> 重置
+                <RefreshCw className="w-3 h-3" /> {t('ui.reset')}
               </button>
             </div>
           </div>
@@ -605,15 +607,15 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
           {/* Map header with mode toggles */}
           <div className="bg-stone-900/80 backdrop-blur border-b border-stone-800 p-2 flex items-center justify-between z-20 flex-shrink-0">
             <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-2">
-              <MapPin className="w-3 h-3" /> 魏赵边境 · 大梁—邯郸战区
+              <MapPin className="w-3 h-3" /> {t('scenario.mapCenter')}
             </span>
             <div className="flex items-center gap-1">
               {/* Map mode toggles */}
               {([
-                { mode: 'default' as MapMode, icon: Globe, label: '默认', key: '1' },
-                { mode: 'supply' as MapMode, icon: Wheat, label: '补给', key: '2' },
-                { mode: 'morale' as MapMode, icon: Heart, label: '士气', key: '3' },
-                { mode: 'territory' as MapMode, icon: Layers, label: '势力', key: '4' },
+                { mode: 'default' as MapMode, icon: Globe, label: t('map.mode.default'), key: '1' },
+                { mode: 'supply' as MapMode, icon: Wheat, label: t('map.mode.supply'), key: '2' },
+                { mode: 'morale' as MapMode, icon: Heart, label: t('map.mode.morale'), key: '3' },
+                { mode: 'territory' as MapMode, icon: Layers, label: t('map.mode.territory'), key: '4' },
               ]).map(({ mode, icon: Icon, label, key }) => (
                 <button
                   key={mode}
@@ -629,10 +631,10 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
                   <span className="hidden sm:inline">{label}</span>
                 </button>
               ))}
-              <span className="text-[8px] text-stone-600 ml-1 hidden md:block">1-4切换</span>
+              <span className="text-[8px] text-stone-600 ml-1 hidden md:block">{t('map.mode.hint')}</span>
             </div>
             <span className="text-[10px] text-stone-500">
-              {activeUnits.length}部队 | {state.supplyGraph.nodes.length}节点
+              {activeUnits.length}{t('scenario.activeUnits')} | {state.supplyGraph.nodes.length}{t('scenario.supplyNodes')}
             </span>
           </div>
 
@@ -850,12 +852,12 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
                       <button key={enemy.id}
                         onClick={() => { handleAttackUnit(ctxUnit.id, enemy.id); setContextMenu(null); }}
                         className="w-full text-left px-3 py-1.5 text-[10px] text-red-300 hover:bg-red-950/20 flex items-center gap-2">
-                        <Crosshair className="w-3 h-3" /> 攻击 {enemy.name}
+                        <Crosshair className="w-3 h-3" /> {t('context.attack')} {enemy.name}
                       </button>
                     ))}
                     <button onClick={() => { handleScout(contextMenu.unitId); setContextMenu(null); }}
                       className="w-full text-left px-3 py-1.5 text-[10px] text-blue-300 hover:bg-blue-950/20 flex items-center gap-2">
-                      <Eye className="w-3 h-3" /> 派遣斥候侦察
+                      <Eye className="w-3 h-3" /> {t('context.scout')}
                     </button>
                   </motion.div>
                 );
@@ -864,14 +866,14 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
 
             {/* ── Map legend ── */}
             <div className="absolute bottom-2 left-2 bg-black/80 backdrop-blur border border-stone-800 rounded p-1.5 text-[8px] font-mono space-y-0.5 z-10">
-              <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-[#4a7c4f]" /> 齐/赵</div>
-              <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-[#c43a31]" /> 魏</div>
-              <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-[#7c3aed]" /> 疑兵</div>
+              <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-[#4a7c4f]" /> {t('map.legend.allied')}</div>
+              <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-[#c43a31]" /> {t('map.legend.hostile')}</div>
+              <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-[#7c3aed]" /> {t('map.legend.deception')}</div>
             </div>
 
             {/* ── Map tips ── */}
             <div className="absolute top-2 right-2 bg-black/60 backdrop-blur border border-stone-800 rounded px-2 py-1 text-[9px] text-stone-500 z-10 pointer-events-none">
-              右键部队开菜单 | 1-4 切换地图模式
+              {t('map.tip')}
             </div>
           </div>
         </div>
@@ -881,7 +883,7 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
           {/* Selected unit details */}
           <div className="panel-bamboo-dark p-4 flex-shrink-0">
             <h3 className="text-xs font-serif font-bold text-amber-500/80 uppercase tracking-widest mb-3 border-b border-stone-800 pb-2">
-              <Target className="w-3 h-3 inline mr-1" /> 选中单位
+              <Target className="w-3 h-3 inline mr-1" /> {t('unit.selected')}
             </h3>
 
             {selectedUnit ? (
@@ -896,24 +898,24 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
                   <div>
                     <div className="font-bold text-stone-100 text-xs flex items-center gap-1">
                       {selectedUnit.name}
-                      {selectedUnit.isFake && <span className="text-[9px] px-1 bg-purple-900/50 text-purple-300 rounded">疑兵</span>}
-                      {selectedUnit.isRouted && <span className="text-[9px] px-1 bg-red-900/50 text-red-300 rounded animate-pulse">溃散</span>}
+                      {selectedUnit.isFake && <span className="text-[9px] px-1 bg-purple-900/50 text-purple-300 rounded">{t('unit.label.fake')}</span>}
+                      {selectedUnit.isRouted && <span className="text-[9px] px-1 bg-red-900/50 text-red-300 rounded animate-pulse">{t('unit.label.routed')}</span>}
                     </div>
-                    <div className="text-stone-500 font-mono">{selectedUnit.size.toLocaleString()} 人</div>
+                    <div className="text-stone-500 font-mono">{selectedUnit.size.toLocaleString()} {t('unit.stat.size')}</div>
                   </div>
                 </div>
 
                 {/* Supply & Morale dual gauge */}
                 <div className="grid grid-cols-2 gap-2">
                   <div className="space-y-0.5">
-                    <div className="flex justify-between text-stone-500"><span className="flex items-center gap-0.5"><Wheat className="w-2.5 h-2.5" />粮草</span><span>{selectedUnit.provisions}%</span></div>
+                    <div className="flex justify-between text-stone-500"><span className="flex items-center gap-0.5"><Wheat className="w-2.5 h-2.5" />{t('unit.stat.supply')}</span><span>{selectedUnit.provisions}%</span></div>
                     <div className="h-1.5 bg-stone-800 rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all duration-500"
                         style={{ background: selectedUnit.provisions > 50 ? '#4a7c4f' : selectedUnit.provisions > 20 ? '#b88a44' : '#c43a31', width: `${selectedUnit.provisions}%` }} />
                     </div>
                   </div>
                   <div className="space-y-0.5">
-                    <div className="flex justify-between text-stone-500"><span className="flex items-center gap-0.5"><Heart className="w-2.5 h-2.5" />士气</span><span>{selectedUnit.morale}</span></div>
+                    <div className="flex justify-between text-stone-500"><span className="flex items-center gap-0.5"><Heart className="w-2.5 h-2.5" />{t('unit.stat.morale')}</span><span>{selectedUnit.morale}</span></div>
                     <div className="h-1.5 bg-stone-800 rounded-full overflow-hidden">
                       <div className="h-full rounded-full transition-all duration-500"
                         style={{ background: selectedUnit.morale >= 80 ? '#10b981' : selectedUnit.morale >= 40 ? '#f59e0b' : '#ef4444', width: `${selectedUnit.morale}%` }} />
@@ -923,14 +925,14 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
 
                 {/* Combat stats */}
                 <div className="flex gap-3 text-stone-500 pt-1">
-                  <span className="flex items-center gap-0.5"><Swords className="w-2.5 h-2.5 text-red-400" />攻 {selectedUnit.attackPower}</span>
-                  <span className="flex items-center gap-0.5"><Shield className="w-2.5 h-2.5 text-blue-400" />防 {selectedUnit.defensePower}</span>
-                  <span className="flex items-center gap-0.5"><Activity className="w-2.5 h-2.5" />速 {selectedUnit.speed}</span>
+                  <span className="flex items-center gap-0.5"><Swords className="w-2.5 h-2.5 text-red-400" />{t('unit.stat.attack')} {selectedUnit.attackPower}</span>
+                  <span className="flex items-center gap-0.5"><Shield className="w-2.5 h-2.5 text-blue-400" />{t('unit.stat.defense')} {selectedUnit.defensePower}</span>
+                  <span className="flex items-center gap-0.5"><Activity className="w-2.5 h-2.5" />{t('unit.stat.speed')} {selectedUnit.speed}</span>
                 </div>
               </div>
             ) : (
               <p className="text-[10px] text-stone-600 font-serif italic text-center py-6">
-                点击地图部队查看详情<br />右键部队打开命令菜单
+                {t('unit.none')}<br />{t('unit.none.sub')}
               </p>
             )}
           </div>
@@ -938,39 +940,39 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
           {/* Action buttons */}
           <div className="panel-bamboo-dark p-4 flex-shrink-0">
             <h3 className="text-xs font-serif font-bold text-amber-500/80 uppercase tracking-widest mb-3 border-b border-stone-800 pb-2">
-              <Zap className="w-3 h-3 inline mr-1" /> 军令 · 预设
+              <Zap className="w-3 h-3 inline mr-1" /> {t('command.title')}
             </h3>
 
             {state.phase === 'DEPLOY' && (
               <div className="space-y-2">
-                <p className="text-[10px] text-stone-500 mb-2">部署疑兵（isFake单位）以迷惑魏军：</p>
+                <p className="text-[10px] text-stone-500 mb-2">{t('command.deploy.hint')}</p>
                 <div className="flex gap-2">
                   <input value={deployName} onChange={e => setDeployName(e.target.value)}
-                    placeholder="疑兵营号，如：齐军右翼"
+                    placeholder={t('command.deploy.placeholder')}
                     className="flex-1 bg-stone-950 border border-stone-700 text-stone-200 p-1.5 rounded text-[10px] outline-none focus:border-purple-500/50 font-serif" />
                   <select value={deployFakeSize} onChange={e => setDeployFakeSize(Number(e.target.value))}
                     className="bg-stone-950 border border-stone-700 text-stone-200 p-1.5 rounded text-[10px]">
-                    <option value={5000}>5千</option><option value={10000}>1万</option><option value={20000}>2万</option><option value={40000}>4万</option>
+                    <option value={5000}>{t('command.deploy.size.5k')}</option><option value={10000}>{t('command.deploy.size.10k')}</option><option value={20000}>{t('command.deploy.size.20k')}</option><option value={40000}>{t('command.deploy.size.40k')}</option>
                   </select>
                 </div>
                 <button onClick={handleDeployFakeUnit} disabled={!deployName.trim()}
                   className="w-full py-2 bg-purple-900/20 border border-purple-500/30 hover:border-purple-400 text-purple-200 text-[10px] font-bold rounded flex items-center justify-center gap-1 disabled:opacity-30 transition-colors">
-                  <EyeOff className="w-3 h-3" /> 部署疑兵（500人+50粮）
+                  <EyeOff className="w-3 h-3" /> {t('command.deploy.button')}
                 </button>
               </div>
             )}
 
             {state.phase === 'STRATEGIZE' && (
               <div className="space-y-1.5">
-                <p className="text-[10px] text-stone-500 mb-1">选择己方部队后可执行：</p>
+                <p className="text-[10px] text-stone-500 mb-1">{t('command.strategize.hint')}</p>
 
                 {/* Preset command: Move */}
                 <div className="grid grid-cols-2 gap-1">
                   {[
-                    { dir: [0, 1] as [number, number], label: '↑ 北进', icon: ChevronRight, cls: 'rotate-[-90deg]' },
-                    { dir: [0, -1] as [number, number], label: '↓ 南移', icon: ChevronRight, cls: 'rotate-90' },
-                    { dir: [-1, 0] as [number, number], label: '← 西行', icon: ChevronRight, cls: 'rotate-180' },
-                    { dir: [1, 0] as [number, number], label: '→ 东征', icon: ChevronRight, cls: '' },
+                    { dir: [0, 1] as [number, number], label: t('command.move.north'), icon: ChevronRight, cls: 'rotate-[-90deg]' },
+                    { dir: [0, -1] as [number, number], label: t('command.move.south'), icon: ChevronRight, cls: 'rotate-90' },
+                    { dir: [-1, 0] as [number, number], label: t('command.move.west'), icon: ChevronRight, cls: 'rotate-180' },
+                    { dir: [1, 0] as [number, number], label: t('command.move.east'), icon: ChevronRight, cls: '' },
                   ].map(({ dir, label, icon: Icon, cls }) => (
                     <button key={label}
                       onClick={() => selectedUnit && selectedUnit.side === 'allied' && !selectedUnit.isFake && !selectedUnit.isRouted && handleMoveUnit(selectedUnit.id, ...dir)}
@@ -984,7 +986,7 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
                 {/* Preset command: Attack targets */}
                 {selectedUnit && selectedUnit.side === 'allied' && !selectedUnit.isFake && !selectedUnit.isRouted && (
                   <>
-                    <div className="text-[8px] text-stone-600 uppercase tracking-wider pt-1">攻击目标</div>
+                    <div className="text-[8px] text-stone-600 uppercase tracking-wider pt-1">{t('command.attack.targets')}</div>
                     {activeUnits.filter(u => u.side === 'hostile' && !u.isRouted).slice(0, 3).map(enemy => {
                       const dist = haversineDistance(selectedUnit.lat, selectedUnit.lng, enemy.lat, enemy.lng);
                       return (
@@ -998,19 +1000,19 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
                   </>
                 )}
 
-                {/* Preset command: Supply cut */}
-                <div className="text-[8px] text-stone-600 uppercase tracking-wider pt-1">特殊行动</div>
+                {/* Preset command: Special */}
+                <div className="text-[8px] text-stone-600 uppercase tracking-wider pt-1">{t('command.special')}</div>
                 <div className="grid grid-cols-2 gap-1">
                   <button onClick={() => { const enemies = activeUnits.filter(u => u.side === 'hostile'); if (enemies[0]) handleScout(enemies[0].id); }}
                     disabled={activeUnits.filter(u => u.side === 'hostile').length === 0}
                     className="py-1.5 bg-blue-950/15 border border-blue-500/20 hover:border-blue-400 text-blue-300 text-[9px] rounded flex items-center justify-center gap-1 disabled:opacity-30 transition-colors font-serif">
-                    <Eye className="w-2.5 h-2.5" /> 斥候侦察
+                    <Eye className="w-2.5 h-2.5" /> {t('command.scout')}
                   </button>
                   <button
                     onClick={() => { const cutEdge = state.supplyGraph.edges.find(e => !e.isCut); if (cutEdge) handleCutSupply(cutEdge.id); }}
                     disabled={!state.supplyGraph.edges.some(e => !e.isCut)}
                     className="py-1.5 bg-amber-950/15 border border-amber-500/20 hover:border-amber-400 text-amber-300 text-[9px] rounded flex items-center justify-center gap-1 disabled:opacity-30 transition-colors font-serif">
-                    <AlertTriangle className="w-2.5 h-2.5" /> 切断粮道
+                    <AlertTriangle className="w-2.5 h-2.5" /> {t('command.cutSupply')}
                   </button>
                 </div>
               </div>
@@ -1025,14 +1027,14 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
                   ) : (
                     <Play className="w-4 h-4" />
                   )}
-                  {isExecuting ? '天机演算中...' : '⚔️ 执行回合结算'}
+                  {isExecuting ? t('command.resolve.executing') : t('command.resolve')}
                 </button>
               </div>
             )}
 
             {state.phase === 'AFTERMATH' && (
               <p className="text-[10px] text-amber-400 font-serif text-center italic">
-                战事已毕，史记入册。
+                {t('command.aftermath')}
               </p>
             )}
           </div>
@@ -1047,7 +1049,7 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
               className="w-full py-2.5 bg-gradient-to-r from-[#8C2F39]/20 via-amber-900/20 to-[#8C2F39]/20 border border-[#8C2F39]/30 hover:border-amber-400/50 text-amber-200 font-serif font-black text-xs rounded flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-amber-900/20"
             >
               <SkipForward className="w-3.5 h-3.5" />
-              {state.phase === 'STRATEGIZE' ? '军令已毕，进入决胜阶段' : `下一阶段: ${phaseDescription(nextPhase(state.phase))}`}
+              {state.phase === 'STRATEGIZE' ? t('command.resolve.idle') : `${t('command.nextPhase')}: ${phaseDescription(nextPhase(state.phase))}`}
             </button>
           )}
 
@@ -1055,13 +1057,13 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
           <div className="flex items-center justify-between text-[9px] text-stone-600 px-1">
             <span className="flex items-center gap-1">
               <Thermometer className="w-2.5 h-2.5" />
-              天时: {weather === 'CLEAR' ? '☀️ 晴' : weather === 'RAIN' ? '🌧️ 雨' : weather === 'WIND' ? '💨 风' : '🌫️ 雾'}
+              {t('command.weather')}: {weather === 'CLEAR' ? t('command.weather.clear') : weather === 'RAIN' ? t('command.weather.rain') : weather === 'WIND' ? t('command.weather.wind') : t('command.weather.fog')}
             </span>
             <button onClick={() => {
               const cycle: Array<'CLEAR' | 'RAIN' | 'WIND' | 'FOG'> = ['CLEAR', 'RAIN', 'WIND', 'FOG'];
               const idx = cycle.indexOf(weather);
               setWeather(cycle[(idx + 1) % cycle.length]);
-            }} className="text-stone-500 hover:text-stone-300 underline cursor-pointer">变天</button>
+            }} className="text-stone-500 hover:text-stone-300 underline cursor-pointer">{t('command.weather.change')}</button>
           </div>
         </div>
       </div>
@@ -1072,16 +1074,16 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
           <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-2">
             <Activity className="w-3 h-3" />
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            战报反馈流 · Combat Log
+            {t('log.title')}
           </span>
-          <span className="text-[9px] text-stone-600">{state.combatLog.length} 条</span>
+          <span className="text-[9px] text-stone-600">{state.combatLog.length} {t('log.count')}</span>
         </div>
         <div
           ref={combatLogRef}
           className="flex-1 overflow-y-auto p-3 space-y-1.5 font-mono text-[10px] leading-relaxed"
         >
           {state.combatLog.length === 0 && (
-            <p className="text-stone-600 text-center py-4 font-serif">等待回合开始...</p>
+            <p className="text-stone-600 text-center py-4 font-serif">{t('log.waiting')}</p>
           )}
           {state.combatLog.slice(0, 50).map((log, idx) => {
             let color = 'text-stone-400';
@@ -1125,15 +1127,15 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
             >
               <Trophy className="w-16 h-16 text-amber-400 mx-auto" />
               <h2 className="text-2xl font-serif font-black text-amber-200">
-                围魏救赵 · {state.victoryScore.rank} 级
+                {t('victory.title')} · {state.victoryScore.rank}
               </h2>
 
               <div className="grid grid-cols-2 gap-3 text-left">
                 {[
-                  { label: '军事优势', value: state.victoryScore.categories.militaryDominance, icon: Swords },
-                  { label: '补给完整', value: state.victoryScore.categories.supplyIntegrity, icon: Wheat },
-                  { label: '欺骗效力', value: state.victoryScore.categories.deceptionEfficacy, icon: EyeOff },
-                  { label: '天命保全', value: state.victoryScore.categories.mandatePreservation, icon: Heart },
+                  { label: t('victory.rank.military'), value: state.victoryScore.categories.militaryDominance, icon: Swords },
+                  { label: t('victory.rank.supply'), value: state.victoryScore.categories.supplyIntegrity, icon: Wheat },
+                  { label: t('victory.rank.deception'), value: state.victoryScore.categories.deceptionEfficacy, icon: EyeOff },
+                  { label: t('victory.rank.mandate'), value: state.victoryScore.categories.mandatePreservation, icon: Heart },
                 ].map(cat => (
                   <div key={cat.label} className="bg-stone-900/50 rounded p-3 border border-stone-800">
                     <div className="text-[10px] text-stone-400 flex items-center gap-1 mb-1">
@@ -1165,7 +1167,7 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
                   onClick={handleReset}
                   className="flex-1 py-2.5 bg-amber-900/20 border border-amber-500/30 hover:border-amber-400 text-amber-200 font-serif font-bold text-sm rounded flex items-center justify-center gap-2"
                 >
-                  <RefreshCw className="w-4 h-4" /> 再战一局
+                  <RefreshCw className="w-4 h-4" /> {t('ui.retry')}
                 </button>
               </div>
             </motion.div>

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { BookOpen, Landmark, Swords, KeyRound, Coins, Compass, FileText, ChevronRight, Layers, Award, Heart, Shield, Sparkles, Flame, Users, Map as MapIcon, Volume2, VolumeX, Trophy, Activity, Crown, Clock, Target, Wifi, Sparkle, LogIn, LogOut, ShieldCheck, UserCheck, HelpCircle, EyeOff, Scale, Globe, Sprout, Fingerprint, ScrollText, Wheat, Castle, Network, Factory, Waypoints } from 'lucide-react';
 import { soundManager } from './utils/soundManager';
 import { GameEngineProvider } from './context/GameEngineContext';
+import { LocaleProvider, useLocale, type Locale } from './i18n/LocaleContext';
 import WeiJiuZhaoScenario from './components/WeiJiuZhaoScenario';
 import LogisticsNetworkSandbox from './components/LogisticsNetworkSandbox';
 import DeceptionSandbox from './components/DeceptionSandbox';
@@ -84,6 +85,23 @@ const TACTIC_CARDS = [
 ];
 
 const RANDOM_MONIKERS = ["诸葛孔明", "陆逊", "辛弃疾", "戚继光", "尉缭子", "张仪", "范蠡", "苏秦", "谢安"];
+
+/** Separate component so useLocale works inside LocaleProvider */
+function LocaleToggleButton() {
+  const { locale, setLocale, t } = useLocale();
+  return (
+    <button
+      type="button"
+      onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}
+      className="p-1.5 rounded border border-stone-800 bg-stone-900/40 text-stone-400 hover:text-stone-200 transition-all"
+      title={t('ui.language') + ': ' + (locale === 'zh' ? t('ui.language.en') : t('ui.language.zh'))}
+    >
+      <span className="text-[10px] font-mono font-bold">
+        {locale === 'zh' ? 'EN' : '中'}
+      </span>
+    </button>
+  );
+}
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -513,17 +531,20 @@ export default function App() {
 
   if (authLoading) {
     return (
+      <LocaleProvider>
       <div className="min-h-screen bg-[#0e0d0c] text-stone-200 flex flex-col items-center justify-center font-serif">
         <div className="space-y-4 text-center">
           <div className="w-12 h-12 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-xs tracking-widest text-[#C5A059] uppercase animate-pulse">天演罗盘印信鉴别中...</p>
         </div>
       </div>
+      </LocaleProvider>
     );
   }
 
   if (!currentUser) {
     return (
+      <LocaleProvider>
       <div className="min-h-screen bg-[#0d0c0b] text-[#F5F2ED] flex flex-col justify-center items-center p-4 relative font-sans overflow-hidden select-none" id="warlord-portal-auth-gate">
         {/* Background Subtle Watermark Overlay */}
         <div className="absolute inset-0 opacity-5 bg-[radial-gradient(#C5A059_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"></div>
@@ -712,10 +733,12 @@ export default function App() {
           </div>
         </div>
       </div>
+      </LocaleProvider>
     );
   }
 
   return (
+    <LocaleProvider>
     <div className="min-h-screen bg-[#0e0d0c] text-stone-200 flex flex-col font-sans selection:bg-[#8C2F39]/40 selection:text-amber-200 antialiased" id="sun-tzu-app-root">
       
       {/* MMO Server Ticker Message Banner */}
@@ -844,14 +867,15 @@ export default function App() {
                 type="button"
                 onClick={toggleSound}
                 className={`p-1.5 rounded border transition-all ${
-                  isMuted 
-                    ? 'border-stone-800 bg-stone-900/40 text-stone-500 hover:text-stone-300' 
+                  isMuted
+                    ? 'border-stone-800 bg-stone-900/40 text-stone-500 hover:text-stone-300'
                     : 'border-amber-500/40 bg-[#8C2F39]/15 text-amber-400 hover:bg-[#8C2F39]/30 shadow-md shadow-orange-950/20'
                 }`}
                 title={isMuted ? '开起古典背景声效' : '静音'}
               >
                 {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 animate-bounce" />}
               </button>
+              <LocaleToggleButton />
             </div>
           </div>
         </div>
@@ -1569,5 +1593,6 @@ export default function App() {
         )}
       </AnimatePresence>
     </div>
+    </LocaleProvider>
   );
 }
