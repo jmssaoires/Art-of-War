@@ -92,17 +92,12 @@ function LocaleToggleButton() {
   return (
     <button
       type="button"
-      onClick={() => {
-        const next = locale === 'zh' ? 'en' : 'zh';
-        console.log('[Toggle] clicking: ' + locale + ' -> ' + next);
-        setLocale(next);
-        alert('Locale changed to: ' + next + ' | t(scenario.title) = ' + t('scenario.title'));
-      }}
-      className="p-1.5 rounded border-2 border-yellow-400 bg-yellow-400/20 text-yellow-300 hover:text-yellow-100 hover:bg-yellow-400/40 transition-all font-bold"
-      title={t('ui.language')}
+      onClick={() => setLocale(locale === 'zh' ? 'en' : 'zh')}
+      className="p-1.5 rounded border border-stone-700 bg-stone-900/40 text-stone-400 hover:text-stone-200 transition-all"
+      title={t('ui.language') + ': ' + (locale === 'zh' ? 'English' : '中文')}
     >
-      <span className="text-xs font-mono">
-        {locale === 'zh' ? '🌐 EN' : '🌐 中文'}
+      <span className="text-[10px] font-mono font-bold">
+        {locale === 'zh' ? 'EN' : '中'}
       </span>
     </button>
   );

@@ -37,23 +37,9 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   });
 
   const setLocale = useCallback((next: Locale) => {
-    // Force a visible DOM change for debugging
-    document.documentElement.setAttribute('data-locale', next);
     setLocaleState(next);
     try { localStorage.setItem(STORAGE_KEY, next); } catch (_) {}
   }, []);
-
-  // Debug
-  useEffect(() => {
-    document.documentElement.setAttribute('data-locale', locale);
-    (window as any).__locale = locale;
-    (window as any).__t = t;
-    // Force visual feedback: red bg = zh, blue bg = en
-    document.body.style.outline = locale === 'zh'
-      ? '4px solid red'
-      : '4px solid blue';
-    console.log('[i18n] locale =', locale, '| scenario.title =', t('scenario.title'));
-  }, [locale, t]);
 
   const t = useCallback(
     (key: string, params?: Record<string, string | number>): string => {
