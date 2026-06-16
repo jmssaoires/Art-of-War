@@ -19,7 +19,8 @@ import {
   Swords, Shield, Eye, EyeOff, Send, MapPin, Activity,
   ChevronRight, AlertTriangle, Trophy, RefreshCw, Play,
   SkipForward, Sparkles, Wheat, Brain, Flag, Target, Zap,
-  Crosshair, Skull, TrendingDown, TrendingUp, Heart
+  Crosshair, Skull, TrendingDown, TrendingUp, Heart,
+  Layers, Thermometer, Globe, AlertCircle, Hash
 } from 'lucide-react';
 import { useGameEngine, saveScenarioState } from '../context/GameEngineContext';
 import type { GameAction } from '../context/GameEngineContext';
@@ -52,6 +53,9 @@ import {
   resolveCombat,
   classifyTerrainFromPosition,
 } from '../engine/combatEngine';
+import UnitCard from './UnitCard';
+
+type MapMode = 'default' | 'supply' | 'morale' | 'territory';
 
 // ──────────────────────────────────────────────────────────
 // Scenario Definition
@@ -209,7 +213,10 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
   const [deployName, setDeployName] = useState('');
   const [deployIsFake, setDeployIsFake] = useState(false);
   const [deployFakeSize, setDeployFakeSize] = useState(5000);
+  const [mapMode, setMapMode] = useState<MapMode>('default');
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; unitId: string } | null>(null);
   const combatLogRef = useRef<HTMLDivElement>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
 
   // Load scenario on mount
   useEffect(() => {
@@ -243,6 +250,34 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
       combatLogRef.current.scrollTop = 0;
     }
   }, [state.combatLog]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      switch (e.key) {
+        case '1': setMapMode('default'); break;
+        case '2': setMapMode('supply'); break;
+        case '3': setMapMode('morale'); break;
+        case '4': setMapMode('territory'); break;
+        case 'Escape':
+          setSelectedUnitId(null);
+          setContextMenu(null);
+          break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Close context menu on click outside
+  useEffect(() => {
+    const close = () => setContextMenu(null);
+    if (contextMenu) {
+      window.addEventListener('click', close, { once: true });
+      return () => window.removeEventListener('click', close);
+    }
+  }, [contextMenu]);
 
   // ──────────────────────────────────────────────────────
   // Unit helpers
@@ -515,7 +550,7 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
   return (
     <div className="flex flex-col h-full space-y-4">
       {/* ── Scenario HUD ── */}
-      <div className="bg-gradient-to-r from-amber-950/30 via-stone-900 to-amber-950/30 border border-amber-500/20 rounded-lg p-4 shadow-lg">
+      <div className="panel-bamboo-dark bg-gradient-to-r from-[#8C2F39]/10 via-stone-900 to-[#4a7c4f]/10 border border-[#C5A059]/20 rounded-lg p-4 shadow-lg">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded bg-red-950/50 border border-red-500/30 flex items-center justify-center">
@@ -566,196 +601,277 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
       {/* ── Main content: Map + CommandPanel + CombatLog ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 flex-1 min-h-0">
         {/* ── Game Map (left 7 cols) ── */}
-        <div className="lg:col-span-7 bg-[#0a0a0a] border border-stone-800 rounded-lg p-0 relative overflow-hidden min-h-[400px] flex flex-col">
-          {/* Map header */}
-          <div className="bg-stone-900 border-b border-stone-800 p-2 flex items-center justify-between z-10">
+        <div className="lg:col-span-7 bg-[#0d0c0b] border border-stone-800 rounded-lg p-0 relative overflow-hidden min-h-[450px] flex flex-col ink-dark">
+          {/* Map header with mode toggles */}
+          <div className="bg-stone-900/80 backdrop-blur border-b border-stone-800 p-2 flex items-center justify-between z-20 flex-shrink-0">
             <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-2">
               <MapPin className="w-3 h-3" /> 魏赵边境 · 大梁—邯郸战区
             </span>
+            <div className="flex items-center gap-1">
+              {/* Map mode toggles */}
+              {([
+                { mode: 'default' as MapMode, icon: Globe, label: '默认', key: '1' },
+                { mode: 'supply' as MapMode, icon: Wheat, label: '补给', key: '2' },
+                { mode: 'morale' as MapMode, icon: Heart, label: '士气', key: '3' },
+                { mode: 'territory' as MapMode, icon: Layers, label: '势力', key: '4' },
+              ]).map(({ mode, icon: Icon, label, key }) => (
+                <button
+                  key={mode}
+                  onClick={() => setMapMode(mode)}
+                  className={`px-1.5 py-0.5 rounded text-[9px] font-mono flex items-center gap-0.5 transition-all ${
+                    mapMode === mode
+                      ? 'bg-amber-900/30 border border-amber-500/40 text-amber-300'
+                      : 'bg-stone-800 border border-stone-700 text-stone-500 hover:text-stone-300'
+                  }`}
+                  title={`${label}模式 (${key})`}
+                >
+                  <Icon className="w-2.5 h-2.5" />
+                  <span className="hidden sm:inline">{label}</span>
+                </button>
+              ))}
+              <span className="text-[8px] text-stone-600 ml-1 hidden md:block">1-4切换</span>
+            </div>
             <span className="text-[10px] text-stone-500">
-              活跃部队: {activeUnits.length} | 补给节点: {state.supplyGraph.nodes.length}
+              {activeUnits.length}部队 | {state.supplyGraph.nodes.length}节点
             </span>
           </div>
 
-          {/* SVG Map overlay */}
-          <div className="flex-1 relative bg-[#0d0c0b] overflow-hidden">
-            <svg
-              className="absolute inset-0 w-full h-full"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="xMidYMid slice"
-            >
-              {/* Background terrain gradient */}
+          {/* Map canvas with terrain background */}
+          <div ref={mapContainerRef} className="flex-1 relative overflow-hidden bg-[#0d0c0b]">
+            {/* ── Terrain background layer ── */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="xMidYMid slice" viewBox="0 0 120 80">
               <defs>
-                <radialGradient id="capitalGlow" cx="50%" cy="50%" r="50%">
-                  <stop offset="0%" stopColor="#C5A059" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#C5A059" stopOpacity="0" />
+                <pattern id="riceGrid" width="6" height="6" patternUnits="userSpaceOnUse">
+                  <path d="M 6 0 L 0 0 0 6" fill="none" stroke="rgba(255,255,255,0.02)" strokeWidth="0.3" />
+                </pattern>
+                <radialGradient id="capitalGlowDaliang" cx="40%" cy="55%">
+                  <stop offset="0%" stopColor="#c43a31" stopOpacity="0.15" />
+                  <stop offset="50%" stopColor="#c43a31" stopOpacity="0.05" />
+                  <stop offset="100%" stopColor="transparent" />
                 </radialGradient>
-                <linearGradient id="supplyLineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#10B981" stopOpacity="0.6" />
-                  <stop offset="100%" stopColor="#C5A059" stopOpacity="0.6" />
-                </linearGradient>
-                <linearGradient id="supplyLineCut" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#EF4444" stopOpacity="0.8" />
-                  <stop offset="100%" stopColor="#F97316" stopOpacity="0.8" />
-                </linearGradient>
+                <radialGradient id="capitalGlowHandan" cx="52%" cy="30%">
+                  <stop offset="0%" stopColor="#4a7c4f" stopOpacity="0.15" />
+                  <stop offset="50%" stopColor="#4a7c4f" stopOpacity="0.05" />
+                  <stop offset="100%" stopColor="transparent" />
+                </radialGradient>
               </defs>
 
-              {/* Grid lines for Chinese military map aesthetic */}
-              {Array.from({ length: 10 }, (_, i) => (
-                <React.Fragment key={`grid-${i}`}>
-                  <line x1={i * 10} y1={0} x2={i * 10} y2={100} stroke="#1a1a1a" strokeWidth={0.1} />
-                  <line x1={0} y1={i * 10} x2={100} y2={i * 10} stroke="#1a1a1a" strokeWidth={0.1} />
-                </React.Fragment>
-              ))}
+              {/* Rice-paper grid background */}
+              <rect width="120" height="80" fill="url(#riceGrid)" />
 
-              {/* Supply edges */}
+              {/* Terrain zones */}
+              <rect x="30" y="5" width="40" height="25" rx="2" fill="rgba(74,124,79,0.04)" stroke="rgba(74,124,79,0.08)" strokeWidth="0.2" />
+              <text x="50" y="18" fill="rgba(74,124,79,0.12)" fontSize="3" textAnchor="middle" fontFamily="serif">齐地 (平原)</text>
+
+              <rect x="10" y="35" width="35" height="35" rx="2" fill="rgba(196,58,49,0.04)" stroke="rgba(196,58,49,0.08)" strokeWidth="0.2" />
+              <text x="27" y="54" fill="rgba(196,58,49,0.12)" fontSize="3" textAnchor="middle" fontFamily="serif">魏地 (中原)</text>
+
+              <rect x="50" y="45" width="35" height="15" rx="2" fill="rgba(180,138,68,0.04)" stroke="rgba(180,138,68,0.08)" strokeWidth="0.2" />
+              <text x="67" y="53" fill="rgba(180,138,68,0.12)" fontSize="3" textAnchor="middle" fontFamily="serif">战区 (争地)</text>
+
+              {/* Capital glows */}
+              <circle cx="32" cy="45" r="15" fill="url(#capitalGlowDaliang)" />
+              <circle cx="55" cy="22" r="12" fill="url(#capitalGlowHandan)" />
+
+              {/* Terrain hatches (mountain symbols) */}
+              {[
+                [20, 12], [75, 8], [85, 25], [10, 60], [80, 65], [60, 72],
+              ].map(([cx, cy], i) => (
+                <g key={`mt-${i}`} opacity={0.06}>
+                  <polygon points={`${cx-2},${cy+2} ${cx},${cy-2} ${cx+2},${cy+2}`} fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="0.3" />
+                  <line x1={cx-3} y1={cy+2} x2={cx+3} y2={cy+2} stroke="rgba(255,255,255,0.2)" strokeWidth="0.2" />
+                </g>
+              ))}
+            </svg>
+
+            {/* ── Map mode overlay (supply / morale heatmap) ── */}
+            {mapMode === 'supply' && (
+              <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="xMidYMid slice" viewBox="0 0 120 80">
+                {state.units.filter(u => !u.isDestroyed).map(unit => {
+                  const cx = ((unit.lng - 114.0) / 1.6) * 120;
+                  const cy = 80 - ((unit.lat - 34.5) / 2.5) * 80;
+                  const alpha = unit.provisions / 200;
+                  return (
+                    <circle key={unit.id} cx={cx} cy={cy} r={Math.max(3, unit.size / 8000)}
+                      fill={unit.provisions > 50 ? '#4a7c4f' : unit.provisions > 20 ? '#b88a44' : '#c43a31'}
+                      opacity={0.25 + alpha} />
+                  );
+                })}
+              </svg>
+            )}
+            {mapMode === 'morale' && (
+              <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="xMidYMid slice" viewBox="0 0 120 80">
+                {state.units.filter(u => !u.isDestroyed).map(unit => {
+                  const cx = ((unit.lng - 114.0) / 1.6) * 120;
+                  const cy = 80 - ((unit.lat - 34.5) / 2.5) * 80;
+                  const alpha = unit.morale / 200;
+                  return (
+                    <circle key={unit.id} cx={cx} cy={cy} r={Math.max(3, unit.size / 8000)}
+                      fill={unit.morale >= 80 ? '#10b981' : unit.morale >= 40 ? '#f59e0b' : '#ef4444'}
+                      opacity={0.25 + alpha} />
+                  );
+                })}
+              </svg>
+            )}
+            {mapMode === 'territory' && (
+              <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="xMidYMid slice" viewBox="0 0 120 80">
+                {/* Simple voronoi-like territory split */}
+                <polygon points="0,0 60,0 45,80 0,80" fill="rgba(196,58,49,0.06)" stroke="rgba(196,58,49,0.15)" strokeWidth="0.3" strokeDasharray="1 0.5" />
+                <polygon points="60,0 120,0 120,80 45,80" fill="rgba(74,124,79,0.06)" stroke="rgba(74,124,79,0.15)" strokeWidth="0.3" strokeDasharray="1 0.5" />
+                <text x="25" y="70" fill="rgba(196,58,49,0.2)" fontSize="4" textAnchor="middle" fontFamily="serif" fontWeight="bold">魏</text>
+                <text x="83" y="15" fill="rgba(74,124,79,0.2)" fontSize="4" textAnchor="middle" fontFamily="serif" fontWeight="bold">齐</text>
+              </svg>
+            )}
+
+            {/* ── Supply lines (SVG layer) ── */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="xMidYMid slice" viewBox="0 0 120 80">
               {state.supplyGraph.edges.map(edge => {
                 const srcNode = state.supplyGraph.nodes.find(n => n.id === edge.source);
                 const tgtNode = state.supplyGraph.nodes.find(n => n.id === edge.target);
                 if (!srcNode || !tgtNode) return null;
 
-                // Map lat/lng to SVG coordinates (crude linear mapping for the scenario area)
-                const toX = (lng: number) => ((lng - 114.0) / 1.5) * 100;
-                const toY = (lat: number) => 100 - ((lat - 34.5) / 2.5) * 100;
+                const toX = (lng: number) => ((lng - 114.0) / 1.6) * 120;
+                const toY = (lat: number) => 80 - ((lat - 34.5) / 2.5) * 80;
 
                 return (
                   <g key={edge.id}>
-                    <line
-                      x1={toX(srcNode.lng)} y1={toY(srcNode.lat)}
-                      x2={toX(tgtNode.lng)} y2={toY(tgtNode.lat)}
-                      stroke={edge.isCut ? 'url(#supplyLineCut)' : edge.isFake ? '#9333EA' : 'url(#supplyLineGrad)'}
-                      strokeWidth={edge.isCut ? 0.3 : 0.6}
-                      strokeDasharray={edge.isCut ? '1 1' : edge.isFake ? '0.5 0.5' : 'none'}
-                    />
-                    {/* Animated supply dots on active edges */}
+                    {/* Glow for active supply lines */}
                     {!edge.isCut && !edge.isFake && (
-                      <circle r="0.5" fill="#10B981">
+                      <line x1={toX(srcNode.lng)} y1={toY(srcNode.lat)}
+                        x2={toX(tgtNode.lng)} y2={toY(tgtNode.lat)}
+                        stroke="#4a7c4f" strokeWidth={2} opacity={0.12} />
+                    )}
+                    <line x1={toX(srcNode.lng)} y1={toY(srcNode.lat)}
+                      x2={toX(tgtNode.lng)} y2={toY(tgtNode.lat)}
+                      stroke={edge.isCut ? '#e0453a' : edge.isFake ? '#7c3aed' : '#5b8c5a'}
+                      strokeWidth={edge.isCut ? 0.5 : 1}
+                      strokeDasharray={edge.isCut ? '1 1' : edge.isFake ? '0.5 0.5' : 'none'}
+                      opacity={edge.isCut ? 0.5 : 0.7}
+                    />
+                    {/* Animated supply dots */}
+                    {!edge.isCut && !edge.isFake && (
+                      <circle r="0.6" fill="#10B981">
                         <animateMotion dur="3s" repeatCount="indefinite"
                           path={`M${toX(srcNode.lng)},${toY(srcNode.lat)} L${toX(tgtNode.lng)},${toY(tgtNode.lat)}`} />
                       </circle>
                     )}
-                    {/* Clickable area to cut supply */}
-                    {!edge.isCut && state.phase === 'STRATEGIZE' && (
-                      <line
-                        x1={toX(srcNode.lng)} y1={toY(srcNode.lat)}
-                        x2={toX(tgtNode.lng)} y2={toY(tgtNode.lat)}
-                        stroke="transparent" strokeWidth={3}
-                        className="cursor-pointer"
-                        onClick={() => handleCutSupply(edge.id)}
-                        title={`切断 ${srcNode.name} ↔ ${tgtNode.name} 粮道`}
-                      />
-                    )}
-                  </g>
-                );
-              })}
-
-              {/* Supply nodes */}
-              {state.supplyGraph.nodes.map(node => {
-                const toX = (lng: number) => ((lng - 114.0) / 1.5) * 100;
-                const toY = (lat: number) => 100 - ((lat - 34.5) / 2.5) * 100;
-
-                return (
-                  <g key={node.id}>
-                    {node.type === 'capital' && (
-                      <circle cx={toX(node.lng)} cy={toY(node.lat)} r={8} fill="url(#capitalGlow)" />
-                    )}
-                    <rect
-                      x={toX(node.lng) - 4} y={toY(node.lat) - 2.5}
-                      width={8} height={5} rx={1}
-                      fill={node.type === 'capital' ? '#8C2F39' : node.type === 'depot' ? '#1a4a1a' : '#1a1a2e'}
-                      stroke={node.type === 'capital' ? '#C5A059' : '#4a5568'}
-                      strokeWidth={0.3}
-                    />
-                    <text
-                      x={toX(node.lng)} y={toY(node.lat) + 5}
-                      textAnchor="middle"
-                      fill="#a0aec0"
-                      fontSize={2.5}
-                      fontFamily="serif"
-                      fontWeight="bold"
-                    >
-                      {node.name}
-                    </text>
-                  </g>
-                );
-              })}
-
-              {/* Units */}
-              {visibleUnits.map(unit => {
-                const toX = (lng: number) => ((lng - 114.0) / 1.5) * 100;
-                const toY = (lat: number) => 100 - ((lat - 34.5) / 2.5) * 100;
-                const isSelected = unit.id === selectedUnitId;
-                const isRouted = unit.isRouted;
-
-                return (
-                  <g
-                    key={unit.id}
-                    className="cursor-pointer"
-                    onClick={() => setSelectedUnitId(unit.id)}
-                  >
-                    {/* Selection ring */}
-                    {isSelected && (
-                      <circle cx={toX(unit.lng)} cy={toY(unit.lat)} r={5}
-                        fill="none" stroke="#C5A059" strokeWidth={0.5}
-                        className="animate-pulse" />
-                    )}
-                    {/* Unit marker */}
-                    <circle
-                      cx={toX(unit.lng)} cy={toY(unit.lat)} r={3}
-                      fill={unit.side === 'allied' ? (unit.isFake ? '#7c3aed' : '#10B981') : '#EF4444'}
-                      stroke={isSelected ? '#fff' : 'none'}
-                      strokeWidth={0.3}
-                      opacity={isRouted ? 0.4 : 1}
-                    />
-                    {/* isFake indicator */}
-                    {unit.isFake && (
-                      <text x={toX(unit.lng)} y={toY(unit.lat) + 1}
-                        textAnchor="middle" fill="#fff" fontSize={2} fontWeight="bold">
-                        ?
-                      </text>
-                    )}
-                    {/* Routed indicator */}
-                    {isRouted && (
-                      <text x={toX(unit.lng) + 3.5} y={toY(unit.lat)}
-                        textAnchor="middle" fill="#EF4444" fontSize={2}>!</text>
-                    )}
-                    {/* Unit name */}
-                    <text
-                      x={toX(unit.lng)} y={toY(unit.lat) - 4}
-                      textAnchor="middle"
-                      fill={unit.side === 'allied' ? '#6EE7B7' : '#FCA5A5'}
-                      fontSize={2.2}
-                      fontFamily="serif"
-                      fontWeight="bold"
-                    >
-                      {unit.name}
-                    </text>
-                    {/* Size */}
-                    <text
-                      x={toX(unit.lng)} y={toY(unit.lat) + 5.5}
-                      textAnchor="middle"
-                      fill="#78716c"
-                      fontSize={1.8}
-                      fontFamily="monospace"
-                    >
-                      {unit.size.toLocaleString()}
-                    </text>
                   </g>
                 );
               })}
             </svg>
 
-            {/* Map legend */}
-            <div className="absolute bottom-2 left-2 bg-black/80 border border-stone-800 rounded p-1.5 text-[8px] font-mono space-y-0.5 z-10">
-              <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500" /> 齐/赵</div>
-              <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500" /> 魏</div>
-              <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-500" /> 疑兵</div>
-              <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500/40" /> 溃散</div>
+            {/* ── Clickable supply line cut zones (overlay) ── */}
+            <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid slice" viewBox="0 0 120 80">
+              {!state.isComplete && state.phase === 'STRATEGIZE' && state.supplyGraph.edges
+                .filter(e => !e.isCut)
+                .map(edge => {
+                  const srcNode = state.supplyGraph.nodes.find(n => n.id === edge.source);
+                  const tgtNode = state.supplyGraph.nodes.find(n => n.id === edge.target);
+                  if (!srcNode || !tgtNode) return null;
+                  const toX = (lng: number) => ((lng - 114.0) / 1.6) * 120;
+                  const toY = (lat: number) => 80 - ((lat - 34.5) / 2.5) * 80;
+                  return (
+                    <line key={edge.id} x1={toX(srcNode.lng)} y1={toY(srcNode.lat)}
+                      x2={toX(tgtNode.lng)} y2={toY(tgtNode.lat)}
+                      stroke="transparent" strokeWidth={6}
+                      className="cursor-pointer hover:stroke-red-500/20 transition-colors"
+                      onClick={() => handleCutSupply(edge.id)}
+                      title={`切断 ${srcNode.name} ↔ ${tgtNode.name}`} />
+                  );
+                })}
+            </svg>
+
+            {/* ── Supply nodes (city badges) ── */}
+            {state.supplyGraph.nodes.map(node => {
+              const xPct = ((node.lng - 114.0) / 1.6) * 100;
+              const yPct = 100 - ((node.lat - 34.5) / 2.5) * 100;
+              const isCapital = node.type === 'capital';
+              return (
+                <div
+                  key={node.id}
+                  className="absolute pointer-events-none"
+                  style={{ left: `${xPct}%`, top: `${yPct}%`, transform: 'translate(-50%, -50%)' }}
+                >
+                  <div className={`flex flex-col items-center ${isCapital ? 'scale-125' : ''}`}>
+                    <div
+                      className={`w-6 h-4 rounded-sm flex items-center justify-center text-[8px] font-black font-serif shadow-lg border ${
+                        isCapital ? 'bg-[#8C2F39] border-[#C5A059] text-white' :
+                        node.type === 'depot' ? 'bg-emerald-900/80 border-emerald-500/40 text-emerald-200' :
+                        'bg-stone-700 border-stone-500 text-stone-200'
+                      }`}
+                    >
+                      {node.name.charAt(0)}
+                    </div>
+                    <span className="text-[8px] font-serif text-stone-400 mt-0.5 whitespace-nowrap">{node.name}</span>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* ── Unit Cards (replaces SVG circles) ── */}
+            {visibleUnits.map(unit => {
+              const xPct = ((unit.lng - 114.0) / 1.6) * 100;
+              const yPct = 100 - ((unit.lat - 34.5) / 2.5) * 100;
+              return (
+                <UnitCard
+                  key={unit.id}
+                  unit={unit}
+                  isSelected={unit.id === selectedUnitId}
+                  isEnemyView={viewerPerspective !== unit.side}
+                  mapMode={mapMode}
+                  x={xPct}
+                  y={yPct}
+                  onClick={() => setSelectedUnitId(unit.id === selectedUnitId ? null : unit.id)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    setContextMenu({ x: e.clientX, y: e.clientY, unitId: unit.id });
+                  }}
+                />
+              );
+            })}
+
+            {/* ── Right-click context menu ── */}
+            <AnimatePresence>
+              {contextMenu && state.phase === 'STRATEGIZE' && (() => {
+                const ctxUnit = state.units.find(u => u.id === contextMenu.unitId);
+                if (!ctxUnit || ctxUnit.side !== 'allied' || ctxUnit.isRouted || ctxUnit.isFake) return null;
+                return (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="fixed z-[100] bg-[#1a1917] border border-stone-700 rounded-md shadow-2xl py-1 min-w-[140px]"
+                    style={{ left: contextMenu.x, top: contextMenu.y }}
+                  >
+                    <div className="text-[9px] text-stone-400 px-3 py-1 border-b border-stone-800 font-bold">
+                      {ctxUnit.name}
+                    </div>
+                    {activeUnits.filter(u => u.side === 'hostile' && !u.isRouted).slice(0, 4).map(enemy => (
+                      <button key={enemy.id}
+                        onClick={() => { handleAttackUnit(ctxUnit.id, enemy.id); setContextMenu(null); }}
+                        className="w-full text-left px-3 py-1.5 text-[10px] text-red-300 hover:bg-red-950/20 flex items-center gap-2">
+                        <Crosshair className="w-3 h-3" /> 攻击 {enemy.name}
+                      </button>
+                    ))}
+                    <button onClick={() => { handleScout(contextMenu.unitId); setContextMenu(null); }}
+                      className="w-full text-left px-3 py-1.5 text-[10px] text-blue-300 hover:bg-blue-950/20 flex items-center gap-2">
+                      <Eye className="w-3 h-3" /> 派遣斥候侦察
+                    </button>
+                  </motion.div>
+                );
+              })()}
+            </AnimatePresence>
+
+            {/* ── Map legend ── */}
+            <div className="absolute bottom-2 left-2 bg-black/80 backdrop-blur border border-stone-800 rounded p-1.5 text-[8px] font-mono space-y-0.5 z-10">
+              <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-[#4a7c4f]" /> 齐/赵</div>
+              <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-[#c43a31]" /> 魏</div>
+              <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-sm bg-[#7c3aed]" /> 疑兵</div>
             </div>
 
-            {/* Click instructions */}
-            <div className="absolute top-2 right-2 bg-black/60 border border-stone-800 rounded px-2 py-1 text-[9px] text-stone-500 z-10">
-              点击补给线切断粮道 | 点击单位查看详情
+            {/* ── Map tips ── */}
+            <div className="absolute top-2 right-2 bg-black/60 backdrop-blur border border-stone-800 rounded px-2 py-1 text-[9px] text-stone-500 z-10 pointer-events-none">
+              右键部队开菜单 | 1-4 切换地图模式
             </div>
           </div>
         </div>
@@ -763,171 +879,159 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
         {/* ── Command Panel (right 5 cols) ── */}
         <div className="lg:col-span-5 flex flex-col space-y-3 min-h-0">
           {/* Selected unit details */}
-          <div className="bg-[#121110] border border-stone-800 rounded-lg p-4 flex-shrink-0">
+          <div className="panel-bamboo-dark p-4 flex-shrink-0">
             <h3 className="text-xs font-serif font-bold text-amber-500/80 uppercase tracking-widest mb-3 border-b border-stone-800 pb-2">
               <Target className="w-3 h-3 inline mr-1" /> 选中单位
             </h3>
 
             {selectedUnit ? (
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-stone-400">名称</span>
-                  <span className="text-stone-200 font-bold">
-                    {selectedUnit.name}
-                    {selectedUnit.isFake && <span className="text-purple-400 ml-1">[疑兵]</span>}
-                    {selectedUnit.isRouted && <span className="text-red-400 ml-1">[溃散]</span>}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-stone-400">阵营</span>
-                  <span className={selectedUnit.side === 'allied' ? 'text-emerald-400' : 'text-red-400'}>
-                    {selectedUnit.side === 'allied' ? '齐/赵联军' : '魏军'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-stone-400">兵力</span>
-                  <span className="text-stone-200">{selectedUnit.size.toLocaleString()} 人</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-stone-400">粮草</span>
-                  <div className="flex items-center gap-1">
-                    <div className="w-16 h-1.5 bg-stone-800 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full ${selectedUnit.provisions > 50 ? 'bg-emerald-500' : selectedUnit.provisions > 20 ? 'bg-amber-500' : 'bg-red-500'}`}
-                        style={{ width: `${selectedUnit.provisions}%` }}
-                      />
-                    </div>
-                    <span className="text-stone-200">{selectedUnit.provisions}%</span>
+              <div className="space-y-1.5 text-[10px]">
+                {/* Unit identity */}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className={`w-8 h-8 rounded flex items-center justify-center text-[10px] font-black text-white ${
+                    selectedUnit.side === 'allied' ? 'bg-[#4a7c4f]' : 'bg-[#c43a31]'
+                  }`}>
+                    {selectedUnit.side === 'allied' ? '齐' : '魏'}
                   </div>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-stone-400">士气</span>
-                  <div className="flex items-center gap-1">
-                    <div className="w-16 h-1.5 bg-stone-800 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full ${selectedUnit.morale > 50 ? 'bg-emerald-500' : selectedUnit.morale > 20 ? 'bg-amber-500' : 'bg-red-600 animate-pulse'}`}
-                        style={{ width: `${selectedUnit.morale}%` }}
-                      />
+                  <div>
+                    <div className="font-bold text-stone-100 text-xs flex items-center gap-1">
+                      {selectedUnit.name}
+                      {selectedUnit.isFake && <span className="text-[9px] px-1 bg-purple-900/50 text-purple-300 rounded">疑兵</span>}
+                      {selectedUnit.isRouted && <span className="text-[9px] px-1 bg-red-900/50 text-red-300 rounded animate-pulse">溃散</span>}
                     </div>
-                    <span className="text-stone-200">{selectedUnit.morale}</span>
+                    <div className="text-stone-500 font-mono">{selectedUnit.size.toLocaleString()} 人</div>
                   </div>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-stone-400">攻击/防御</span>
-                  <span className="text-stone-200">{selectedUnit.attackPower}/{selectedUnit.defensePower}</span>
                 </div>
 
-                {/* Quick actions for selected unit */}
-                {state.phase === 'STRATEGIZE' && selectedUnit.side === 'allied' && !selectedUnit.isRouted && !selectedUnit.isFake && (
-                  <div className="grid grid-cols-4 gap-1 pt-2 border-t border-stone-800 mt-2">
-                    <button onClick={() => handleMoveUnit(selectedUnit.id, 0, 1)} className="px-1 py-1 bg-stone-800 rounded text-[9px] text-stone-400 hover:text-emerald-400">↑北</button>
-                    <button onClick={() => handleMoveUnit(selectedUnit.id, 0, -1)} className="px-1 py-1 bg-stone-800 rounded text-[9px] text-stone-400 hover:text-emerald-400">↓南</button>
-                    <button onClick={() => handleMoveUnit(selectedUnit.id, -1, 0)} className="px-1 py-1 bg-stone-800 rounded text-[9px] text-stone-400 hover:text-emerald-400">←西</button>
-                    <button onClick={() => handleMoveUnit(selectedUnit.id, 1, 0)} className="px-1 py-1 bg-stone-800 rounded text-[9px] text-stone-400 hover:text-emerald-400">→东</button>
+                {/* Supply & Morale dual gauge */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-0.5">
+                    <div className="flex justify-between text-stone-500"><span className="flex items-center gap-0.5"><Wheat className="w-2.5 h-2.5" />粮草</span><span>{selectedUnit.provisions}%</span></div>
+                    <div className="h-1.5 bg-stone-800 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-500"
+                        style={{ background: selectedUnit.provisions > 50 ? '#4a7c4f' : selectedUnit.provisions > 20 ? '#b88a44' : '#c43a31', width: `${selectedUnit.provisions}%` }} />
+                    </div>
                   </div>
-                )}
+                  <div className="space-y-0.5">
+                    <div className="flex justify-between text-stone-500"><span className="flex items-center gap-0.5"><Heart className="w-2.5 h-2.5" />士气</span><span>{selectedUnit.morale}</span></div>
+                    <div className="h-1.5 bg-stone-800 rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-500"
+                        style={{ background: selectedUnit.morale >= 80 ? '#10b981' : selectedUnit.morale >= 40 ? '#f59e0b' : '#ef4444', width: `${selectedUnit.morale}%` }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Combat stats */}
+                <div className="flex gap-3 text-stone-500 pt-1">
+                  <span className="flex items-center gap-0.5"><Swords className="w-2.5 h-2.5 text-red-400" />攻 {selectedUnit.attackPower}</span>
+                  <span className="flex items-center gap-0.5"><Shield className="w-2.5 h-2.5 text-blue-400" />防 {selectedUnit.defensePower}</span>
+                  <span className="flex items-center gap-0.5"><Activity className="w-2.5 h-2.5" />速 {selectedUnit.speed}</span>
+                </div>
               </div>
             ) : (
-              <p className="text-[10px] text-stone-600 font-serif italic text-center py-4">
-                点击地图上的单位以检视详情
+              <p className="text-[10px] text-stone-600 font-serif italic text-center py-6">
+                点击地图部队查看详情<br />右键部队打开命令菜单
               </p>
             )}
           </div>
 
           {/* Action buttons */}
-          <div className="bg-[#121110] border border-stone-800 rounded-lg p-4 flex-shrink-0">
+          <div className="panel-bamboo-dark p-4 flex-shrink-0">
             <h3 className="text-xs font-serif font-bold text-amber-500/80 uppercase tracking-widest mb-3 border-b border-stone-800 pb-2">
-              <Zap className="w-3 h-3 inline mr-1" /> 军令
+              <Zap className="w-3 h-3 inline mr-1" /> 军令 · 预设
             </h3>
 
             {state.phase === 'DEPLOY' && (
               <div className="space-y-2">
                 <p className="text-[10px] text-stone-500 mb-2">部署疑兵（isFake单位）以迷惑魏军：</p>
                 <div className="flex gap-2">
-                  <input
-                    value={deployName}
-                    onChange={e => setDeployName(e.target.value)}
-                    placeholder="疑兵名称，如：齐军右翼"
-                    className="flex-1 bg-stone-950 border border-stone-800 text-stone-200 p-1.5 rounded text-[10px] outline-none focus:border-amber-500/50"
-                  />
-                  <select
-                    value={deployFakeSize}
-                    onChange={e => setDeployFakeSize(Number(e.target.value))}
-                    className="bg-stone-950 border border-stone-800 text-stone-200 p-1.5 rounded text-[10px]"
-                  >
-                    <option value={5000}>5千</option>
-                    <option value={10000}>1万</option>
-                    <option value={20000}>2万</option>
-                    <option value={40000}>4万</option>
+                  <input value={deployName} onChange={e => setDeployName(e.target.value)}
+                    placeholder="疑兵营号，如：齐军右翼"
+                    className="flex-1 bg-stone-950 border border-stone-700 text-stone-200 p-1.5 rounded text-[10px] outline-none focus:border-purple-500/50 font-serif" />
+                  <select value={deployFakeSize} onChange={e => setDeployFakeSize(Number(e.target.value))}
+                    className="bg-stone-950 border border-stone-700 text-stone-200 p-1.5 rounded text-[10px]">
+                    <option value={5000}>5千</option><option value={10000}>1万</option><option value={20000}>2万</option><option value={40000}>4万</option>
                   </select>
                 </div>
-                <button
-                  onClick={handleDeployFakeUnit}
-                  disabled={!deployName.trim()}
-                  className="w-full py-2 bg-purple-900/30 border border-purple-500/30 hover:border-purple-400 text-purple-200 text-[10px] font-bold rounded flex items-center justify-center gap-1 disabled:opacity-30"
-                >
-                  <EyeOff className="w-3 h-3" /> 部署疑兵（消耗500人+50粮）
+                <button onClick={handleDeployFakeUnit} disabled={!deployName.trim()}
+                  className="w-full py-2 bg-purple-900/20 border border-purple-500/30 hover:border-purple-400 text-purple-200 text-[10px] font-bold rounded flex items-center justify-center gap-1 disabled:opacity-30 transition-colors">
+                  <EyeOff className="w-3 h-3" /> 部署疑兵（500人+50粮）
                 </button>
               </div>
             )}
 
             {state.phase === 'STRATEGIZE' && (
-              <div className="space-y-2">
-                <p className="text-[10px] text-stone-500">
-                  选择单位后使用方向键移动，或点击地图粮道切断补给。
-                </p>
+              <div className="space-y-1.5">
+                <p className="text-[10px] text-stone-500 mb-1">选择己方部队后可执行：</p>
+
+                {/* Preset command: Move */}
+                <div className="grid grid-cols-2 gap-1">
+                  {[
+                    { dir: [0, 1] as [number, number], label: '↑ 北进', icon: ChevronRight, cls: 'rotate-[-90deg]' },
+                    { dir: [0, -1] as [number, number], label: '↓ 南移', icon: ChevronRight, cls: 'rotate-90' },
+                    { dir: [-1, 0] as [number, number], label: '← 西行', icon: ChevronRight, cls: 'rotate-180' },
+                    { dir: [1, 0] as [number, number], label: '→ 东征', icon: ChevronRight, cls: '' },
+                  ].map(({ dir, label, icon: Icon, cls }) => (
+                    <button key={label}
+                      onClick={() => selectedUnit && selectedUnit.side === 'allied' && !selectedUnit.isFake && !selectedUnit.isRouted && handleMoveUnit(selectedUnit.id, ...dir)}
+                      disabled={!selectedUnit || selectedUnit.side !== 'allied' || selectedUnit.isFake || selectedUnit.isRouted}
+                      className="py-1.5 bg-stone-900 border border-stone-800 hover:border-emerald-500/30 text-stone-300 text-[9px] rounded flex items-center justify-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed transition-colors font-serif">
+                      <Icon className={`w-2.5 h-2.5 ${cls}`} /> {label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Preset command: Attack targets */}
                 {selectedUnit && selectedUnit.side === 'allied' && !selectedUnit.isFake && !selectedUnit.isRouted && (
-                  <div className="space-y-1">
-                    {/* Attack nearest enemy */}
+                  <>
+                    <div className="text-[8px] text-stone-600 uppercase tracking-wider pt-1">攻击目标</div>
                     {activeUnits.filter(u => u.side === 'hostile' && !u.isRouted).slice(0, 3).map(enemy => {
                       const dist = haversineDistance(selectedUnit.lat, selectedUnit.lng, enemy.lat, enemy.lng);
                       return (
-                        <button
-                          key={enemy.id}
-                          onClick={() => handleAttackUnit(selectedUnit.id, enemy.id)}
-                          className="w-full py-1.5 bg-red-950/20 border border-red-500/20 hover:border-red-400 text-red-300 text-[10px] rounded flex items-center justify-between px-2"
-                        >
-                          <span className="flex items-center gap-1">
-                            <Crosshair className="w-3 h-3" /> 攻击 {enemy.name}
-                          </span>
-                          <span className="text-stone-500">{dist.toFixed(1)} km</span>
+                        <button key={enemy.id} onClick={() => handleAttackUnit(selectedUnit.id, enemy.id)}
+                          className="w-full py-1.5 bg-red-950/15 border border-red-500/20 hover:border-red-400 hover:bg-red-950/30 text-red-300 text-[10px] rounded flex items-center justify-between px-2 transition-colors">
+                          <span className="flex items-center gap-1"><Crosshair className="w-3 h-3" />{enemy.name}</span>
+                          <span className="text-stone-600 font-mono text-[9px]">{dist.toFixed(0)}km</span>
                         </button>
                       );
                     })}
-                    {/* Scout enemy */}
-                    <button
-                      onClick={() => {
-                        const enemies = activeUnits.filter(u => u.side === 'hostile');
-                        if (enemies[0]) handleScout(enemies[0].id);
-                      }}
-                      className="w-full py-1.5 bg-blue-950/20 border border-blue-500/20 hover:border-blue-400 text-blue-300 text-[10px] rounded flex items-center justify-center gap-1"
-                    >
-                      <Eye className="w-3 h-3" /> 派遣斥候侦察
-                    </button>
-                  </div>
+                  </>
                 )}
+
+                {/* Preset command: Supply cut */}
+                <div className="text-[8px] text-stone-600 uppercase tracking-wider pt-1">特殊行动</div>
+                <div className="grid grid-cols-2 gap-1">
+                  <button onClick={() => { const enemies = activeUnits.filter(u => u.side === 'hostile'); if (enemies[0]) handleScout(enemies[0].id); }}
+                    disabled={activeUnits.filter(u => u.side === 'hostile').length === 0}
+                    className="py-1.5 bg-blue-950/15 border border-blue-500/20 hover:border-blue-400 text-blue-300 text-[9px] rounded flex items-center justify-center gap-1 disabled:opacity-30 transition-colors font-serif">
+                    <Eye className="w-2.5 h-2.5" /> 斥候侦察
+                  </button>
+                  <button
+                    onClick={() => { const cutEdge = state.supplyGraph.edges.find(e => !e.isCut); if (cutEdge) handleCutSupply(cutEdge.id); }}
+                    disabled={!state.supplyGraph.edges.some(e => !e.isCut)}
+                    className="py-1.5 bg-amber-950/15 border border-amber-500/20 hover:border-amber-400 text-amber-300 text-[9px] rounded flex items-center justify-center gap-1 disabled:opacity-30 transition-colors font-serif">
+                    <AlertTriangle className="w-2.5 h-2.5" /> 切断粮道
+                  </button>
+                </div>
               </div>
             )}
 
             {state.phase === 'RESOLVE' && (
               <div className="text-center">
-                <button
-                  onClick={handleResolve}
-                  disabled={isExecuting}
-                  className="w-full py-3 bg-red-900/40 border border-red-500/30 hover:border-red-400 text-red-200 font-serif font-black text-sm rounded flex items-center justify-center gap-2 disabled:opacity-50"
-                >
+                <button onClick={handleResolve} disabled={isExecuting}
+                  className="w-full py-3 bg-gradient-to-r from-red-900/40 to-amber-900/40 border border-red-500/30 hover:border-red-400 text-red-200 font-serif font-black text-sm rounded flex items-center justify-center gap-2 disabled:opacity-50 transition-all shadow-lg">
                   {isExecuting ? (
                     <span className="w-4 h-4 border-2 border-red-200 border-t-transparent rounded-full animate-spin" />
                   ) : (
                     <Play className="w-4 h-4" />
                   )}
-                  {isExecuting ? '天机演算中...' : '执行回合结算'}
+                  {isExecuting ? '天机演算中...' : '⚔️ 执行回合结算'}
                 </button>
               </div>
             )}
 
             {state.phase === 'AFTERMATH' && (
-              <p className="text-[10px] text-amber-400 font-serif text-center">
+              <p className="text-[10px] text-amber-400 font-serif text-center italic">
                 战事已毕，史记入册。
               </p>
             )}
@@ -940,24 +1044,37 @@ export default function WeiJiuZhaoScenario({ onDynastyFateUpdate, onTimelineEntr
                 ? () => { dispatch({ type: 'SET_PHASE', phase: 'RESOLVE' }); }
                 : handleAdvancePhase
               }
-              className="w-full py-2.5 bg-gradient-to-r from-amber-900/30 to-stone-900 border border-amber-500/30 hover:border-amber-400 text-amber-200 font-serif font-black text-xs rounded flex items-center justify-center gap-2 transition-all"
+              className="w-full py-2.5 bg-gradient-to-r from-[#8C2F39]/20 via-amber-900/20 to-[#8C2F39]/20 border border-[#8C2F39]/30 hover:border-amber-400/50 text-amber-200 font-serif font-black text-xs rounded flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-amber-900/20"
             >
               <SkipForward className="w-3.5 h-3.5" />
-              {state.phase === 'STRATEGIZE' ? '完成部署，进入决胜阶段' : `进入下一阶段: ${phaseDescription(nextPhase(state.phase))}`}
+              {state.phase === 'STRATEGIZE' ? '军令已毕，进入决胜阶段' : `下一阶段: ${phaseDescription(nextPhase(state.phase))}`}
             </button>
           )}
+
+          {/* Weather indicator */}
+          <div className="flex items-center justify-between text-[9px] text-stone-600 px-1">
+            <span className="flex items-center gap-1">
+              <Thermometer className="w-2.5 h-2.5" />
+              天时: {weather === 'CLEAR' ? '☀️ 晴' : weather === 'RAIN' ? '🌧️ 雨' : weather === 'WIND' ? '💨 风' : '🌫️ 雾'}
+            </span>
+            <button onClick={() => {
+              const cycle: Array<'CLEAR' | 'RAIN' | 'WIND' | 'FOG'> = ['CLEAR', 'RAIN', 'WIND', 'FOG'];
+              const idx = cycle.indexOf(weather);
+              setWeather(cycle[(idx + 1) % cycle.length]);
+            }} className="text-stone-500 hover:text-stone-300 underline cursor-pointer">变天</button>
+          </div>
         </div>
       </div>
 
       {/* ── Combat Log (bottom) ── */}
-      <div className="bg-[#0a0a0a] border border-stone-800 rounded-lg shadow-2xl flex flex-col overflow-hidden" style={{ maxHeight: '180px' }}>
-        <div className="bg-stone-900 border-b border-stone-800 p-2 flex justify-between items-center z-10 flex-shrink-0">
+      <div className="panel-bamboo-dark flex flex-col overflow-hidden" style={{ maxHeight: '180px' }}>
+        <div className="bg-stone-900/80 backdrop-blur border-b border-stone-800 p-2 flex justify-between items-center z-10 flex-shrink-0">
           <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-2">
             <Activity className="w-3 h-3" />
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            战报反馈流 (Combat Log)
+            战报反馈流 · Combat Log
           </span>
-          <span className="text-[9px] text-stone-600">{state.combatLog.length} 条记录</span>
+          <span className="text-[9px] text-stone-600">{state.combatLog.length} 条</span>
         </div>
         <div
           ref={combatLogRef}
