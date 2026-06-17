@@ -107,6 +107,14 @@ const zh: Record<string, string> = {
   'command.weather.change': '变天',
 
   // ══════════════════════════════════════════
+  // 敌方 AI 统帅
+  // ══════════════════════════════════════════
+  'ai.commander': '敌将',
+  'ai.cautious': '持重',
+  'ai.balanced': '相机',
+  'ai.aggressive': '凶悍',
+
+  // ══════════════════════════════════════════
   // 右键菜单
   // ══════════════════════════════════════════
   'context.attack': '攻击',
@@ -242,6 +250,141 @@ const zh: Record<string, string> = {
   'node.daliang': '大梁 (魏都)',
   'node.handan': '邯郸 (赵都)',
   'node.qidepot': '齐军补给站',
+
+  // ══════════════════════════════════════════
+  // App 主标题与 HUD
+  // ══════════════════════════════════════════
+  'app.title': '《孙子》封建大战略推演本铺',
+  'app.subtitle': '历史阵营霸权沙盒推演与实时军情网络',
+  'app.status': '战役赛季就绪',
+  'hud.mandate': '天命值',
+  'hud.coffers': '国库金匮',
+  'hud.coffers.unit': '镒',
+  'hud.stability': '安邦稳定度',
+  'auth.logout.button': '注销雅号',
+  'auth.logout.title': '清空缓存，退回大门并开启新手引导',
+  'sound.unmute.title': '开启古典背景声效',
+  'sound.mute.title': '静音',
+
+  // ══════════════════════════════════════════
+  // 加载界面
+  // ══════════════════════════════════════════
+  'loading.text': '天演罗盘印信鉴别中...',
+
+  // ══════════════════════════════════════════
+  // 登录页
+  // ══════════════════════════════════════════
+  'login.title': '《孙子兵法》天演兵道本铺',
+  'login.subtitle': '历史权谋与战术沙盒',
+  'login.quote': '"兵者，国之大事也。死生之地，存亡之道，不可不察也。"',
+  'login.tab.player': '布衣策士入营',
+  'login.tab.admin': '大司马督阁',
+  'login.field.nickname.label': '请输入或选定您的策士雅号',
+  'login.field.nickname.placeholder': '请输入或选择雅号，如：苏秦...',
+  'login.field.password.label': '请设置或填入通关密匙',
+  'login.field.password.placeholder': '不少于六位之密匙',
+  'login.register.check': '初次入朝，新立策士玉牌 (注册)',
+  'login.monikers.label': '🛡️ 策事堂古贤大贤备选：',
+  'login.button.submit': '送信入朝 · 即刻起誓',
+  'login.admin.label': '大司马特权入阁密令',
+  'login.admin.placeholder': '请输入密令和密钥 (suntzu666)',
+  'login.admin.hint': '💡 操作员辅导：大司马主策划在与 AI 聊天或自主调试全篇核心机制（机制法典）与沙盒时纪速度等高级后台功能时，特以此凭据登录。',
+  'login.admin.hint2': '默认测试体验密码为：',
+  'login.admin.button': '盖鉴御命印信 · 督理总坛',
+  'login.version': '永续数理沙盒系统版本 v2.9.2-发布版',
+  'login.error.missing': '雅号与入朝密匙缺一不可',
+  'login.error.tooshort': '防伪关防，密匙至少须为六字决',
+  'login.error.alreadyRegistered': '此雅号已有录入，若为其主，请取消「新立玉牌」直登',
+  'login.error.wrongPassword': '兵籍名册查实无此人，或主公记错密匙',
+  'login.error.notFound': '未见其人档案，若初次造访，请勾选「新立玉牌」注册',
+  'login.ready': '主公，天演已备。盖鉴启誓，即刻运筹天下！',
+
+  // ══════════════════════════════════════════
+  // 导航栏分类标题
+  // ══════════════════════════════════════════
+  'nav.category.tactical': '🎯 战局推演本署',
+  'nav.category.court': '🏛️ 朝堂中枢大司马',
+  'nav.category.faction': '⛓️ 军工刺客与世家大贾',
+
+  // ══════════════════════════════════════════
+  // 导航 Tab
+  // ══════════════════════════════════════════
+  'tab.map_battle.name': '真实地图作战 🌍',
+  'tab.map_battle.desc': '神州实境战例与九地天演',
+  'tab.timeline.name': '天命天演 📊',
+  'tab.timeline.desc': '朝代兴衰大纪事与皇家施政断案',
+  'tab.aristocrat.name': '九品门阀 (方向一)',
+  'tab.aristocrat.desc': '动态推演世家与皇权的动态博弈',
+  'tab.reform.name': '变法改革 (方向二)',
+  'tab.reform.desc': '激进新政与各阶层反噬推演',
+  'tab.succession.name': '宫廷夺嫡 (方向三)',
+  'tab.succession.desc': '老皇帝幕后操控九子夺嫡大戏',
+  'tab.tributary.name': '羁縻朝贡 (方向四)',
+  'tab.tributary.desc': '天朝上国与周边藩国的朝贡体系推演',
+  'tab.ideology.name': '诸子百家 (方向五)',
+  'tab.ideology.desc': '帝国底层思想控制与排他性演化',
+  'tab.landmerge.name': '土地兼并 (方向六)',
+  'tab.landmerge.desc': '经济死结与流民大潮的周期律',
+  'tab.secretpolice.name': '酷吏缇骑 (方向七)',
+  'tab.secretpolice.desc': '特务政治与皇帝猜忌的恐怖平衡',
+  'tab.factionalism.name': '结党营私 (方向八)',
+  'tab.factionalism.desc': '科举取士与朋党之争内耗推演',
+  'tab.famine.name': '漕运赈灾 (方向九)',
+  'tab.famine.desc': '天灾常平仓与帝国经济生命线',
+  'tab.vassal.name': '宗室削藩 (方向十)',
+  'tab.vassal.desc': '推恩令与诸侯靖难的内战博弈',
+  'tab.characternetwork.name': '权力图谱 (方向十一)',
+  'tab.characternetwork.desc': 'CK3风格君臣羁绊与心理压力场',
+  'tab.macroeconomy.name': '王朝经济 (方向十二)',
+  'tab.macroeconomy.desc': 'V3风格盐铁宏观供需演化',
+  'tab.policy_tree.name': '国策演进树 (方案A)',
+  'tab.policy_tree.desc': '视觉化的节点政策树解锁系统',
+  'tab.faction_parliament.name': '派系议政殿 (方案B)',
+  'tab.faction_parliament.desc': 'V3式利益集团可视化席位图',
+  'tab.reigns_swipe.name': '命运卡牌 (方案C)',
+  'tab.reigns_swipe.desc': 'Reigns四维平衡左右滑动抉择',
+  'tab.eu4_diplomacy.name': '地缘外交网 (方案D)',
+  'tab.eu4_diplomacy.desc': 'EU4动态侵略扩张与包围网',
+  'tab.logistics.name': '兵者：局 (地网后勤)',
+  'tab.logistics.desc': 'AI驱动图论与大军摩擦系统',
+  'tab.deception.name': '兵者：局 (诡道迷雾)',
+  'tab.deception.desc': 'AI驱动虚假情报与心理战',
+  'tab.weijiu_scenario.name': '围魏救赵 ⚔️🔥',
+  'tab.weijiu_scenario.desc': '全场景整合：地图+补给+诡道+评分',
+  'tab.multiplayer.name': '天命总坛 🌟',
+  'tab.multiplayer.desc': '多人实时云端朝政对决',
+  'tab.war_philosophy.name': '兵道生存 🔥',
+  'tab.war_philosophy.desc': '以兵法为生存哲学的模拟推演',
+  'tab.combat.name': '奇正军争 ⚔️',
+  'tab.combat.desc': '虚实九地将领五危',
+  'tab.trade.name': '大商世家 💰',
+  'tab.trade.desc': '私盐垄断与阶层天梯',
+  'tab.uprising_culture.name': '义军起义 🚩',
+  'tab.uprising_culture.desc': '流民暴动与平叛镇压',
+  'tab.gdd.name': '策划主编 📝',
+  'tab.gdd.desc': '游戏核心设计与架构',
+
+  // ══════════════════════════════════════════
+  // 兵法卡牌（补充字段）
+  // ══════════════════════════════════════════
+  'card.qizheng.desc': '军争大略。开启后，暂时对战斗攻防及军备决策赋能。对于【真实地图】【奇正军争】【兵道生存】模块提供 35% 军力与胜战结算加权。',
+  'card.qizheng.effect': '攻防胜战算率提高 35%',
+  'card.huogong.desc': '绝道烧营。暂时提升战场爆发或反叛信仰。对于【义军信仰】模块之起义爆发及信仰转化速度提升 50% 极效倍率。',
+  'card.huogong.effect': '起义传布/火攻摧防速度增加 50%',
+  'card.wujian.desc': '谍谋幽玄。暂时强化细作刺采、离间攻心及结盟几率。对于【五间连环】【多边外交】【朝堂夺嫡】提供额定 45% 的情报突破胜算。',
+  'card.wujian.effect': '五间探察/外交结交率提升 45%',
+  'card.shangzhan.desc': '赋裕兵饷。暂时增调商业赋税效率及丰裕度。对于【大商世家】行商利息或【天命天演】财政分红增幅 40%。',
+  'card.shangzhan.effect': '盐铁商课/帑藏年税分红提振 40%',
+  'card.duration': '30S 持续',
+  'card.expired': '持续威力消退，归于常法大盘。',
+  'card.art': '兵法',
+
+  // ══════════════════════════════════════════
+  // 页脚
+  // ══════════════════════════════════════════
+  'footer.copyright': '© 《孙子》 封建大战略异步朝政策略游艺网盟 · 咸阳沙盘中枢本机',
+  'footer.version': '网络枢纽版本: 拾叁·壹壹壹柒·大司马典藏版',
+  'footer.location': '大本营执事指挥处: 咸阳相国府',
 };
 
 export default zh;

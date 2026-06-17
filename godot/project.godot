@@ -1,0 +1,32 @@
+; Engine configuration file — Art of War (Godot 4.6 port)
+; Generated as the foundation for the native game port.
+
+config_version=5
+
+[application]
+
+config/name="孙子 · Art of War"
+run/main_scene="res://Main.tscn"
+config/features=PackedStringArray("4.6", "GL Compatibility")
+config/icon="res://icon.svg"
+
+[autoload]
+
+Locale="*res://Locale.gd"
+
+[debug]
+
+gdscript/warnings/treat_warnings_as_errors=false
+
+[gui]
+
+theme/custom="res://ui_theme.tres"
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://localization/strings.en.translation", "res://localization/strings.zh.translation")
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

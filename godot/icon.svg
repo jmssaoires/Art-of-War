@@ -1,0 +1,5 @@
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">
+  <rect width="128" height="128" rx="20" fill="#0d0c0b"/>
+  <rect x="8" y="8" width="112" height="112" rx="14" fill="none" stroke="#C5A059" stroke-width="3"/>
+  <text x="64" y="86" font-family="serif" font-size="72" font-weight="bold" text-anchor="middle" fill="#C5A059">兵</text>
+</svg>

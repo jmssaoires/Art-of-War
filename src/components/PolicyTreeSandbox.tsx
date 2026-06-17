@@ -50,7 +50,7 @@ export default function PolicyTreeSandbox() {
   const handleUnlock = (node: PolicyNode) => {
     if (!isAvailable(node)) return;
     if (politicalPower < node.cost) {
-      sfx.playError?.() || sfx.playScroll();
+      sfx.playError();
       return;
     }
     

@@ -108,6 +108,14 @@ const en: Record<string, string> = {
   'command.weather.change': 'Change',
 
   // ══════════════════════════════════════════
+  // Enemy AI Commander
+  // ══════════════════════════════════════════
+  'ai.commander': 'Enemy AI',
+  'ai.cautious': 'Cautious',
+  'ai.balanced': 'Balanced',
+  'ai.aggressive': 'Aggressive',
+
+  // ══════════════════════════════════════════
   // Context Menu
   // ══════════════════════════════════════════
   'context.attack': 'Attack',
@@ -119,6 +127,7 @@ const en: Record<string, string> = {
   'log.title': 'Combat Log',
   'log.waiting': 'Awaiting turn start...',
   'log.count': 'entries',
+  'log.unit.placeholder': '',
 
   // ══════════════════════════════════════════
   // Combat / Supply Dynamic Logs
@@ -242,6 +251,141 @@ const en: Record<string, string> = {
   'node.daliang': 'Daliang (Wei Capital)',
   'node.handan': 'Handan (Zhao Capital)',
   'node.qidepot': 'Qi Supply Depot',
+
+  // ══════════════════════════════════════════
+  // App Title & HUD
+  // ══════════════════════════════════════════
+  'app.title': 'Sun Tzu — Feudal Grand Strategy Sandbox',
+  'app.subtitle': 'Historical faction hegemony simulation & real-time intelligence network',
+  'app.status': 'Campaign Season Ready',
+  'hud.mandate': 'Mandate',
+  'hud.coffers': 'Treasury',
+  'hud.coffers.unit': 'gold',
+  'hud.stability': 'Stability',
+  'auth.logout.button': 'Log Out',
+  'auth.logout.title': 'Clear cache and return to login',
+  'sound.unmute.title': 'Enable classical audio',
+  'sound.mute.title': 'Mute',
+
+  // ══════════════════════════════════════════
+  // Loading Screen
+  // ══════════════════════════════════════════
+  'loading.text': 'Validating strategist credentials...',
+
+  // ══════════════════════════════════════════
+  // Login Page
+  // ══════════════════════════════════════════
+  'login.title': "Sun Tzu's Art of War — Grand Strategy Sandbox",
+  'login.subtitle': 'Historical Intrigue & Tactical Simulation',
+  'login.quote': '"War is of vital importance to the State. It is a matter of life and death, a road either to safety or to ruin."',
+  'login.tab.player': 'Warlord Login',
+  'login.tab.admin': 'Grand Marshal',
+  'login.field.nickname.label': 'Enter your warlord name',
+  'login.field.nickname.placeholder': 'e.g. Sun Bin, Zhang Yi...',
+  'login.field.password.label': 'Set or enter your password',
+  'login.field.password.placeholder': 'Minimum 6 characters',
+  'login.register.check': 'New account (Register)',
+  'login.monikers.label': '🛡️ Suggested historical names:',
+  'login.button.submit': 'Enter the Court',
+  'login.admin.label': 'Grand Marshal passcode',
+  'login.admin.placeholder': 'Enter passcode (suntzu666)',
+  'login.admin.hint': '💡 Developer note: the Grand Marshal account unlocks the GDD editor, AI mechanic tools, and timeline speed controls.',
+  'login.admin.hint2': 'Default test passcode: ',
+  'login.admin.button': 'Enter as Grand Marshal',
+  'login.version': 'Perpetual Sandbox v2.9.2-release',
+  'login.error.missing': 'Warlord name and password are both required',
+  'login.error.tooshort': 'Password must be at least 6 characters',
+  'login.error.alreadyRegistered': 'This name is already taken — uncheck "New Account" to log in',
+  'login.error.wrongPassword': 'No matching record — check your credentials',
+  'login.error.notFound': 'No account found — check "New Account" to register',
+  'login.ready': 'My lord, the simulation awaits. Swear the oath and command your forces!',
+
+  // ══════════════════════════════════════════
+  // Navigation Category Headers
+  // ══════════════════════════════════════════
+  'nav.category.tactical': '🎯 Grand Strategy Sandbox',
+  'nav.category.court': '🏛️ Imperial Court Command',
+  'nav.category.faction': '⛓️ Guilds & Merchants',
+
+  // ══════════════════════════════════════════
+  // Navigation Tabs
+  // ══════════════════════════════════════════
+  'tab.map_battle.name': 'Real-World Battle Map 🌍',
+  'tab.map_battle.desc': 'Historical campaigns and Nine Lands terrain',
+  'tab.timeline.name': 'Dynasty Engine 📊',
+  'tab.timeline.desc': 'Rise and fall chronicle with imperial governance',
+  'tab.aristocrat.name': 'Nine Ranks Clans (Dir. 1)',
+  'tab.aristocrat.desc': 'Dynamic noble–imperial power struggle',
+  'tab.reform.name': 'Dynastic Reform (Dir. 2)',
+  'tab.reform.desc': 'Radical reforms and multi-faction backlash',
+  'tab.succession.name': 'Imperial Succession (Dir. 3)',
+  'tab.succession.desc': 'Aging emperor orchestrates the nine-prince contest',
+  'tab.tributary.name': 'Tributary System (Dir. 4)',
+  'tab.tributary.desc': 'The Middle Kingdom and its vassal tribute network',
+  'tab.ideology.name': 'Hundred Schools (Dir. 5)',
+  'tab.ideology.desc': 'Imperial ideological control and rival philosophies',
+  'tab.landmerge.name': 'Land Merger (Dir. 6)',
+  'tab.landmerge.desc': 'Economic deadlock and peasant migration cycles',
+  'tab.secretpolice.name': 'Secret Police (Dir. 7)',
+  'tab.secretpolice.desc': 'Imperial spy networks and the balance of terror',
+  'tab.factionalism.name': 'Court Factions (Dir. 8)',
+  'tab.factionalism.desc': 'Bureaucratic factionalism and imperial infighting',
+  'tab.famine.name': 'Famine Relief (Dir. 9)',
+  'tab.famine.desc': 'Granary logistics and imperial economic lifelines',
+  'tab.vassal.name': 'Vassal Pacification (Dir. 10)',
+  'tab.vassal.desc': 'Enfeoffment edicts and princely civil wars',
+  'tab.characternetwork.name': 'Power Network (Dir. 11)',
+  'tab.characternetwork.desc': 'CK3-style lord–vassal bonds and psychological stress',
+  'tab.macroeconomy.name': 'Dynastic Economy (Dir. 12)',
+  'tab.macroeconomy.desc': 'V3-style salt-iron supply and demand simulation',
+  'tab.policy_tree.name': 'Policy Tree (Option A)',
+  'tab.policy_tree.desc': 'Visual node-based policy unlock system',
+  'tab.faction_parliament.name': 'Parliament (Option B)',
+  'tab.faction_parliament.desc': 'V3-style interest group seat visualization',
+  'tab.reigns_swipe.name': 'Fate Cards (Option C)',
+  'tab.reigns_swipe.desc': 'Reigns-style four-axis balance swipe decisions',
+  'tab.eu4_diplomacy.name': 'Geopolitical Network (Option D)',
+  'tab.eu4_diplomacy.desc': 'EU4-style aggression, expansion, and encirclement',
+  'tab.logistics.name': 'Art of War: Net (Logistics)',
+  'tab.logistics.desc': 'AI-driven graph theory and army friction',
+  'tab.deception.name': 'Art of War: Net (Deception)',
+  'tab.deception.desc': 'AI-driven false intelligence and psychological warfare',
+  'tab.weijiu_scenario.name': 'Relieve Zhao by Besieging Wei ⚔️🔥',
+  'tab.weijiu_scenario.desc': 'Full integration: map + supply + deception + scoring',
+  'tab.multiplayer.name': 'Grand Hall 🌟',
+  'tab.multiplayer.desc': 'Real-time multiplayer cloud governance',
+  'tab.war_philosophy.name': 'Art of War Survival 🔥',
+  'tab.war_philosophy.desc': 'Sun Tzu philosophy as survival simulation',
+  'tab.combat.name': 'Unorthodox Warfare ⚔️',
+  'tab.combat.desc': 'Nine Lands, Five Dangers, and general attributes',
+  'tab.trade.name': 'Merchant Dynasties 💰',
+  'tab.trade.desc': 'Salt monopoly and social class ladder',
+  'tab.uprising_culture.name': 'Peasant Uprising 🚩',
+  'tab.uprising_culture.desc': 'Peasant revolts and imperial suppression',
+  'tab.gdd.name': 'Game Designer 📝',
+  'tab.gdd.desc': 'Core game design and architecture',
+
+  // ══════════════════════════════════════════
+  // Stratagem Cards (supplementary fields)
+  // ══════════════════════════════════════════
+  'card.qizheng.desc': 'Grand strategy. Temporarily empowers combat and military decisions. Grants 35% military bonus for Battle Map, Unorthodox Warfare, and Art of War Survival modules.',
+  'card.qizheng.effect': '+35% combat and victory rate',
+  'card.huogong.desc': 'Fire and ambush. Temporarily boosts battlefield burst or rebellion. Increases uprising and belief conversion rate by 50% in the Peasant Uprising module.',
+  'card.huogong.effect': '+50% uprising spread and fire attack rate',
+  'card.wujian.desc': 'Espionage mastery. Temporarily boosts spy operations, subversion, and alliance chances. Provides 45% intelligence breakthrough for Five Spies, Diplomacy, and Succession modules.',
+  'card.wujian.effect': '+45% spy and diplomatic success rate',
+  'card.shangzhan.desc': 'Commercial dominance. Temporarily boosts tax efficiency and treasury. Increases merchant interest for Merchant Dynasties or treasury dividends in Dynasty Engine by 40%.',
+  'card.shangzhan.effect': '+40% tax and treasury dividend',
+  'card.duration': '30s active',
+  'card.expired': 'has expired — returning to standard operations.',
+  'card.art': 'Art',
+
+  // ══════════════════════════════════════════
+  // Footer
+  // ══════════════════════════════════════════
+  'footer.copyright': '© Art of War · Feudal Grand Strategy Async Governance · Local Xianyang Sandbox',
+  'footer.version': 'Network Version: XIII·1117·Grand Marshal Edition',
+  'footer.location': "Command HQ: Xianyang Chancellor's Office",
 };
 
 export default en;

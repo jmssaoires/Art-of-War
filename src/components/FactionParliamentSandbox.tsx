@@ -263,7 +263,7 @@ export default function FactionParliamentSandbox() {
   );
 }
 
-function GSeat({ x, y, color, delay }: { x: number, y: number, color: string, delay: number }) {
+const GSeat: React.FC<{ x: number, y: number, color: string, delay: number }> = ({ x, y, color, delay }) => {
   return (
     <motion.circle 
        cx={x} 
@@ -277,4 +277,4 @@ function GSeat({ x, y, color, delay }: { x: number, y: number, color: string, de
        strokeWidth="1.5"
     />
   );
-}
+};

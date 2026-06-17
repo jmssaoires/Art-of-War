@@ -53,6 +53,8 @@ import {
   resolveCombat,
   classifyTerrainFromPosition,
 } from '../engine/combatEngine';
+import { planEnemyTurn } from '../engine/aiCommander';
+import type { AIDifficulty } from '../engine/aiCommander';
 import UnitCard from './UnitCard';
 import type { Locale } from '../i18n/LocaleContext';
 
@@ -211,6 +213,7 @@ export default function WeiJiuZhaoScenario({ locale, t, onDynastyFateUpdate, onT
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [viewerPerspective, setViewerPerspective] = useState<'allied' | 'hostile'>('allied');
   const [weather, setWeather] = useState<'CLEAR' | 'RAIN' | 'WIND' | 'FOG'>('CLEAR');
+  const [aiDifficulty, setAiDifficulty] = useState<AIDifficulty>('BALANCED');
   const [isExecuting, setIsExecuting] = useState(false);
   const [showVictory, setShowVictory] = useState(false);
   const [deployName, setDeployName] = useState('');
@@ -432,90 +435,156 @@ export default function WeiJiuZhaoScenario({ locale, t, onDynastyFateUpdate, onT
     if (state.phase !== 'RESOLVE') return;
     setIsExecuting(true);
 
+    const clamp = (n: number) => Math.max(0, Math.min(100, n));
+
     try {
-      // 1. Supply tick — BFS + morale + provisions
+      // Work on a single mutable snapshot so every sub-system (AI, supply,
+      // panic, revelation) reads consistent values and we dispatch ONE patch
+      // per unit at the end — avoids stale-closure clobbering between steps.
+      const work: UnifiedUnit[] = state.units.map(u => ({ ...u }));
+      const byId = (id: string) => work.find(u => u.id === id);
+      const logs: string[] = [];
+      const edgeCutIds = new Set<string>();
+
+      // ── 0. Enemy AI commander acts (敌将) ──
+      const plan = planEnemyTurn(
+        work,
+        state.supplyGraph.nodes,
+        state.supplyGraph.edges,
+        'hostile',
+        'allied',
+        WEI_JIU_ZHAO_SCENARIO.alliedCapitalId,
+        aiDifficulty
+      );
+      for (const act of plan.actions) {
+        if (act.kind === 'ATTACK' && act.targetId) {
+          const atk = byId(act.unitId);
+          const def = byId(act.targetId);
+          if (!atk || !def || atk.isDestroyed || def.isDestroyed) continue;
+          const terrain = classifyTerrainFromPosition(def.lat, def.lng);
+          const r = resolveCombat({ attacker: atk, defender: def, terrain, weather });
+          atk.size = r.attackerSurvivingSize;
+          atk.morale = clamp(atk.morale + r.attackerMoraleDelta);
+          atk.provisions = Math.max(0, atk.provisions - 10);
+          atk.isDestroyed = atk.size <= 0;
+          def.size = r.defenderSurvivingSize;
+          def.morale = clamp(def.morale + r.defenderMoraleDelta);
+          def.isDestroyed = def.size <= 0;
+          logs.push(`🤖 ${r.narrative}`);
+        } else if (act.kind === 'MOVE') {
+          const u = byId(act.unitId);
+          if (!u || u.isDestroyed) continue;
+          u.lat += act.dLat ?? 0;
+          u.lng += act.dLng ?? 0;
+          u.provisions = Math.max(0, u.provisions - 5);
+          logs.push(`🤖 ${act.log}`);
+        } else if (act.kind === 'CUT_SUPPLY' && act.edgeId) {
+          edgeCutIds.add(act.edgeId);
+          logs.push(`🤖 ${act.log}`);
+        }
+      }
+
+      // ── 1. Supply tick — BFS + morale + provisions (on post-AI snapshot) ──
       const supplyResult = runSupplyTick(
-        state.units,
+        work,
         state.supplyGraph.nodes,
         state.supplyGraph.edges,
         WEI_JIU_ZHAO_SCENARIO.alliedCapitalId,
         WEI_JIU_ZHAO_SCENARIO.hostileCapitalId
       );
 
-      // Apply supply results to each unit
       const newlyRoutedIds = new Set<string>();
       for (const ur of supplyResult.unitResults) {
-        const patch: Partial<UnifiedUnit> = {
-          morale: ur.moraleResult.nextMorale,
-          provisions: Math.max(0, (state.units.find(u => u.id === ur.unitId)?.provisions ?? 100) - ur.provisionsConsumed),
-          isRouted: ur.moraleResult.isRouted,
-        };
-        if (ur.moraleResult.isRouted) newlyRoutedIds.add(ur.unitId);
-        dispatch({ type: 'UPDATE_UNIT', unitId: ur.unitId, patch });
-        for (const msg of ur.logMessages) {
-          dispatch({ type: 'ADD_COMBAT_LOG', message: msg });
-        }
+        const u = byId(ur.unitId);
+        if (!u) continue;
+        const wasRouted = u.isRouted;
+        u.morale = ur.moraleResult.nextMorale;
+        u.provisions = Math.max(0, u.provisions - ur.provisionsConsumed);
+        u.isRouted = ur.moraleResult.isRouted;
+        if (ur.moraleResult.isRouted && !wasRouted) newlyRoutedIds.add(ur.unitId);
+        logs.push(...ur.logMessages);
       }
+      for (const id of supplyResult.edgesCutThisTick) edgeCutIds.add(id);
 
-      // 2. Panic contagion
+      // ── 2. Panic contagion ──
       if (newlyRoutedIds.size > 0) {
-        const contagions = computePanicContagion(state.units, newlyRoutedIds);
+        const contagions = computePanicContagion(work, newlyRoutedIds);
         for (const c of contagions) {
-          const unit = state.units.find(u => u.id === c.unitId);
-          if (unit) {
-            dispatch({
-              type: 'UPDATE_UNIT',
-              unitId: c.unitId,
-              patch: { morale: Math.max(0, unit.morale + c.penalty) },
-            });
-            dispatch({
-              type: 'ADD_COMBAT_LOG',
-              message: `😱 【恐慌传染】${unit.name} ${c.reason} 士气 ${c.penalty}`,
-            });
-          }
+          const u = byId(c.unitId);
+          if (!u) continue;
+          u.morale = clamp(u.morale + c.penalty);
+          logs.push(`😱 【恐慌传染】${u.name} ${c.reason} 士气 ${c.penalty}`);
         }
       }
 
-      // 3. Fake unit revelation
-      const revelations = checkAllFakeRevelations(state.units);
+      // ── 3. Fake unit revelation (疑兵识破) ──
+      const revelations = checkAllFakeRevelations(work);
       for (const rev of revelations) {
-        if (rev.revealed) {
-          dispatch({
-            type: 'UPDATE_UNIT',
-            unitId: rev.unitId,
-            patch: { isFake: false, isDestroyed: true, size: 0 },
-          });
-          dispatch({
-            type: 'ADD_COMBAT_LOG',
-            message: `💥 【识破】疑兵被 ${rev.revealedByUnitName || '敌军'} 抵近识破，草人虚旗尽毁！`,
-          });
-        }
+        if (!rev.revealed) continue;
+        const u = byId(rev.unitId);
+        if (!u) continue;
+        u.isFake = false;
+        u.isDestroyed = true;
+        u.size = 0;
+        logs.push(`💥 【识破】疑兵被 ${rev.revealedByUnitName || '敌军'} 抵近识破，草人虚旗尽毁！`);
       }
 
-      // 4. Generate scout reports
-      const reports = generateFactionScoutReports(state.units, 'allied');
+      // ── 4. Scout reports from the resolved snapshot ──
+      const reports = generateFactionScoutReports(work, 'allied');
+
+      // ── 5. Commit: one patch per unit, edges, reports, logs ──
+      for (const u of work) {
+        dispatch({
+          type: 'UPDATE_UNIT',
+          unitId: u.id,
+          patch: {
+            size: u.size,
+            morale: u.morale,
+            provisions: u.provisions,
+            lat: u.lat,
+            lng: u.lng,
+            isRouted: u.isRouted,
+            isDestroyed: u.isDestroyed,
+            isFake: u.isFake,
+          },
+        });
+      }
+      for (const id of edgeCutIds) {
+        dispatch({ type: 'CUT_SUPPLY_EDGE', edgeId: id });
+      }
       for (const r of reports) {
         dispatch({ type: 'SUBMIT_SCOUT_REPORT', report: r });
       }
+      for (const msg of logs) {
+        dispatch({ type: 'ADD_COMBAT_LOG', message: msg });
+      }
 
-      // 5. Turn summary
-      dispatch({
-        type: 'ADD_COMBAT_LOG',
-        message: generateTurnSummary({ ...state, turnNumber: state.turnNumber + 1 }),
-      });
+      // ── 6. Turn summary ──
+      const resolvedState = {
+        ...state,
+        units: work,
+        supplyGraph: {
+          ...state.supplyGraph,
+          edges: state.supplyGraph.edges.map(e =>
+            edgeCutIds.has(e.id) ? { ...e, isCut: true } : e
+          ),
+        },
+        scoutReports: [...state.scoutReports, ...reports],
+        turnNumber: state.turnNumber + 1,
+      };
+      dispatch({ type: 'ADD_COMBAT_LOG', message: generateTurnSummary(resolvedState) });
 
-      // 6. Check scenario end
+      // ── 7. Check scenario end ──
       const endCheck = checkScenarioEnd(
-        state,
+        resolvedState,
         WEI_JIU_ZHAO_SCENARIO.alliedCapitalId,
         WEI_JIU_ZHAO_SCENARIO.hostileCapitalId,
         WEI_JIU_ZHAO_SCENARIO.maxTurns
       );
 
       if (endCheck.isVictory || endCheck.isDefeat) {
-        // Compute victory score
         const { computeVictoryScore } = await import('../engine/victoryScoring');
-        const score = computeVictoryScore(state, WEI_JIU_ZHAO_SCENARIO);
+        const score = computeVictoryScore(resolvedState, WEI_JIU_ZHAO_SCENARIO);
         dispatch({ type: 'SET_COMPLETE', score });
         setShowVictory(true);
         dispatch({
@@ -525,7 +594,6 @@ export default function WeiJiuZhaoScenario({ locale, t, onDynastyFateUpdate, onT
             : `💀 【兵败】${endCheck.description}`,
         });
       } else {
-        // Advance to next turn
         dispatch({ type: 'ADVANCE_TURN' });
         dispatch({ type: 'SET_PHASE', phase: 'STRATEGIZE' });
       }
@@ -538,7 +606,7 @@ export default function WeiJiuZhaoScenario({ locale, t, onDynastyFateUpdate, onT
     } finally {
       setIsExecuting(false);
     }
-  }, [state, dispatch]);
+  }, [state, weather, aiDifficulty, dispatch]);
 
   const handleReset = useCallback(() => {
     dispatch({ type: 'LOAD_SCENARIO', scenario: WEI_JIU_ZHAO_SCENARIO });
@@ -1053,6 +1121,33 @@ export default function WeiJiuZhaoScenario({ locale, t, onDynastyFateUpdate, onT
               {state.phase === 'STRATEGIZE' ? t('command.resolve.idle') : `${t('command.nextPhase')}: ${phaseDescription(nextPhase(state.phase))}`}
             </button>
           )}
+
+          {/* Enemy AI difficulty selector */}
+          <div className="flex items-center justify-between text-[9px] text-stone-600 px-1">
+            <span className="flex items-center gap-1">
+              <Brain className="w-2.5 h-2.5" />
+              {t('ai.commander')}
+            </span>
+            <div className="flex gap-1">
+              {([
+                { id: 'CAUTIOUS' as AIDifficulty, label: t('ai.cautious') },
+                { id: 'BALANCED' as AIDifficulty, label: t('ai.balanced') },
+                { id: 'AGGRESSIVE' as AIDifficulty, label: t('ai.aggressive') },
+              ]).map(({ id, label }) => (
+                <button
+                  key={id}
+                  onClick={() => setAiDifficulty(id)}
+                  className={`px-1.5 py-0.5 rounded text-[9px] font-mono border transition-colors ${
+                    aiDifficulty === id
+                      ? 'bg-red-900/30 border-red-500/40 text-red-300'
+                      : 'bg-stone-800 border-stone-700 text-stone-500 hover:text-stone-300'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Weather indicator */}
           <div className="flex items-center justify-between text-[9px] text-stone-600 px-1">
